@@ -34,8 +34,8 @@ const Contact = () => {
                 <div>
                   <h4 className="font-semibold text-foreground mb-1">Endereço</h4>
                   <p className="text-muted-foreground">
-                    Rua Vila Olímpica, 123<br />
-                    1000-001 Lisboa, Portugal
+                    Bairro do Zimpeto<br />
+                    Maputo, Moçambique
                   </p>
                 </div>
               </div>
@@ -47,8 +47,8 @@ const Contact = () => {
                 <div>
                   <h4 className="font-semibold text-foreground mb-1">Telefone</h4>
                   <p className="text-muted-foreground">
-                    +351 21 123 4567<br />
-                    +351 912 345 678
+                    +258 21 123 4567<br />
+                    +258 84 345 6789
                   </p>
                 </div>
               </div>
@@ -60,8 +60,8 @@ const Contact = () => {
                 <div>
                   <h4 className="font-semibold text-foreground mb-1">Email</h4>
                   <p className="text-muted-foreground">
-                    geral@vilaolimpica.pt<br />
-                    administracao@vilaolimpica.pt
+                    geral@vilaolimpica.co.mz<br />
+                    administracao@vilaolimpica.co.mz
                   </p>
                 </div>
               </div>
@@ -85,7 +85,7 @@ const Contact = () => {
               <p className="text-primary-foreground/90 mb-4">
                 Para situações urgentes, nossa equipe está disponível 24 horas por dia.
               </p>
-              <p className="text-2xl font-bold">+351 800 123 456</p>
+              <p className="text-2xl font-bold">+258 82 000 0000</p>
             </div>
           </div>
 
@@ -128,7 +128,7 @@ const Contact = () => {
                   <Input 
                     id="phone"
                     type="tel" 
-                    placeholder="+351 912 345 678"
+                    placeholder="+258 84 123 4567"
                     className="w-full"
                   />
                 </div>

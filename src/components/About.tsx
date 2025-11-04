@@ -35,8 +35,8 @@ const About = () => {
             Condomínio Vila Olímpica
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Um espaço pensado para o bem-estar, segurança e qualidade de vida das famílias. 
-            Mais que um condomínio, uma verdadeira comunidade.
+            Localizado no Bairro do Zimpeto, Maputo. Um espaço pensado para o bem-estar, 
+            segurança e qualidade de vida das famílias moçambicanas.
           </p>
         </div>
 

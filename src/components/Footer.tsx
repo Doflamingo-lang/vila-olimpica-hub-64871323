@@ -76,11 +76,11 @@ const Footer = () => {
             <h4 className="font-bold text-lg mb-4">Conecte-se</h4>
             <div className="space-y-3 mb-4">
               <a 
-                href="mailto:geral@vilaolimpica.pt" 
+                href="mailto:geral@vilaolimpica.co.mz" 
                 className="flex items-center gap-2 text-primary-foreground/80 hover:text-accent transition-colors text-sm"
               >
                 <Mail className="w-4 h-4" />
-                geral@vilaolimpica.pt
+                geral@vilaolimpica.co.mz
               </a>
             </div>
             <div className="flex gap-3">
