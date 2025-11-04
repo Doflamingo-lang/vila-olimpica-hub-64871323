@@ -1,5 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Home, MapPin, Bath, Bed, Square } from "lucide-react";
+import imovel1 from "@/assets/imovel-1.jpg";
+import imovel2 from "@/assets/imovel-2.jpg";
+import imovel3 from "@/assets/imovel-3.jpg";
 
 const Properties = () => {
   const properties = [
@@ -7,34 +10,34 @@ const Properties = () => {
       id: 1,
       title: "Apartamento T3 - Bloco A",
       type: "Venda",
-      price: "250.000€",
-      image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80",
+      price: "12.500.000 MT",
+      image: imovel1,
       beds: 3,
       baths: 2,
       area: "120m²",
-      location: "Bloco A - 3º Andar",
+      location: "Vila Olímpica - Maputo",
     },
     {
       id: 2,
       title: "Apartamento T2 - Bloco B",
       type: "Arrendamento",
-      price: "850€/mês",
-      image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      price: "45.000 MT/mês",
+      image: imovel2,
       beds: 2,
       baths: 1,
       area: "85m²",
-      location: "Bloco B - 2º Andar",
+      location: "Vila Olímpica - Matola",
     },
     {
       id: 3,
-      title: "Moradia T4 - Vila Premium",
+      title: "Apartamento T4 - Vila Premium",
       type: "Venda",
-      price: "420.000€",
-      image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80",
+      price: "18.000.000 MT",
+      image: imovel3,
       beds: 4,
       baths: 3,
       area: "200m²",
-      location: "Zona Premium",
+      location: "Vila Olímpica - Zona Premium",
     },
   ];
 
