@@ -1,4 +1,4 @@
-import { Building2, Facebook, Instagram, Linkedin, Mail } from "lucide-react";
+import { Building2, Facebook, Instagram, Linkedin, MessageCircle } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -76,11 +76,13 @@ const Footer = () => {
             <h4 className="font-bold text-lg mb-4">Conecte-se</h4>
             <div className="space-y-3 mb-4">
               <a 
-                href="mailto:geral@vilaolimpica.co.mz" 
+                href="https://wa.me/258843001234" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2 text-primary-foreground/80 hover:text-accent transition-colors text-sm"
               >
-                <Mail className="w-4 h-4" />
-                geral@vilaolimpica.co.mz
+                <MessageCircle className="w-4 h-4" />
+                +258 84 300 1234
               </a>
             </div>
             <div className="flex gap-3">

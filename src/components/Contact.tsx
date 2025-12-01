@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { MapPin, Phone, MessageCircle, Clock } from "lucide-react";
 
 const Contact = () => {
   return (
@@ -55,13 +55,17 @@ const Contact = () => {
 
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Mail className="w-6 h-6 text-accent" />
+                  <MessageCircle className="w-6 h-6 text-accent" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground mb-1">Email</h4>
+                  <h4 className="font-semibold text-foreground mb-1">WhatsApp</h4>
                   <p className="text-muted-foreground">
-                    geral@vilaolimpica.co.mz<br />
-                    administracao@vilaolimpica.co.mz
+                    <a href="https://wa.me/258843001234" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
+                      +258 84 300 1234
+                    </a><br />
+                    <a href="https://wa.me/258843456789" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
+                      +258 84 345 6789
+                    </a>
                   </p>
                 </div>
               </div>
