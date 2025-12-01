@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Briefcase, Phone, Mail, ExternalLink } from "lucide-react";
+import { Briefcase, Phone, Mail, ExternalLink, Store, ShoppingBag, Utensils, Truck, Scissors, Sprout, Filter } from "lucide-react";
+import { useState } from "react";
+import EntrepreneurDetailsDialog from "./EntrepreneurDetailsDialog";
 import empreendedor1 from "@/assets/empreendedor-1.jpg";
 import empreendedor2 from "@/assets/empreendedor-2.jpg";
 import empreendedor3 from "@/assets/empreendedor-3.jpg";
@@ -8,6 +10,19 @@ import empreendedor5 from "@/assets/empreendedor-5.jpg";
 import empreendedor6 from "@/assets/empreendedor-6.webp";
 
 const Entrepreneurs = () => {
+  const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
+  const [selectedEntrepreneur, setSelectedEntrepreneur] = useState<any>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const categories = [
+    { name: "Todos", icon: Store },
+    { name: "Alimentação", icon: Utensils },
+    { name: "Comércio", icon: ShoppingBag },
+    { name: "Serviços", icon: Store },
+    { name: "Moda", icon: Scissors },
+    { name: "Transporte", icon: Truck },
+    { name: "Agricultura", icon: Sprout },
+  ];
   const entrepreneurs = [
     {
       id: 1,
@@ -68,18 +83,30 @@ const Entrepreneurs = () => {
       image: empreendedor6,
       phone: "+258 84 678 9012",
       email: "fernando.agricultura@gmail.com",
+      fullDescription: "Produtos agrícolas frescos e orgânicos, cultivados com dedicação. Oferecemos entregas ao domicílio dentro do condomínio. Variedade de frutas, vegetais e legumes da época.",
+      location: "Vila Olímpica - Zimpeto, Maputo",
     },
   ];
+
+  const filteredEntrepreneurs =
+    selectedCategory === "Todos"
+      ? entrepreneurs
+      : entrepreneurs.filter((e) => e.category === selectedCategory);
+
+  const handleViewDetails = (entrepreneur: any) => {
+    setSelectedEntrepreneur(entrepreneur);
+    setDialogOpen(true);
+  };
 
   return (
     <section id="empreendedores" className="py-20 bg-secondary/30">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <span className="text-accent font-semibold text-sm uppercase tracking-wider">
-            Empreendedores
+            Empreendedores Locais
           </span>
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mt-2 mb-4">
-            Serviços da Comunidade
+            Marketplace da Vila
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Conecte-se com profissionais talentosos que fazem parte da nossa comunidade. 
@@ -87,8 +114,28 @@ const Entrepreneurs = () => {
           </p>
         </div>
 
+        {/* Filtros por Categoria */}
+        <div className="flex flex-wrap justify-center gap-3 mb-12">
+          {categories.map((category) => {
+            const Icon = category.icon;
+            return (
+              <Button
+                key={category.name}
+                variant={selectedCategory === category.name ? "default" : "outline"}
+                onClick={() => setSelectedCategory(category.name)}
+                className="gap-2"
+              >
+                <Icon className="w-4 h-4" />
+                {category.name}
+              </Button>
+            );
+          })}
+        </div>
+
+        {/* Grid de Negócios */}
+        {/* Grid de Negócios */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {entrepreneurs.map((entrepreneur) => (
+          {filteredEntrepreneurs.map((entrepreneur) => (
             <div
               key={entrepreneur.id}
               className="bg-card rounded-xl p-6 border border-border hover:shadow-elegant transition-all group"
@@ -133,8 +180,12 @@ const Entrepreneurs = () => {
                 </a>
               </div>
 
-              <Button variant="outline" className="w-full group">
-                Entrar em Contato
+              <Button 
+                variant="outline" 
+                className="w-full group"
+                onClick={() => handleViewDetails(entrepreneur)}
+              >
+                Ver Detalhes
                 <ExternalLink className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </div>
@@ -155,6 +206,13 @@ const Entrepreneurs = () => {
           </Button>
         </div>
       </div>
+
+      {/* Modal de Detalhes */}
+      <EntrepreneurDetailsDialog
+        entrepreneur={selectedEntrepreneur}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </section>
   );
 };
