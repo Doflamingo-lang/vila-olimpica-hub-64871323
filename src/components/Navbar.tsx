@@ -1,6 +1,7 @@
 import { Building2, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,9 +44,11 @@ const Navbar = () => {
                 {item.label}
               </a>
             ))}
-            <Button variant="hero" size="sm">
-              Área do Morador
-            </Button>
+            <Link to="/area-morador">
+              <Button variant="hero" size="sm">
+                Área do Morador
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -76,9 +79,11 @@ const Navbar = () => {
                   {item.label}
                 </a>
               ))}
-              <Button variant="hero" size="sm" className="w-full">
-                Área do Morador
-              </Button>
+              <Link to="/area-morador" className="w-full">
+                <Button variant="hero" size="sm" className="w-full" onClick={() => setIsOpen(false)}>
+                  Área do Morador
+                </Button>
+              </Link>
             </div>
           </div>
         )}

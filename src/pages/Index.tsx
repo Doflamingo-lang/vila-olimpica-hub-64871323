@@ -7,6 +7,7 @@ import News from "@/components/News";
 import Transparency from "@/components/Transparency";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 const Index = () => {
   return (
@@ -20,6 +21,7 @@ const Index = () => {
       <Transparency />
       <Contact />
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };
