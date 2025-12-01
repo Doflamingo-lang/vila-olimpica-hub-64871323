@@ -9,7 +9,8 @@ import {
   Home,
   ArrowLeft,
   Download,
-  AlertCircle
+  AlertCircle,
+  MessageCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -192,7 +193,7 @@ const ResidentArea = () => {
             <Card className="mt-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" />
+                  <MessageCircle className="w-5 h-5 text-primary" />
                   Contato
                 </CardTitle>
               </CardHeader>
@@ -203,8 +204,13 @@ const ResidentArea = () => {
                 <Button variant="default" className="w-full">
                   Abrir Chamado
                 </Button>
-                <Button variant="outline" className="w-full">
-                  Enviar Email
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => window.open('https://wa.me/258843001234', '_blank')}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Enviar WhatsApp
                 </Button>
               </CardContent>
             </Card>
