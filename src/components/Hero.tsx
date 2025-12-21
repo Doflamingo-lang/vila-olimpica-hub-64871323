@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Home, Users, TrendingUp } from "lucide-react";
-import heroImage from "@/assets/hero-condominio.jpg";
-
+import heroImage from "@/assets/vila-olimpica.jpg";
 const Hero = () => {
   return (
     <section id="inicio" className="relative min-h-screen flex items-center pt-16">
