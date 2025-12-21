@@ -12,6 +12,8 @@ interface Document {
   title: string;
   description: string | null;
   category: string;
+  folder: string | null;
+  year: number | null;
   file_url: string;
   file_name: string;
   file_size: string | null;

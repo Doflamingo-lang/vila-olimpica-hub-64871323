@@ -53,9 +53,11 @@ export type Database = {
           file_size: string | null
           file_type: string | null
           file_url: string
+          folder: string | null
           id: string
           title: string
           updated_at: string
+          year: number | null
         }
         Insert: {
           category: string
@@ -65,9 +67,11 @@ export type Database = {
           file_size?: string | null
           file_type?: string | null
           file_url: string
+          folder?: string | null
           id?: string
           title: string
           updated_at?: string
+          year?: number | null
         }
         Update: {
           category?: string
@@ -77,9 +81,11 @@ export type Database = {
           file_size?: string | null
           file_type?: string | null
           file_url?: string
+          folder?: string | null
           id?: string
           title?: string
           updated_at?: string
+          year?: number | null
         }
         Relationships: []
       }
