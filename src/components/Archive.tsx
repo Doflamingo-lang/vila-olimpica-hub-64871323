@@ -10,6 +10,8 @@ interface Document {
   title: string;
   description: string | null;
   category: string;
+  folder: string | null;
+  year: number | null;
   file_url: string;
   file_name: string;
   file_size: string | null;
@@ -122,6 +124,11 @@ const Archive = () => {
                           <span className="px-2 py-1 bg-secondary rounded text-xs font-medium">
                             {doc.category}
                           </span>
+                          {doc.year && (
+                            <span className="px-2 py-1 bg-primary/10 rounded text-xs font-medium text-primary">
+                              {doc.year}
+                            </span>
+                          )}
                           <span>{formatDate(doc.created_at)}</span>
                           {doc.file_size && <span>{doc.file_size}</span>}
                         </div>

@@ -1,4 +1,4 @@
-import { Building2, ArrowLeft, FileText, Download, Eye, Calendar, Search, FolderArchive, BarChart3, Users, Shield, Loader2 } from "lucide-react";
+import { Building2, ArrowLeft, FileText, Download, Eye, Calendar, Search, FolderArchive, BarChart3, Users, Shield, Loader2, Folder, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
@@ -6,12 +6,27 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import DocumentPreviewDialog from "@/components/DocumentPreviewDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 
 interface Document {
   id: string;
   title: string;
   description: string | null;
   category: string;
+  folder: string | null;
+  year: number | null;
   file_url: string;
   file_name: string;
   file_size: string | null;
@@ -19,13 +34,18 @@ interface Document {
   created_at: string;
 }
 
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
+
 const ArchivePage = () => {
   const [selectedType, setSelectedType] = useState<string>("Todos");
+  const [selectedYear, setSelectedYear] = useState<string>("Todos");
   const [searchTerm, setSearchTerm] = useState("");
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   const documentTypes = ["Todos", "Financeiro", "Ata", "Regulamento", "Relatório", "Contrato"];
 
@@ -37,12 +57,16 @@ const ArchivePage = () => {
     const { data, error } = await supabase
       .from("documents")
       .select("*")
+      .order("year", { ascending: false })
       .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error fetching documents:", error);
     } else {
       setDocuments(data || []);
+      // Expand all folders by default
+      const folders = [...new Set((data || []).map(d => d.folder || "Geral"))];
+      setExpandedFolders(new Set(folders));
     }
     setIsLoading(false);
   };
@@ -50,6 +74,16 @@ const ArchivePage = () => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("pt-BR");
+  };
+
+  const toggleFolder = (folder: string) => {
+    const newExpanded = new Set(expandedFolders);
+    if (newExpanded.has(folder)) {
+      newExpanded.delete(folder);
+    } else {
+      newExpanded.add(folder);
+    }
+    setExpandedFolders(newExpanded);
   };
 
   const stats = [
@@ -61,10 +95,23 @@ const ArchivePage = () => {
 
   const filteredDocuments = documents.filter((doc) => {
     const matchesType = selectedType === "Todos" || doc.category === selectedType;
+    const matchesYear = selectedYear === "Todos" || doc.year?.toString() === selectedYear;
     const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (doc.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-    return matchesType && matchesSearch;
+    return matchesType && matchesYear && matchesSearch;
   });
+
+  // Group documents by folder
+  const documentsByFolder = filteredDocuments.reduce((acc, doc) => {
+    const folder = doc.folder || "Geral";
+    if (!acc[folder]) acc[folder] = [];
+    acc[folder].push(doc);
+    return acc;
+  }, {} as Record<string, Document[]>);
+
+  // Get unique years from documents
+  const availableYears = [...new Set(documents.map(d => d.year).filter(Boolean))] as number[];
+  availableYears.sort((a, b) => b - a);
 
   const handlePreview = (doc: Document) => {
     setSelectedDocument(doc);
@@ -107,7 +154,7 @@ const ArchivePage = () => {
             <span className="text-accent font-semibold text-sm uppercase tracking-wider">Arquivo</span>
             <h1 className="text-4xl md:text-6xl font-bold mt-2 mb-6">Documentos e Relatórios</h1>
             <p className="text-xl text-primary-foreground/90 max-w-2xl mx-auto">
-              Acesso completo a toda documentação oficial do condomínio. Visualize antes de baixar.
+              Acesso completo a toda documentação oficial do condomínio, organizada por pastas e anos.
             </p>
           </div>
         </div>
@@ -132,17 +179,40 @@ const ArchivePage = () => {
       <section className="py-8 border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex flex-wrap gap-3">
-              {documentTypes.map((type) => (
-                <Button
-                  key={type}
-                  variant={selectedType === type ? "default" : "outline"}
-                  onClick={() => setSelectedType(type)}
-                  size="sm"
-                >
-                  {type}
-                </Button>
-              ))}
+            <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex flex-wrap gap-2">
+                {documentTypes.map((type) => (
+                  <Button
+                    key={type}
+                    variant={selectedType === type ? "default" : "outline"}
+                    onClick={() => setSelectedType(type)}
+                    size="sm"
+                  >
+                    {type}
+                  </Button>
+                ))}
+              </div>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-28">
+                  <SelectValue placeholder="Ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Todos">Todos Anos</SelectItem>
+                  {availableYears.length > 0 ? (
+                    availableYears.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    years.slice(0, 5).map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             <div className="relative w-full md:w-80">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -164,6 +234,7 @@ const ArchivePage = () => {
             <p className="text-muted-foreground">
               Mostrando <span className="font-semibold text-foreground">{filteredDocuments.length}</span> documentos
               {selectedType !== "Todos" && ` do tipo ${selectedType}`}
+              {selectedYear !== "Todos" && ` de ${selectedYear}`}
             </p>
           </div>
 
@@ -177,74 +248,95 @@ const ArchivePage = () => {
                 <FolderArchive className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <p className="text-lg text-muted-foreground">Nenhum documento disponível no momento.</p>
               </div>
+            ) : filteredDocuments.length === 0 ? (
+              <div className="text-center py-24">
+                <Search className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg text-muted-foreground">Nenhum documento encontrado com os filtros selecionados.</p>
+              </div>
             ) : (
-              <div className="bg-card rounded-xl border border-border overflow-hidden shadow-md">
-                <div className="bg-gradient-to-r from-primary to-primary-glow p-6">
-                  <div className="flex items-center gap-3">
-                    <FolderArchive className="w-8 h-8 text-primary-foreground" />
-                    <div>
-                      <h3 className="text-2xl font-bold text-primary-foreground">Documentação Oficial</h3>
-                      <p className="text-primary-foreground/90">Clique no ícone de olho para visualizar antes de baixar</p>
-                    </div>
-                  </div>
-                </div>
-
-                {filteredDocuments.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-muted-foreground">Nenhum documento encontrado com esses filtros.</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border">
-                    {filteredDocuments.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="p-6 hover:bg-secondary/50 transition-colors group"
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-accent/20 transition-colors">
-                            <FileText className="w-6 h-6 text-accent" />
+              <div className="space-y-4">
+                {Object.entries(documentsByFolder).map(([folder, docs]) => (
+                  <Collapsible
+                    key={folder}
+                    open={expandedFolders.has(folder)}
+                    onOpenChange={() => toggleFolder(folder)}
+                  >
+                    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                      <CollapsibleTrigger asChild>
+                        <button className="w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/15 hover:to-accent/15 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <Folder className="w-6 h-6 text-accent" />
+                            <span className="font-semibold text-foreground text-lg">{folder}</span>
+                            <span className="px-2 py-0.5 bg-secondary rounded-full text-xs text-muted-foreground">
+                              {docs.length} documento{docs.length !== 1 ? "s" : ""}
+                            </span>
                           </div>
+                          <ChevronRight className={cn(
+                            "w-5 h-5 text-muted-foreground transition-transform",
+                            expandedFolders.has(folder) && "rotate-90"
+                          )} />
+                        </button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="divide-y divide-border">
+                          {docs.map((doc) => (
+                            <div
+                              key={doc.id}
+                              className="p-6 hover:bg-secondary/50 transition-colors group"
+                            >
+                              <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-accent/20 transition-colors">
+                                  <FileText className="w-6 h-6 text-accent" />
+                                </div>
 
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-lg font-bold text-foreground mb-1">{doc.title}</h4>
-                            {doc.description && (
-                              <p className="text-sm text-muted-foreground mb-2">{doc.description}</p>
-                            )}
-                            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                              <span className="px-2 py-1 bg-secondary rounded text-xs font-medium">
-                                {doc.category}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                {formatDate(doc.created_at)}
-                              </span>
-                              {doc.file_size && <span>{doc.file_size}</span>}
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="text-lg font-bold text-foreground mb-1">{doc.title}</h4>
+                                  {doc.description && (
+                                    <p className="text-sm text-muted-foreground mb-2">{doc.description}</p>
+                                  )}
+                                  <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                                    <span className="px-2 py-1 bg-secondary rounded text-xs font-medium">
+                                      {doc.category}
+                                    </span>
+                                    {doc.year && (
+                                      <span className="px-2 py-1 bg-primary/10 rounded text-xs font-medium text-primary">
+                                        {doc.year}
+                                      </span>
+                                    )}
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="w-3 h-3" />
+                                      {formatDate(doc.created_at)}
+                                    </span>
+                                    {doc.file_size && <span>{doc.file_size}</span>}
+                                  </div>
+                                </div>
+
+                                <div className="flex gap-2 flex-shrink-0">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    title="Visualizar"
+                                    onClick={() => handlePreview(doc)}
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    title="Download"
+                                    onClick={() => handleDownload(doc)}
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-
-                          <div className="flex gap-2 flex-shrink-0">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              title="Visualizar"
-                              onClick={() => handlePreview(doc)}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              title="Download"
-                              onClick={() => handleDownload(doc)}
-                            >
-                              <Download className="w-4 h-4" />
-                            </Button>
-                          </div>
+                          ))}
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
+                ))}
               </div>
             )}
           </div>
