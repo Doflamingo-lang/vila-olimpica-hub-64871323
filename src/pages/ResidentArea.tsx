@@ -1,15 +1,15 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   FileText, 
   Calendar, 
   CreditCard, 
   Bell, 
-  Users, 
   Home,
   ArrowLeft,
   Download,
-  AlertCircle,
   MessageCircle,
   LogOut,
   Loader2,
@@ -18,11 +18,14 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import NoticesSection from "@/components/resident/NoticesSection";
+import FeesSection from "@/components/resident/FeesSection";
 
 const ResidentArea = () => {
   const { user, session, isAdmin, isLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("overview");
 
   // Redirect to auth if not logged in
   if (!isLoading && !session) {
@@ -50,53 +53,6 @@ const ResidentArea = () => {
   if (!session) {
     return null;
   }
-
-  const services = [
-    {
-      icon: <CreditCard className="w-8 h-8" />,
-      title: "Pagamentos",
-      description: "Consulte e pague suas taxas condominiais online",
-      status: "Em dia",
-      statusColor: "text-green-600 dark:text-green-400"
-    },
-    {
-      icon: <Calendar className="w-8 h-8" />,
-      title: "Reservas",
-      description: "Reserve áreas comuns como salão de festas e churrasqueira",
-      action: "Fazer Reserva",
-      link: "/reservas"
-    },
-    {
-      icon: <FileText className="w-8 h-8" />,
-      title: "Documentos",
-      description: "Acesse regulamentos, atas e documentos importantes",
-      action: "Ver Documentos"
-    },
-    {
-      icon: <Bell className="w-8 h-8" />,
-      title: "Avisos",
-      description: "Fique por dentro das novidades e comunicados",
-      badge: "3 novos"
-    }
-  ];
-
-  const recentNotices = [
-    {
-      title: "Manutenção Programada",
-      date: "15 Jan 2025",
-      description: "Manutenção no sistema de água no dia 20/01"
-    },
-    {
-      title: "Assembleia Geral",
-      date: "10 Jan 2025",
-      description: "Convocação para assembleia ordinária em 30/01"
-    },
-    {
-      title: "Nova Área de Lazer",
-      date: "05 Jan 2025",
-      description: "Inauguração da nova área kids no próximo sábado"
-    }
-  ];
 
   const documents = [
     { name: "Regulamento Interno", date: "2025", icon: <FileText className="w-5 h-5" /> },
@@ -153,139 +109,146 @@ const ResidentArea = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Serviços Principais */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Serviços Rápidos</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {services.map((service, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
-                <CardHeader>
-                  <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-4">
-                    {service.icon}
-                  </div>
-                  <CardTitle className="text-lg">{service.title}</CardTitle>
-                  <CardDescription>{service.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {service.status && (
-                    <div className={`flex items-center gap-2 ${service.statusColor} font-semibold`}>
-                      <AlertCircle className="w-4 h-4" />
-                      {service.status}
+        {/* Quick Access Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all hover:border-primary"
+            onClick={() => setActiveTab("notices")}
+          >
+            <CardContent className="p-4 flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-2">
+                <Bell className="w-6 h-6" />
+              </div>
+              <p className="font-medium text-sm">Avisos</p>
+            </CardContent>
+          </Card>
+          
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all hover:border-primary"
+            onClick={() => setActiveTab("fees")}
+          >
+            <CardContent className="p-4 flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-2">
+                <CreditCard className="w-6 h-6" />
+              </div>
+              <p className="font-medium text-sm">Pagamentos</p>
+            </CardContent>
+          </Card>
+          
+          <Link to="/reservas" className="block">
+            <Card className="cursor-pointer hover:shadow-lg transition-all hover:border-primary h-full">
+              <CardContent className="p-4 flex flex-col items-center text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-2">
+                  <Calendar className="w-6 h-6" />
+                </div>
+                <p className="font-medium text-sm">Reservas</p>
+              </CardContent>
+            </Card>
+          </Link>
+          
+          <Link to="/arquivo" className="block">
+            <Card className="cursor-pointer hover:shadow-lg transition-all hover:border-primary h-full">
+              <CardContent className="p-4 flex flex-col items-center text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-2">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <p className="font-medium text-sm">Documentos</p>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+
+        {/* Tabs Content */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid grid-cols-3 w-full max-w-md">
+            <TabsTrigger value="overview">Resumo</TabsTrigger>
+            <TabsTrigger value="notices">Avisos</TabsTrigger>
+            <TabsTrigger value="fees">Pagamentos</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Notices Preview */}
+              <div className="lg:col-span-2">
+                <NoticesSection />
+              </div>
+
+              {/* Quick Actions */}
+              <div className="space-y-6">
+                {/* Documents */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-primary" />
+                      Documentos
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {documents.map((doc, index) => (
+                        <Link to="/arquivo" key={index}>
+                          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                            <div className="flex items-center gap-3">
+                              <div className="text-primary">
+                                {doc.icon}
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-foreground">{doc.name}</p>
+                                <p className="text-xs text-muted-foreground">{doc.date}</p>
+                              </div>
+                            </div>
+                            <Download className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                          </div>
+                        </Link>
+                      ))}
                     </div>
-                  )}
-                  {service.action && service.link ? (
-                    <Link to={service.link}>
-                      <Button variant="outline" className="w-full mt-2">
-                        {service.action}
+                    <Link to="/arquivo">
+                      <Button variant="outline" className="w-full mt-4">
+                        Ver Todos os Documentos
                       </Button>
                     </Link>
-                  ) : service.action ? (
-                    <Button variant="outline" className="w-full mt-2">
-                      {service.action}
+                  </CardContent>
+                </Card>
+
+                {/* Contact */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MessageCircle className="w-5 h-5 text-primary" />
+                      Contato
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Precisa falar com a administração?
+                    </p>
+                    <Link to="/contato">
+                      <Button variant="default" className="w-full">
+                        Enviar Mensagem
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.open('https://wa.me/258843001234', '_blank')}
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Enviar WhatsApp
                     </Button>
-                  ) : null}
-                  {service.badge && (
-                    <span className="inline-block bg-accent text-accent-foreground px-3 py-1 rounded-full text-sm font-semibold">
-                      {service.badge}
-                    </span>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Avisos Recentes */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="w-5 h-5 text-primary" />
-                  Avisos Recentes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recentNotices.map((notice, index) => (
-                    <div 
-                      key={index} 
-                      className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-foreground">{notice.title}</h3>
-                        <span className="text-xs text-muted-foreground">{notice.date}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{notice.description}</p>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline" className="w-full mt-4">
-                  Ver Todos os Avisos
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+          <TabsContent value="notices">
+            <NoticesSection />
+          </TabsContent>
 
-          {/* Documentos */}
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  Documentos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {documents.map((doc, index) => (
-                    <div 
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="text-primary">
-                          {doc.icon}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{doc.name}</p>
-                          <p className="text-xs text-muted-foreground">{doc.date}</p>
-                        </div>
-                      </div>
-                      <Download className="w-4 h-4 text-muted-foreground hover:text-primary" />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Contato Rápido */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageCircle className="w-5 h-5 text-primary" />
-                  Contato
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Precisa falar com a administração?
-                </p>
-                <Button variant="default" className="w-full">
-                  Abrir Chamado
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => window.open('https://wa.me/258843001234', '_blank')}
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Enviar WhatsApp
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+          <TabsContent value="fees">
+            <FeesSection />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

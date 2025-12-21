@@ -44,6 +44,48 @@ export type Database = {
         }
         Relationships: []
       }
+      condominium_fees: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          paid_at: string | null
+          payment_method: string | null
+          reference_month: string
+          reference_year: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          due_date: string
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          reference_month: string
+          reference_year: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          reference_month?: string
+          reference_year?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       document_downloads: {
         Row: {
           document_id: string
