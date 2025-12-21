@@ -1,5 +1,4 @@
 import { 
-  Building2, 
   LayoutDashboard, 
   Calendar, 
   Users, 
@@ -16,6 +15,7 @@ import {
   Download,
   Building
 } from "lucide-react";
+import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 import NewsManagement from "@/components/admin/NewsManagement";
 import DocumentsManagement from "@/components/admin/DocumentsManagement";
 import DocumentDownloadsStats from "@/components/admin/DocumentDownloadsStats";
@@ -307,9 +307,11 @@ const AdminDashboard = () => {
         {/* Logo */}
         <div className="p-4 border-b border-border">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center flex-shrink-0">
-              <Building2 className="w-6 h-6 text-primary-foreground" />
-            </div>
+            <img 
+              src={logoVilaOlimpica} 
+              alt="Logo Vila Olímpica" 
+              className="w-10 h-10 object-contain flex-shrink-0"
+            />
             {!sidebarCollapsed && (
               <div className="flex flex-col">
                 <span className="font-bold text-foreground leading-tight">Vila Olímpica</span>

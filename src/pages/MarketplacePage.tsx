@@ -1,4 +1,5 @@
-import { Building2, ArrowLeft, Phone, ExternalLink, Store, ShoppingBag, Utensils, Truck, Scissors, Sprout, MapPin, Star, Clock, MessageCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Phone, ExternalLink, Store, ShoppingBag, Utensils, Truck, Scissors, Sprout, MapPin, Star, Clock, MessageCircle, Loader2, Home } from "lucide-react";
+import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -85,10 +86,12 @@ const MarketplacePage = () => {
       <header className="fixed top-0 w-full bg-background/95 backdrop-blur-md border-b border-border z-50 shadow-sm">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Building2 className="w-6 h-6 text-primary-foreground" />
-              </div>
+            <Link to="/" className="flex items-center gap-3 group">
+              <img 
+                src={logoVilaOlimpica} 
+                alt="Logo Vila Olímpica" 
+                className="w-12 h-12 object-contain group-hover:scale-110 transition-transform"
+              />
               <div className="flex flex-col">
                 <span className="font-bold text-lg text-foreground leading-tight">Vila Olímpica</span>
                 <span className="text-xs text-muted-foreground">Condomínio</span>
@@ -259,7 +262,7 @@ const MarketplacePage = () => {
           <div className="flex flex-wrap justify-center gap-3">
             <Link to="/">
               <Button variant="outline" size="sm">
-                <Building2 className="w-4 h-4 mr-2" />
+                <Home className="w-4 h-4 mr-2" />
                 Início
               </Button>
             </Link>

@@ -1,4 +1,5 @@
-import { Building2, ArrowLeft, Store, Phone, MessageCircle, MapPin, Clock, Image, FileText, Send, Upload, X } from "lucide-react";
+import { ArrowLeft, Store, Phone, MessageCircle, MapPin, Clock, Image, FileText, Send, Upload, X } from "lucide-react";
+import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -217,10 +218,12 @@ const RegisterServicePage = () => {
       <header className="fixed top-0 w-full bg-background/95 backdrop-blur-md border-b border-border z-50 shadow-sm">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Building2 className="w-6 h-6 text-primary-foreground" />
-              </div>
+            <Link to="/" className="flex items-center gap-3 group">
+              <img 
+                src={logoVilaOlimpica} 
+                alt="Logo Vila Olímpica" 
+                className="w-12 h-12 object-contain group-hover:scale-110 transition-transform"
+              />
               <div className="flex flex-col">
                 <span className="font-bold text-lg text-foreground leading-tight">Vila Olímpica</span>
                 <span className="text-xs text-muted-foreground">Condomínio</span>
