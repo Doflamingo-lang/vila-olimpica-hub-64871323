@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Home, Users, TrendingUp, Play, ChevronDown } from "lucide-react";
-import heroImage from "@/assets/hero-vila-olimpica.jpg";
+import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 
 const Hero = () => {
   const scrollToNext = () => {
@@ -12,7 +12,7 @@ const Hero = () => {
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <img
-          src={heroImage}
+          src={logoVilaOlimpica}
           alt="Condomínio Vila Olímpica"
           className="w-full h-full object-cover scale-105"
         />
@@ -38,7 +38,7 @@ const Hero = () => {
             
             {/* Title */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-6 leading-[1.1] animate-fade-up opacity-0" style={{ animationDelay: "0.2s", animationFillMode: "forwards" }}>
-              Bem-vindo ao
+              Bem-vindo a
               <span className="block mt-2 bg-gradient-to-r from-accent via-accent-glow to-accent bg-clip-text text-transparent">
                 Vila Olímpica
               </span>
@@ -99,9 +99,11 @@ const Hero = () => {
               <div className="absolute -inset-4 bg-gradient-to-r from-accent/20 to-primary-foreground/10 rounded-3xl blur-2xl" />
               <div className="relative bg-primary-foreground/10 backdrop-blur-xl rounded-3xl border border-primary-foreground/20 p-8 shadow-2xl">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center shadow-lg">
-                    <Home className="w-7 h-7 text-accent-foreground" />
-                  </div>
+                  <img 
+                    src={logoVilaOlimpica} 
+                    alt="Logo Vila Olímpica" 
+                    className="w-16 h-16 object-contain rounded-2xl bg-white/90 p-1"
+                  />
                   <div>
                     <h3 className="text-xl font-bold text-primary-foreground">Qualidade de Vida</h3>
                     <p className="text-primary-foreground/70 text-sm">Infraestrutura completa</p>
