@@ -8,15 +8,13 @@ import {
 import { Calendar, Clock, User, Tag } from "lucide-react";
 
 interface NewsItem {
-  id: number;
+  id: string;
   title: string;
-  date: string;
-  excerpt: string;
-  content?: string;
-  image: string;
+  summary: string;
+  content: string;
   category: string;
-  author?: string;
-  readTime?: string;
+  image_url: string | null;
+  created_at: string;
 }
 
 interface NewsDetailsDialogProps {
@@ -28,13 +26,29 @@ interface NewsDetailsDialogProps {
 const NewsDetailsDialog = ({ news, open, onOpenChange }: NewsDetailsDialogProps) => {
   if (!news) return null;
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("pt-BR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const getReadTime = (content: string) => {
+    const wordsPerMinute = 200;
+    const wordCount = content.split(/\s+/).length;
+    const minutes = Math.ceil(wordCount / wordsPerMinute);
+    return `${minutes} min`;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
         {/* Image Header */}
         <div className="relative h-64 w-full">
           <img
-            src={news.image}
+            src={news.image_url || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80"}
             alt={news.title}
             className="w-full h-full object-cover"
           />
@@ -59,27 +73,23 @@ const NewsDetailsDialog = ({ news, open, onOpenChange }: NewsDetailsDialogProps)
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4 text-accent" />
-                <time>{news.date}</time>
+                <time>{formatDate(news.created_at)}</time>
               </div>
-              {news.readTime && (
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4 text-accent" />
-                  <span>{news.readTime} de leitura</span>
-                </div>
-              )}
-              {news.author && (
-                <div className="flex items-center gap-1">
-                  <User className="w-4 h-4 text-accent" />
-                  <span>{news.author}</span>
-                </div>
-              )}
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4 text-accent" />
+                <span>{getReadTime(news.content)} de leitura</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <User className="w-4 h-4 text-accent" />
+                <span>Administração</span>
+              </div>
             </div>
           </DialogHeader>
 
           {/* Content */}
           <div className="prose prose-sm max-w-none">
-            <p className="text-muted-foreground leading-relaxed text-base">
-              {news.content || news.excerpt}
+            <p className="text-muted-foreground leading-relaxed text-base whitespace-pre-line">
+              {news.content}
             </p>
           </div>
 

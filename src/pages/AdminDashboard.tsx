@@ -15,8 +15,10 @@ import {
   Store,
   Check,
   X,
-  Eye
+  Eye,
+  Newspaper
 } from "lucide-react";
+import NewsManagement from "@/components/admin/NewsManagement";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -466,6 +468,10 @@ const AdminDashboard = () => {
                   </span>
                 )}
               </TabsTrigger>
+              <TabsTrigger value="news">
+                <Newspaper className="w-4 h-4 mr-1" />
+                Notícias
+              </TabsTrigger>
             </TabsList>
 
             {/* Reservations Tab */}
@@ -686,6 +692,11 @@ const AdminDashboard = () => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* News Tab */}
+            <TabsContent value="news">
+              <NewsManagement />
             </TabsContent>
           </Tabs>
         </div>
