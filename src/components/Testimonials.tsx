@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Quote, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Quote, ChevronLeft, ChevronRight, Star, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Testimonials = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
 
   const testimonials = [
     {
@@ -40,13 +41,28 @@ const Testimonials = () => {
     },
   ];
 
-  const nextSlide = () => {
+  const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-  };
+  }, [testimonials.length]);
 
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   };
+
+  const togglePlay = () => {
+    setIsPlaying((prev) => !prev);
+  };
+
+  // Auto-play effect
+  useEffect(() => {
+    if (!isPlaying) return;
+    
+    const interval = setInterval(() => {
+      nextSlide();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, nextSlide]);
 
   return (
     <section id="depoimentos" className="py-16 bg-secondary/40">
@@ -73,6 +89,14 @@ const Testimonials = () => {
                 className="rounded-full w-10 h-10"
               >
                 <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={togglePlay}
+                className="rounded-full w-10 h-10"
+              >
+                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </Button>
               <Button
                 variant="outline"
@@ -138,6 +162,9 @@ const Testimonials = () => {
             <div className="flex lg:hidden items-center justify-center gap-3 mt-4">
               <Button variant="outline" size="icon" onClick={prevSlide} className="rounded-full w-8 h-8">
                 <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button variant="outline" size="icon" onClick={togglePlay} className="rounded-full w-8 h-8">
+                {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
               </Button>
               <div className="flex items-center gap-1.5">
                 {testimonials.map((_, index) => (
