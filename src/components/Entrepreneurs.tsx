@@ -135,7 +135,7 @@ const Entrepreneurs = () => {
         {/* Grid de Negócios */}
         {/* Grid de Negócios */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {filteredEntrepreneurs.map((entrepreneur) => (
+          {filteredEntrepreneurs.slice(0, 3).map((entrepreneur) => (
             <div
               key={entrepreneur.id}
               className="bg-card rounded-xl p-6 border border-border hover:shadow-elegant transition-all group"
