@@ -19,6 +19,7 @@ import {
   Newspaper
 } from "lucide-react";
 import NewsManagement from "@/components/admin/NewsManagement";
+import DocumentsManagement from "@/components/admin/DocumentsManagement";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -472,6 +473,10 @@ const AdminDashboard = () => {
                 <Newspaper className="w-4 h-4 mr-1" />
                 Notícias
               </TabsTrigger>
+              <TabsTrigger value="documents">
+                <FileText className="w-4 h-4 mr-1" />
+                Documentos
+              </TabsTrigger>
             </TabsList>
 
             {/* Reservations Tab */}
@@ -697,6 +702,11 @@ const AdminDashboard = () => {
             {/* News Tab */}
             <TabsContent value="news">
               <NewsManagement />
+            </TabsContent>
+
+            {/* Documents Tab */}
+            <TabsContent value="documents">
+              <DocumentsManagement />
             </TabsContent>
           </Tabs>
         </div>

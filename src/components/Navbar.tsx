@@ -12,7 +12,7 @@ const Navbar = () => {
     { label: "Imóveis", href: "/imoveis", isRoute: true },
     { label: "Marketplace", href: "/marketplace", isRoute: true },
     { label: "Notícias", href: "/noticias", isRoute: true },
-    { label: "Transparência", href: "/transparencia", isRoute: true },
+    { label: "Arquivo", href: "/arquivo", isRoute: true },
     { label: "Contato", href: "/contato", isRoute: true },
   ];
 
