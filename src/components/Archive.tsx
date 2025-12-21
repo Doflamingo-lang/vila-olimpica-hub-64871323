@@ -54,7 +54,12 @@ const Archive = () => {
     setPreviewOpen(true);
   };
 
-  const handleDownload = (doc: Document) => {
+  const handleDownload = async (doc: Document) => {
+    // Track download
+    await supabase.from("document_downloads").insert({
+      document_id: doc.id,
+      user_agent: navigator.userAgent,
+    });
     window.open(doc.file_url, "_blank");
   };
 
