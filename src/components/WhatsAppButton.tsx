@@ -79,14 +79,13 @@ const WhatsAppButton = () => {
       {/* Botão flutuante */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-4 md:right-8 z-50 w-16 h-16 rounded-full shadow-2xl hover:shadow-glow transition-all hover:scale-110"
-        variant="default"
+        className="fixed bottom-6 right-4 md:right-8 z-50 w-16 h-16 rounded-full shadow-2xl hover:shadow-glow transition-all hover:scale-110 bg-accent hover:bg-accent/90"
         size="icon"
       >
         {isOpen ? (
-          <X className="w-6 h-6" />
+          <X className="w-6 h-6 text-accent-foreground" />
         ) : (
-          <MessageCircle className="w-6 h-6" />
+          <MessageCircle className="w-6 h-6 text-accent-foreground" />
         )}
       </Button>
     </>
