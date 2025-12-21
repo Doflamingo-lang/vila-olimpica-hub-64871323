@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Briefcase, Phone, Mail, ExternalLink, Store, ShoppingBag, Utensils, Truck, Scissors, Sprout, Filter } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import EntrepreneurDetailsDialog from "./EntrepreneurDetailsDialog";
 import empreendedor1 from "@/assets/empreendedor-1.jpg";
 import empreendedor2 from "@/assets/empreendedor-2.jpg";
@@ -193,13 +194,12 @@ const Entrepreneurs = () => {
         </div>
 
         <div className="text-center">
-          <Button 
-            variant="default"
-            onClick={() => window.open('https://wa.me/258843001234?text=Olá! Gostaria de cadastrar meu negócio no Marketplace da Vila.', '_blank')}
-          >
-            <Briefcase className="w-4 h-4 mr-2" />
-            Cadastrar Meu Serviço
-          </Button>
+          <Link to="/marketplace/cadastrar">
+            <Button variant="default">
+              <Briefcase className="w-4 h-4 mr-2" />
+              Cadastrar Meu Serviço
+            </Button>
+          </Link>
         </div>
       </div>
 
