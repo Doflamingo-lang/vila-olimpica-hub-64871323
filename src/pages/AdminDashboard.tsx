@@ -3,11 +3,8 @@ import {
   LayoutDashboard, 
   Calendar, 
   Users, 
-  BarChart3, 
-  Settings, 
   LogOut,
   Home,
-  Bell,
   FileText,
   ChevronLeft,
   ChevronRight,
@@ -15,7 +12,6 @@ import {
   Store,
   Check,
   X,
-  Eye,
   Newspaper,
   Download
 } from "lucide-react";
@@ -24,13 +20,12 @@ import DocumentsManagement from "@/components/admin/DocumentsManagement";
 import DocumentDownloadsStats from "@/components/admin/DocumentDownloadsStats";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import {
   Table,
@@ -47,12 +42,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 
 interface Reservation {
   id: string;
@@ -112,9 +101,9 @@ const AdminDashboard = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [serviceFilter, setServiceFilter] = useState<string>("all");
+  const [activeSection, setActiveSection] = useState<string>("dashboard");
   
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -283,13 +272,12 @@ const AdminDashboard = () => {
     : services.filter((s) => s.status === serviceFilter);
 
   const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
-    { icon: Calendar, label: "Reservas", path: "/admin/reservas" },
-    { icon: Store, label: "Marketplace", path: "/admin/marketplace" },
-    { icon: Users, label: "Moradores", path: "/admin/moradores" },
-    { icon: FileText, label: "Documentos", path: "/admin/documentos" },
-    { icon: Bell, label: "Avisos", path: "/admin/avisos" },
-    { icon: Settings, label: "Configurações", path: "/admin/config" },
+    { icon: LayoutDashboard, label: "Dashboard", section: "dashboard" },
+    { icon: Calendar, label: "Reservas", section: "reservations" },
+    { icon: Store, label: "Marketplace", section: "services" },
+    { icon: Newspaper, label: "Notícias", section: "news" },
+    { icon: FileText, label: "Documentos", section: "documents" },
+    { icon: Download, label: "Estatísticas", section: "downloads" },
   ];
 
   if (authLoading || isLoading) {
@@ -332,19 +320,19 @@ const AdminDashboard = () => {
         <nav className="flex-1 p-4">
           <ul className="space-y-2">
             {menuItems.map((item) => (
-              <li key={item.path}>
-                <Link
-                  to={item.path}
+              <li key={item.section}>
+                <button
+                  onClick={() => setActiveSection(item.section)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-                    location.pathname === item.path
+                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left",
+                    activeSection === item.section
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   )}
                 >
                   <item.icon className="w-5 h-5 flex-shrink-0" />
                   {!sidebarCollapsed && <span>{item.label}</span>}
-                </Link>
+                </button>
               </li>
             ))}
           </ul>
@@ -408,85 +396,109 @@ const AdminDashboard = () => {
         </header>
 
         <div className="p-6">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Total de Reservas</CardDescription>
-                <CardTitle className="text-3xl">{stats.totalReservations}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {stats.reservationsThisMonth} este mês
-                </p>
-              </CardContent>
-            </Card>
+          {/* Dashboard Section */}
+          {activeSection === "dashboard" && (
+            <>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveSection("reservations")}>
+                  <CardHeader className="pb-2">
+                    <CardDescription>Total de Reservas</CardDescription>
+                    <CardTitle className="text-3xl">{stats.totalReservations}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      {stats.reservationsThisMonth} este mês
+                    </p>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Confirmadas</CardDescription>
-                <CardTitle className="text-3xl text-green-600">{stats.confirmedReservations}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {((stats.confirmedReservations / (stats.totalReservations || 1)) * 100).toFixed(0)}% do total
-                </p>
-              </CardContent>
-            </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription>Confirmadas</CardDescription>
+                    <CardTitle className="text-3xl text-green-600">{stats.confirmedReservations}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      {((stats.confirmedReservations / (stats.totalReservations || 1)) * 100).toFixed(0)}% do total
+                    </p>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Canceladas</CardDescription>
-                <CardTitle className="text-3xl text-red-600">{stats.cancelledReservations}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {((stats.cancelledReservations / (stats.totalReservations || 1)) * 100).toFixed(0)}% do total
-                </p>
-              </CardContent>
-            </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription>Canceladas</CardDescription>
+                    <CardTitle className="text-3xl text-red-600">{stats.cancelledReservations}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      {((stats.cancelledReservations / (stats.totalReservations || 1)) * 100).toFixed(0)}% do total
+                    </p>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Serviços Pendentes</CardDescription>
-                <CardTitle className="text-3xl text-yellow-600">{stats.pendingServices}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {stats.approvedServices} aprovados
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveSection("services")}>
+                  <CardHeader className="pb-2">
+                    <CardDescription>Serviços Pendentes</CardDescription>
+                    <CardTitle className="text-3xl text-yellow-600">{stats.pendingServices}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      {stats.approvedServices} aprovados
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
 
-          {/* Tabs for different sections */}
-          <Tabs defaultValue="reservations" className="space-y-6">
-            <TabsList>
-              <TabsTrigger value="reservations">Reservas</TabsTrigger>
-              <TabsTrigger value="services">
-                Marketplace
-                {stats.pendingServices > 0 && (
-                  <span className="ml-2 px-2 py-0.5 bg-yellow-500 text-white text-xs rounded-full">
-                    {stats.pendingServices}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="news">
-                <Newspaper className="w-4 h-4 mr-1" />
-                Notícias
-              </TabsTrigger>
-              <TabsTrigger value="documents">
-                <FileText className="w-4 h-4 mr-1" />
-                Documentos
-              </TabsTrigger>
-              <TabsTrigger value="downloads">
-                <Download className="w-4 h-4 mr-1" />
-                Estatísticas
-              </TabsTrigger>
-            </TabsList>
+              {/* Quick Access Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveSection("news")}>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Newspaper className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">Notícias</CardTitle>
+                        <CardDescription>Gerenciar publicações</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
 
-            {/* Reservations Tab */}
-            <TabsContent value="reservations">
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveSection("documents")}>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">Documentos</CardTitle>
+                        <CardDescription>Arquivo do condomínio</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveSection("downloads")}>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Download className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">Estatísticas</CardTitle>
+                        <CardDescription>Downloads de documentos</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </div>
+            </>
+          )}
+
+          {/* Reservations Section */}
+          {activeSection === "reservations" && (
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -575,10 +587,10 @@ const AdminDashboard = () => {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
+          )}
 
-            {/* Marketplace Services Tab */}
-            <TabsContent value="services">
+          {/* Marketplace Services Section */}
+          {activeSection === "services" && (
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -703,23 +715,22 @@ const AdminDashboard = () => {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
+          )}
 
-            {/* News Tab */}
-            <TabsContent value="news">
-              <NewsManagement />
-            </TabsContent>
+          {/* News Section */}
+          {activeSection === "news" && (
+            <NewsManagement />
+          )}
 
-            {/* Documents Tab */}
-            <TabsContent value="documents">
-              <DocumentsManagement />
-            </TabsContent>
+          {/* Documents Section */}
+          {activeSection === "documents" && (
+            <DocumentsManagement />
+          )}
 
-            {/* Downloads Stats Tab */}
-            <TabsContent value="downloads">
-              <DocumentDownloadsStats />
-            </TabsContent>
-          </Tabs>
+          {/* Downloads Stats Section */}
+          {activeSection === "downloads" && (
+            <DocumentDownloadsStats />
+          )}
         </div>
       </main>
     </div>
