@@ -16,10 +16,12 @@ import {
   Check,
   X,
   Eye,
-  Newspaper
+  Newspaper,
+  Download
 } from "lucide-react";
 import NewsManagement from "@/components/admin/NewsManagement";
 import DocumentsManagement from "@/components/admin/DocumentsManagement";
+import DocumentDownloadsStats from "@/components/admin/DocumentDownloadsStats";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -477,6 +479,10 @@ const AdminDashboard = () => {
                 <FileText className="w-4 h-4 mr-1" />
                 Documentos
               </TabsTrigger>
+              <TabsTrigger value="downloads">
+                <Download className="w-4 h-4 mr-1" />
+                Estatísticas
+              </TabsTrigger>
             </TabsList>
 
             {/* Reservations Tab */}
@@ -707,6 +713,11 @@ const AdminDashboard = () => {
             {/* Documents Tab */}
             <TabsContent value="documents">
               <DocumentsManagement />
+            </TabsContent>
+
+            {/* Downloads Stats Tab */}
+            <TabsContent value="downloads">
+              <DocumentDownloadsStats />
             </TabsContent>
           </Tabs>
         </div>
