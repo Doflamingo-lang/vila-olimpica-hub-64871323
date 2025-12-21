@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Home, Users, TrendingUp, Play, ChevronDown } from "lucide-react";
 import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
+import heroBackground from "@/assets/hero-background.jpg";
 
 const Hero = () => {
   const scrollToNext = () => {
@@ -12,7 +13,7 @@ const Hero = () => {
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <img
-          src={logoVilaOlimpica}
+          src={heroBackground}
           alt="Condomínio Vila Olímpica"
           className="w-full h-full object-cover scale-105"
         />
