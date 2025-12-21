@@ -1,18 +1,23 @@
-import { Building2, ArrowLeft, Store, Phone, Mail, MapPin, Clock, Image, FileText, Send } from "lucide-react";
+import { Building2, ArrowLeft, Store, Phone, Mail, MapPin, Clock, Image, FileText, Send, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import WhatsAppButton from "@/components/WhatsAppButton";
 
 const RegisterServicePage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     ownerName: "",
@@ -43,6 +48,70 @@ const RegisterServicePage = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validar tipo de arquivo
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Arquivo inválido",
+          description: "Por favor, selecione uma imagem (JPG, PNG, etc.)",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Validar tamanho (máx 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "A imagem deve ter no máximo 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile) return null;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    const fileExt = imageFile.name.split('.').pop();
+    const fileName = `${user?.id || 'anonymous'}/${Date.now()}.${fileExt}`;
+
+    const { data, error } = await supabase.storage
+      .from('business-images')
+      .upload(fileName, imageFile);
+
+    if (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('business-images')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -69,8 +138,20 @@ const RegisterServicePage = () => {
 
     setIsSubmitting(true);
 
-    // Simular envio do formulário
     try {
+      // Upload da imagem se existir
+      let imageUrl = null;
+      if (imageFile) {
+        setIsUploading(true);
+        try {
+          imageUrl = await uploadImage();
+        } catch (uploadError) {
+          console.error('Erro ao fazer upload da imagem:', uploadError);
+          // Continua sem a imagem
+        }
+        setIsUploading(false);
+      }
+
       // Construir mensagem para WhatsApp
       const message = `
 *Novo Cadastro de Serviço - Marketplace Vila Olímpica*
@@ -82,6 +163,7 @@ const RegisterServicePage = () => {
 *Email:* ${formData.email}
 *Localização:* ${formData.location}
 *Horário:* ${formData.hours}
+${imageUrl ? `*Imagem:* ${imageUrl}` : ''}
 
 *Descrição:*
 ${formData.description}
@@ -111,6 +193,7 @@ ${formData.fullDescription}
         fullDescription: "",
         hours: "",
       });
+      removeImage();
 
     } catch (error) {
       toast({
@@ -283,6 +366,45 @@ ${formData.fullDescription}
                         onChange={(e) => handleChange("hours", e.target.value)}
                         className="pl-10"
                         maxLength={100}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Image Upload */}
+                  <div>
+                    <Label>Logo/Imagem do Negócio</Label>
+                    <div className="mt-2">
+                      {imagePreview ? (
+                        <div className="relative inline-block">
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="w-32 h-32 object-cover rounded-lg border border-border"
+                          />
+                          <button
+                            type="button"
+                            onClick={removeImage}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center hover:bg-destructive/90"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full h-32 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-accent hover:bg-accent/5 transition-colors"
+                        >
+                          <Upload className="w-8 h-8 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Clique para fazer upload</span>
+                          <span className="text-xs text-muted-foreground">JPG, PNG (máx. 5MB)</span>
+                        </div>
+                      )}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
                       />
                     </div>
                   </div>
