@@ -192,16 +192,12 @@ const Entrepreneurs = () => {
           ))}
         </div>
 
-        <div className="bg-gradient-to-br from-accent to-accent-glow rounded-2xl p-8 md:p-12 text-center shadow-glow">
-          <Briefcase className="w-16 h-16 text-accent-foreground mx-auto mb-4" />
-          <h3 className="text-3xl md:text-4xl font-bold text-accent-foreground mb-4">
-            Divulgue Seu Negócio
-          </h3>
-          <p className="text-xl text-accent-foreground/90 mb-6 max-w-2xl mx-auto">
-            Você é morador e tem um negócio ou serviço? 
-            Anuncie aqui e alcance toda a comunidade!
-          </p>
-          <Button variant="outline" size="lg" className="bg-background/20 backdrop-blur-sm border-2 border-accent-foreground/30 text-accent-foreground hover:bg-background/30">
+        <div className="text-center">
+          <Button 
+            variant="default"
+            onClick={() => window.open('https://wa.me/258843001234?text=Olá! Gostaria de cadastrar meu negócio no Marketplace da Vila.', '_blank')}
+          >
+            <Briefcase className="w-4 h-4 mr-2" />
             Cadastrar Meu Serviço
           </Button>
         </div>
