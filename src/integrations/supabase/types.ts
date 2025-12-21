@@ -211,9 +211,12 @@ export type Database = {
       properties: {
         Row: {
           address: string | null
+          apartment_number: string | null
           area: number | null
           bathrooms: number | null
           bedrooms: number | null
+          block: string | null
+          building: string | null
           city: string | null
           created_at: string
           description: string | null
@@ -236,9 +239,12 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          apartment_number?: string | null
           area?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
+          block?: string | null
+          building?: string | null
           city?: string | null
           created_at?: string
           description?: string | null
@@ -261,9 +267,12 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          apartment_number?: string | null
           area?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
+          block?: string | null
+          building?: string | null
           city?: string | null
           created_at?: string
           description?: string | null

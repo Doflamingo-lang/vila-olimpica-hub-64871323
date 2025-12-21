@@ -42,9 +42,8 @@ import {
   Bath,
   Car,
   Ruler,
-  MapPin
+  Building2
 } from "lucide-react";
-import { format } from "date-fns";
 
 interface Property {
   id: string;
@@ -58,6 +57,9 @@ interface Property {
   bedrooms: number | null;
   bathrooms: number | null;
   parking_spots: number | null;
+  block: string | null;
+  building: string | null;
+  apartment_number: string | null;
   address: string | null;
   neighborhood: string | null;
   city: string | null;
@@ -71,19 +73,9 @@ interface Property {
   created_at: string;
 }
 
-const PROPERTY_TYPES = [
-  { value: "apartment", label: "Apartamento" },
-  { value: "house", label: "Casa" },
-  { value: "commercial", label: "Comercial" },
-  { value: "land", label: "Terreno" },
-  { value: "studio", label: "Studio" },
-  { value: "penthouse", label: "Cobertura" },
-];
-
 const TRANSACTION_TYPES = [
   { value: "sale", label: "Venda" },
   { value: "rent", label: "Aluguel" },
-  { value: "seasonal", label: "Temporada" },
 ];
 
 const FEATURES_OPTIONS = [
@@ -99,9 +91,8 @@ const FEATURES_OPTIONS = [
   "Salão de Festas",
   "Elevador",
   "Pet Friendly",
-  "Vista para o Mar",
+  "Vista Privilegiada",
   "Jardim",
-  "Lareira",
 ];
 
 const PropertiesManagement = () => {
@@ -119,13 +110,15 @@ const PropertiesManagement = () => {
     title: "",
     description: "",
     full_description: "",
-    property_type: "apartment",
     transaction_type: "sale",
     price: "",
     area: "",
     bedrooms: "0",
     bathrooms: "0",
     parking_spots: "0",
+    block: "",
+    building: "",
+    apartment_number: "",
     address: "",
     neighborhood: "",
     city: "São Paulo",
@@ -167,13 +160,15 @@ const PropertiesManagement = () => {
       title: "",
       description: "",
       full_description: "",
-      property_type: "apartment",
       transaction_type: "sale",
       price: "",
       area: "",
       bedrooms: "0",
       bathrooms: "0",
       parking_spots: "0",
+      block: "",
+      building: "",
+      apartment_number: "",
       address: "",
       neighborhood: "",
       city: "São Paulo",
@@ -194,13 +189,15 @@ const PropertiesManagement = () => {
       title: property.title,
       description: property.description || "",
       full_description: property.full_description || "",
-      property_type: property.property_type,
       transaction_type: property.transaction_type,
       price: property.price?.toString() || "",
       area: property.area?.toString() || "",
       bedrooms: property.bedrooms?.toString() || "0",
       bathrooms: property.bathrooms?.toString() || "0",
       parking_spots: property.parking_spots?.toString() || "0",
+      block: property.block || "",
+      building: property.building || "",
+      apartment_number: property.apartment_number || "",
       address: property.address || "",
       neighborhood: property.neighborhood || "",
       city: property.city || "São Paulo",
@@ -305,13 +302,16 @@ const PropertiesManagement = () => {
       title: formData.title.trim(),
       description: formData.description.trim() || null,
       full_description: formData.full_description.trim() || null,
-      property_type: formData.property_type,
+      property_type: "apartment",
       transaction_type: formData.transaction_type,
       price: formData.price ? parseFloat(formData.price) : null,
       area: formData.area ? parseFloat(formData.area) : null,
       bedrooms: parseInt(formData.bedrooms) || 0,
       bathrooms: parseInt(formData.bathrooms) || 0,
       parking_spots: parseInt(formData.parking_spots) || 0,
+      block: formData.block.trim() || null,
+      building: formData.building.trim() || null,
+      apartment_number: formData.apartment_number.trim() || null,
       address: formData.address.trim() || null,
       neighborhood: formData.neighborhood.trim() || null,
       city: formData.city.trim() || null,
@@ -390,12 +390,16 @@ const PropertiesManagement = () => {
     }).format(price);
   };
 
-  const getPropertyTypeLabel = (type: string) => {
-    return PROPERTY_TYPES.find(t => t.value === type)?.label || type;
-  };
-
   const getTransactionTypeLabel = (type: string) => {
     return TRANSACTION_TYPES.find(t => t.value === type)?.label || type;
+  };
+
+  const getLocationInfo = (property: Property) => {
+    const parts = [];
+    if (property.block) parts.push(`Bloco ${property.block}`);
+    if (property.building) parts.push(`Ed. ${property.building}`);
+    if (property.apartment_number) parts.push(`Apt. ${property.apartment_number}`);
+    return parts.length > 0 ? parts.join(" • ") : "-";
   };
 
   if (isLoading) {
@@ -410,8 +414,8 @@ const PropertiesManagement = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Gestão de Imóveis</h2>
-          <p className="text-muted-foreground">Cadastre e gerencie os imóveis disponíveis</p>
+          <h2 className="text-2xl font-bold text-foreground">Gestão de Apartamentos</h2>
+          <p className="text-muted-foreground">Cadastre e gerencie os apartamentos disponíveis</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
@@ -420,13 +424,13 @@ const PropertiesManagement = () => {
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Novo Imóvel
+              Novo Apartamento
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingProperty ? "Editar Imóvel" : "Cadastrar Novo Imóvel"}
+                {editingProperty ? "Editar Apartamento" : "Cadastrar Novo Apartamento"}
               </DialogTitle>
             </DialogHeader>
 
@@ -441,49 +445,28 @@ const PropertiesManagement = () => {
                     id="title"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Ex: Apartamento 3 quartos no Centro"
+                    placeholder="Ex: Apartamento T3 - Bloco A"
                     required
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="property_type">Tipo de Imóvel</Label>
-                    <Select
-                      value={formData.property_type}
-                      onValueChange={(value) => setFormData({ ...formData, property_type: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PROPERTY_TYPES.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="transaction_type">Tipo de Transação</Label>
-                    <Select
-                      value={formData.transaction_type}
-                      onValueChange={(value) => setFormData({ ...formData, transaction_type: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TRANSACTION_TYPES.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div>
+                  <Label htmlFor="transaction_type">Tipo de Transação</Label>
+                  <Select
+                    value={formData.transaction_type}
+                    onValueChange={(value) => setFormData({ ...formData, transaction_type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TRANSACTION_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -492,7 +475,7 @@ const PropertiesManagement = () => {
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Breve descrição do imóvel..."
+                    placeholder="Breve descrição do apartamento..."
                     rows={2}
                   />
                 </div>
@@ -503,9 +486,46 @@ const PropertiesManagement = () => {
                     id="full_description"
                     value={formData.full_description}
                     onChange={(e) => setFormData({ ...formData, full_description: e.target.value })}
-                    placeholder="Descrição detalhada do imóvel..."
+                    placeholder="Descrição detalhada do apartamento..."
                     rows={4}
                   />
+                </div>
+              </div>
+
+              {/* Apartment Location */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">Localização do Apartamento</h3>
+                
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="block">Bloco</Label>
+                    <Input
+                      id="block"
+                      value={formData.block}
+                      onChange={(e) => setFormData({ ...formData, block: e.target.value })}
+                      placeholder="Ex: A, B, C"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="building">Edifício</Label>
+                    <Input
+                      id="building"
+                      value={formData.building}
+                      onChange={(e) => setFormData({ ...formData, building: e.target.value })}
+                      placeholder="Ex: Torre 1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="apartment_number">Nº Apartamento</Label>
+                    <Input
+                      id="apartment_number"
+                      value={formData.apartment_number}
+                      onChange={(e) => setFormData({ ...formData, apartment_number: e.target.value })}
+                      placeholder="Ex: 101, 202"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -513,7 +533,7 @@ const PropertiesManagement = () => {
               <div className="space-y-4">
                 <h3 className="font-semibold text-foreground border-b pb-2">Detalhes</h3>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   <div>
                     <Label htmlFor="price">Preço (R$)</Label>
                     <Input
@@ -568,61 +588,6 @@ const PropertiesManagement = () => {
                       value={formData.parking_spots}
                       onChange={(e) => setFormData({ ...formData, parking_spots: e.target.value })}
                       min="0"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Location */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-foreground border-b pb-2">Localização</h3>
-                
-                <div>
-                  <Label htmlFor="address">Endereço</Label>
-                  <Input
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="Rua, número"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <Label htmlFor="neighborhood">Bairro</Label>
-                    <Input
-                      id="neighborhood"
-                      value={formData.neighborhood}
-                      onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="city">Cidade</Label>
-                    <Input
-                      id="city"
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="state">Estado</Label>
-                    <Input
-                      id="state"
-                      value={formData.state}
-                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      maxLength={2}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="zip_code">CEP</Label>
-                    <Input
-                      id="zip_code"
-                      value={formData.zip_code}
-                      onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
-                      placeholder="00000-000"
                     />
                   </div>
                 </div>
@@ -781,21 +746,21 @@ const PropertiesManagement = () => {
       {/* Properties Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Imóveis Cadastrados ({properties.length})</CardTitle>
+          <CardTitle>Apartamentos Cadastrados ({properties.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {properties.length === 0 ? (
             <div className="text-center py-12">
-              <Home className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Nenhum imóvel cadastrado</p>
+              <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">Nenhum apartamento cadastrado</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Imóvel</TableHead>
-                    <TableHead>Tipo</TableHead>
+                    <TableHead>Apartamento</TableHead>
+                    <TableHead>Localização</TableHead>
                     <TableHead>Transação</TableHead>
                     <TableHead>Preço</TableHead>
                     <TableHead>Detalhes</TableHead>
@@ -821,16 +786,15 @@ const PropertiesManagement = () => {
                           )}
                           <div>
                             <p className="font-medium line-clamp-1">{property.title}</p>
-                            {property.neighborhood && (
-                              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                {property.neighborhood}
-                              </p>
-                            )}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{getPropertyTypeLabel(property.property_type)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Building2 className="w-4 h-4" />
+                          {getLocationInfo(property)}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline">
                           {getTransactionTypeLabel(property.transaction_type)}
