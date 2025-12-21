@@ -11,7 +11,7 @@ import PropertyDetailsPage from "./pages/PropertyDetailsPage";
 import MarketplacePage from "./pages/MarketplacePage";
 import RegisterServicePage from "./pages/RegisterServicePage";
 import NewsPage from "./pages/NewsPage";
-import TransparencyPage from "./pages/TransparencyPage";
+import ArchivePage from "./pages/ArchivePage";
 import ContactPage from "./pages/ContactPage";
 import AuthPage from "./pages/AuthPage";
 import ReservationsPage from "./pages/ReservationsPage";
@@ -35,7 +35,7 @@ const App = () => (
           <Route path="/marketplace" element={<MarketplacePage />} />
           <Route path="/marketplace/cadastrar" element={<RegisterServicePage />} />
           <Route path="/noticias" element={<NewsPage />} />
-          <Route path="/transparencia" element={<TransparencyPage />} />
+          <Route path="/arquivo" element={<ArchivePage />} />
           <Route path="/contato" element={<ContactPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/reservas" element={<ReservationsPage />} />
