@@ -237,14 +237,11 @@ const PropertiesPage = () => {
 
                   <div className="flex items-center justify-between pt-4 border-t border-border">
                     <div className="text-2xl font-bold text-primary">{property.price}</div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => window.open('https://wa.me/258843001234?text=Olá! Tenho interesse no ' + property.title, '_blank')}
-                    >
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      Contactar
-                    </Button>
+                    <Link to={`/imoveis/${property.id}`}>
+                      <Button variant="outline" size="sm">
+                        Ver Detalhes
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </div>

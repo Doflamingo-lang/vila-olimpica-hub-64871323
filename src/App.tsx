@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import ResidentArea from "./pages/ResidentArea";
 import AboutPage from "./pages/AboutPage";
 import PropertiesPage from "./pages/PropertiesPage";
+import PropertyDetailsPage from "./pages/PropertyDetailsPage";
 import MarketplacePage from "./pages/MarketplacePage";
 import NewsPage from "./pages/NewsPage";
 import TransparencyPage from "./pages/TransparencyPage";
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/area-morador" element={<ResidentArea />} />
           <Route path="/sobre" element={<AboutPage />} />
           <Route path="/imoveis" element={<PropertiesPage />} />
+          <Route path="/imoveis/:id" element={<PropertyDetailsPage />} />
           <Route path="/marketplace" element={<MarketplacePage />} />
           <Route path="/noticias" element={<NewsPage />} />
           <Route path="/transparencia" element={<TransparencyPage />} />
