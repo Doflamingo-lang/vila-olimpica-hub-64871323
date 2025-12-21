@@ -1,0 +1,909 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { 
+  Plus, 
+  Pencil, 
+  Trash2, 
+  Loader2, 
+  Upload, 
+  X, 
+  Home,
+  BedDouble,
+  Bath,
+  Car,
+  Ruler,
+  MapPin
+} from "lucide-react";
+import { format } from "date-fns";
+
+interface Property {
+  id: string;
+  title: string;
+  description: string | null;
+  full_description: string | null;
+  property_type: string;
+  transaction_type: string;
+  price: number | null;
+  area: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  parking_spots: number | null;
+  address: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  zip_code: string | null;
+  features: string[] | null;
+  image_url: string | null;
+  gallery_urls: string[] | null;
+  is_featured: boolean;
+  is_active: boolean;
+  created_at: string;
+}
+
+const PROPERTY_TYPES = [
+  { value: "apartment", label: "Apartamento" },
+  { value: "house", label: "Casa" },
+  { value: "commercial", label: "Comercial" },
+  { value: "land", label: "Terreno" },
+  { value: "studio", label: "Studio" },
+  { value: "penthouse", label: "Cobertura" },
+];
+
+const TRANSACTION_TYPES = [
+  { value: "sale", label: "Venda" },
+  { value: "rent", label: "Aluguel" },
+  { value: "seasonal", label: "Temporada" },
+];
+
+const FEATURES_OPTIONS = [
+  "Piscina",
+  "Academia",
+  "Churrasqueira",
+  "Varanda",
+  "Ar Condicionado",
+  "Aquecimento",
+  "Mobiliado",
+  "Portaria 24h",
+  "Playground",
+  "Salão de Festas",
+  "Elevador",
+  "Pet Friendly",
+  "Vista para o Mar",
+  "Jardim",
+  "Lareira",
+];
+
+const PropertiesManagement = () => {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const { toast } = useToast();
+
+  // Form state
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    full_description: "",
+    property_type: "apartment",
+    transaction_type: "sale",
+    price: "",
+    area: "",
+    bedrooms: "0",
+    bathrooms: "0",
+    parking_spots: "0",
+    address: "",
+    neighborhood: "",
+    city: "São Paulo",
+    state: "SP",
+    zip_code: "",
+    features: [] as string[],
+    image_url: "",
+    gallery_urls: [] as string[],
+    is_featured: false,
+    is_active: true,
+  });
+
+  useEffect(() => {
+    fetchProperties();
+  }, []);
+
+  const fetchProperties = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from("properties")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching properties:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os imóveis.",
+        variant: "destructive",
+      });
+    } else {
+      setProperties(data || []);
+    }
+    setIsLoading(false);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      description: "",
+      full_description: "",
+      property_type: "apartment",
+      transaction_type: "sale",
+      price: "",
+      area: "",
+      bedrooms: "0",
+      bathrooms: "0",
+      parking_spots: "0",
+      address: "",
+      neighborhood: "",
+      city: "São Paulo",
+      state: "SP",
+      zip_code: "",
+      features: [],
+      image_url: "",
+      gallery_urls: [],
+      is_featured: false,
+      is_active: true,
+    });
+    setEditingProperty(null);
+  };
+
+  const handleEdit = (property: Property) => {
+    setEditingProperty(property);
+    setFormData({
+      title: property.title,
+      description: property.description || "",
+      full_description: property.full_description || "",
+      property_type: property.property_type,
+      transaction_type: property.transaction_type,
+      price: property.price?.toString() || "",
+      area: property.area?.toString() || "",
+      bedrooms: property.bedrooms?.toString() || "0",
+      bathrooms: property.bathrooms?.toString() || "0",
+      parking_spots: property.parking_spots?.toString() || "0",
+      address: property.address || "",
+      neighborhood: property.neighborhood || "",
+      city: property.city || "São Paulo",
+      state: property.state || "SP",
+      zip_code: property.zip_code || "",
+      features: property.features || [],
+      image_url: property.image_url || "",
+      gallery_urls: property.gallery_urls || [],
+      is_featured: property.is_featured,
+      is_active: property.is_active,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${Date.now()}-main.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("property-images")
+      .upload(fileName, file);
+
+    if (uploadError) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível fazer upload da imagem.",
+        variant: "destructive",
+      });
+      setUploadingImage(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("property-images")
+      .getPublicUrl(fileName);
+
+    setFormData({ ...formData, image_url: urlData.publicUrl });
+    setUploadingImage(false);
+  };
+
+  const handleGalleryUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingGallery(true);
+    const newUrls: string[] = [];
+
+    for (const file of Array.from(files)) {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("property-images")
+        .upload(fileName, file);
+
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage
+          .from("property-images")
+          .getPublicUrl(fileName);
+        newUrls.push(urlData.publicUrl);
+      }
+    }
+
+    setFormData({ 
+      ...formData, 
+      gallery_urls: [...formData.gallery_urls, ...newUrls] 
+    });
+    setUploadingGallery(false);
+  };
+
+  const removeGalleryImage = (index: number) => {
+    const newGallery = formData.gallery_urls.filter((_, i) => i !== index);
+    setFormData({ ...formData, gallery_urls: newGallery });
+  };
+
+  const toggleFeature = (feature: string) => {
+    const features = formData.features.includes(feature)
+      ? formData.features.filter(f => f !== feature)
+      : [...formData.features, feature];
+    setFormData({ ...formData, features });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.title.trim()) {
+      toast({
+        title: "Erro",
+        description: "O título é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const propertyData = {
+      title: formData.title.trim(),
+      description: formData.description.trim() || null,
+      full_description: formData.full_description.trim() || null,
+      property_type: formData.property_type,
+      transaction_type: formData.transaction_type,
+      price: formData.price ? parseFloat(formData.price) : null,
+      area: formData.area ? parseFloat(formData.area) : null,
+      bedrooms: parseInt(formData.bedrooms) || 0,
+      bathrooms: parseInt(formData.bathrooms) || 0,
+      parking_spots: parseInt(formData.parking_spots) || 0,
+      address: formData.address.trim() || null,
+      neighborhood: formData.neighborhood.trim() || null,
+      city: formData.city.trim() || null,
+      state: formData.state.trim() || null,
+      zip_code: formData.zip_code.trim() || null,
+      features: formData.features.length > 0 ? formData.features : null,
+      image_url: formData.image_url || null,
+      gallery_urls: formData.gallery_urls.length > 0 ? formData.gallery_urls : null,
+      is_featured: formData.is_featured,
+      is_active: formData.is_active,
+    };
+
+    let error;
+
+    if (editingProperty) {
+      const { error: updateError } = await supabase
+        .from("properties")
+        .update(propertyData)
+        .eq("id", editingProperty.id);
+      error = updateError;
+    } else {
+      const { error: insertError } = await supabase
+        .from("properties")
+        .insert([propertyData]);
+      error = insertError;
+    }
+
+    if (error) {
+      console.error("Error saving property:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar o imóvel.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Sucesso",
+        description: editingProperty ? "Imóvel atualizado!" : "Imóvel cadastrado!",
+      });
+      setIsDialogOpen(false);
+      resetForm();
+      fetchProperties();
+    }
+
+    setIsSubmitting(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir este imóvel?")) return;
+
+    const { error } = await supabase
+      .from("properties")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o imóvel.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Sucesso",
+        description: "Imóvel excluído!",
+      });
+      fetchProperties();
+    }
+  };
+
+  const formatPrice = (price: number | null) => {
+    if (!price) return "-";
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(price);
+  };
+
+  const getPropertyTypeLabel = (type: string) => {
+    return PROPERTY_TYPES.find(t => t.value === type)?.label || type;
+  };
+
+  const getTransactionTypeLabel = (type: string) => {
+    return TRANSACTION_TYPES.find(t => t.value === type)?.label || type;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Gestão de Imóveis</h2>
+          <p className="text-muted-foreground">Cadastre e gerencie os imóveis disponíveis</p>
+        </div>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) resetForm();
+        }}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Imóvel
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingProperty ? "Editar Imóvel" : "Cadastrar Novo Imóvel"}
+              </DialogTitle>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Basic Info */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">Informações Básicas</h3>
+                
+                <div>
+                  <Label htmlFor="title">Título *</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Ex: Apartamento 3 quartos no Centro"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="property_type">Tipo de Imóvel</Label>
+                    <Select
+                      value={formData.property_type}
+                      onValueChange={(value) => setFormData({ ...formData, property_type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PROPERTY_TYPES.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="transaction_type">Tipo de Transação</Label>
+                    <Select
+                      value={formData.transaction_type}
+                      onValueChange={(value) => setFormData({ ...formData, transaction_type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TRANSACTION_TYPES.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Descrição Curta</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Breve descrição do imóvel..."
+                    rows={2}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="full_description">Descrição Completa</Label>
+                  <Textarea
+                    id="full_description"
+                    value={formData.full_description}
+                    onChange={(e) => setFormData({ ...formData, full_description: e.target.value })}
+                    placeholder="Descrição detalhada do imóvel..."
+                    rows={4}
+                  />
+                </div>
+              </div>
+
+              {/* Details */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">Detalhes</h3>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <Label htmlFor="price">Preço (R$)</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      placeholder="0,00"
+                      step="0.01"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="area">Área (m²)</Label>
+                    <Input
+                      id="area"
+                      type="number"
+                      value={formData.area}
+                      onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                      placeholder="0"
+                      step="0.01"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="bedrooms">Quartos</Label>
+                    <Input
+                      id="bedrooms"
+                      type="number"
+                      value={formData.bedrooms}
+                      onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
+                      min="0"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="bathrooms">Banheiros</Label>
+                    <Input
+                      id="bathrooms"
+                      type="number"
+                      value={formData.bathrooms}
+                      onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
+                      min="0"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="parking_spots">Vagas</Label>
+                    <Input
+                      id="parking_spots"
+                      type="number"
+                      value={formData.parking_spots}
+                      onChange={(e) => setFormData({ ...formData, parking_spots: e.target.value })}
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Location */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">Localização</h3>
+                
+                <div>
+                  <Label htmlFor="address">Endereço</Label>
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Rua, número"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <Label htmlFor="neighborhood">Bairro</Label>
+                    <Input
+                      id="neighborhood"
+                      value={formData.neighborhood}
+                      onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="city">Cidade</Label>
+                    <Input
+                      id="city"
+                      value={formData.city}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="state">Estado</Label>
+                    <Input
+                      id="state"
+                      value={formData.state}
+                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                      maxLength={2}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="zip_code">CEP</Label>
+                    <Input
+                      id="zip_code"
+                      value={formData.zip_code}
+                      onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
+                      placeholder="00000-000"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Features */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">Características</h3>
+                <div className="flex flex-wrap gap-2">
+                  {FEATURES_OPTIONS.map((feature) => (
+                    <Badge
+                      key={feature}
+                      variant={formData.features.includes(feature) ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => toggleFeature(feature)}
+                    >
+                      {feature}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Images */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">Imagens</h3>
+                
+                {/* Main Image */}
+                <div>
+                  <Label>Imagem Principal</Label>
+                  <div className="mt-2 flex items-center gap-4">
+                    {formData.image_url ? (
+                      <div className="relative">
+                        <img
+                          src={formData.image_url}
+                          alt="Main"
+                          className="w-32 h-24 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, image_url: "" })}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-32 h-24 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
+                        {uploadingImage ? (
+                          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                        ) : (
+                          <>
+                            <Upload className="w-6 h-6 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground mt-1">Upload</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageUpload}
+                          disabled={uploadingImage}
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                {/* Gallery */}
+                <div>
+                  <Label>Galeria de Imagens</Label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {formData.gallery_urls.map((url, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={url}
+                          alt={`Gallery ${index + 1}`}
+                          className="w-24 h-20 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeGalleryImage(index)}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    <label className="flex flex-col items-center justify-center w-24 h-20 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
+                      {uploadingGallery ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                      ) : (
+                        <>
+                          <Plus className="w-5 h-5 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">Adicionar</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleGalleryUpload}
+                        disabled={uploadingGallery}
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Options */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">Opções</h3>
+                <div className="flex gap-6">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="is_featured"
+                      checked={formData.is_featured}
+                      onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
+                    />
+                    <Label htmlFor="is_featured">Destaque</Label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="is_active"
+                      checked={formData.is_active}
+                      onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                    />
+                    <Label htmlFor="is_active">Ativo</Label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsDialogOpen(false);
+                    resetForm();
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {editingProperty ? "Atualizar" : "Cadastrar"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Properties Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Imóveis Cadastrados ({properties.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {properties.length === 0 ? (
+            <div className="text-center py-12">
+              <Home className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">Nenhum imóvel cadastrado</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Imóvel</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Transação</TableHead>
+                    <TableHead>Preço</TableHead>
+                    <TableHead>Detalhes</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {properties.map((property) => (
+                    <TableRow key={property.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {property.image_url ? (
+                            <img
+                              src={property.image_url}
+                              alt={property.title}
+                              className="w-16 h-12 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-16 h-12 bg-muted rounded flex items-center justify-center">
+                              <Home className="w-6 h-6 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium line-clamp-1">{property.title}</p>
+                            {property.neighborhood && (
+                              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                {property.neighborhood}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{getPropertyTypeLabel(property.property_type)}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {getTransactionTypeLabel(property.transaction_type)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">{formatPrice(property.price)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          {property.bedrooms !== null && property.bedrooms > 0 && (
+                            <span className="flex items-center gap-1">
+                              <BedDouble className="w-4 h-4" />
+                              {property.bedrooms}
+                            </span>
+                          )}
+                          {property.bathrooms !== null && property.bathrooms > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Bath className="w-4 h-4" />
+                              {property.bathrooms}
+                            </span>
+                          )}
+                          {property.parking_spots !== null && property.parking_spots > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Car className="w-4 h-4" />
+                              {property.parking_spots}
+                            </span>
+                          )}
+                          {property.area && (
+                            <span className="flex items-center gap-1">
+                              <Ruler className="w-4 h-4" />
+                              {property.area}m²
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          {property.is_featured && (
+                            <Badge variant="default" className="w-fit">Destaque</Badge>
+                          )}
+                          <Badge variant={property.is_active ? "secondary" : "outline"}>
+                            {property.is_active ? "Ativo" : "Inativo"}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(property)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(property.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default PropertiesManagement;

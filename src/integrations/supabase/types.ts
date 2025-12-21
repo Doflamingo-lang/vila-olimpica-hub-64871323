@@ -208,6 +208,84 @@ export type Database = {
         }
         Relationships: []
       }
+      properties: {
+        Row: {
+          address: string | null
+          area: number | null
+          bathrooms: number | null
+          bedrooms: number | null
+          city: string | null
+          created_at: string
+          description: string | null
+          features: string[] | null
+          full_description: string | null
+          gallery_urls: string[] | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          neighborhood: string | null
+          parking_spots: number | null
+          price: number | null
+          property_type: string
+          state: string | null
+          title: string
+          transaction_type: string
+          updated_at: string
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          area?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          full_description?: string | null
+          gallery_urls?: string[] | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          neighborhood?: string | null
+          parking_spots?: number | null
+          price?: number | null
+          property_type?: string
+          state?: string | null
+          title: string
+          transaction_type?: string
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          area?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          full_description?: string | null
+          gallery_urls?: string[] | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          neighborhood?: string | null
+          parking_spots?: number | null
+          price?: number | null
+          property_type?: string
+          state?: string | null
+          title?: string
+          transaction_type?: string
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
       reservations: {
         Row: {
           area_id: string
