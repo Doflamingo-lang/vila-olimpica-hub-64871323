@@ -294,22 +294,69 @@ const MarketplacePage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
+      <section className="py-16 bg-secondary">
         <div className="container mx-auto px-4 text-center">
-          <Store className="w-16 h-16 mx-auto mb-4" />
-          <h2 className="text-3xl font-bold mb-4">Divulgue Seu Negócio</h2>
-          <p className="text-lg text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
-            Você é morador e tem um negócio ou serviço? Anuncie aqui e alcance toda a comunidade!
+          <h2 className="text-2xl font-bold mb-4 text-foreground">Divulgue Seu Negócio</h2>
+          <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+            Você é morador e tem um negócio ou serviço? Anuncie aqui!
           </p>
           <Button 
-            variant="outline" 
-            size="lg" 
-            className="bg-background/20 backdrop-blur-sm border-2 border-primary-foreground/30 text-primary-foreground hover:bg-background/30"
+            variant="default"
             onClick={() => window.open('https://wa.me/258843001234?text=Olá! Gostaria de cadastrar meu negócio no Marketplace da Vila.', '_blank')}
           >
             <MessageCircle className="w-4 h-4 mr-2" />
             Cadastrar Meu Serviço
           </Button>
+        </div>
+      </section>
+
+      {/* Quick Links Section */}
+      <section className="py-12 border-t border-border">
+        <div className="container mx-auto px-4">
+          <h3 className="text-lg font-semibold text-center mb-6 text-foreground">Explore Outras Áreas</h3>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link to="/">
+              <Button variant="outline" size="sm">
+                <Building2 className="w-4 h-4 mr-2" />
+                Início
+              </Button>
+            </Link>
+            <Link to="/imoveis">
+              <Button variant="outline" size="sm">
+                Imóveis
+              </Button>
+            </Link>
+            <Link to="/reservas">
+              <Button variant="outline" size="sm">
+                Reservas
+              </Button>
+            </Link>
+            <Link to="/noticias">
+              <Button variant="outline" size="sm">
+                Notícias
+              </Button>
+            </Link>
+            <Link to="/transparencia">
+              <Button variant="outline" size="sm">
+                Transparência
+              </Button>
+            </Link>
+            <Link to="/sobre">
+              <Button variant="outline" size="sm">
+                Sobre
+              </Button>
+            </Link>
+            <Link to="/contacto">
+              <Button variant="outline" size="sm">
+                Contacto
+              </Button>
+            </Link>
+            <Link to="/area-morador">
+              <Button variant="outline" size="sm">
+                Área do Morador
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
