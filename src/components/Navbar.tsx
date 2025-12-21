@@ -1,7 +1,8 @@
-import { Building2, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,17 +23,19 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <a href="#inicio" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Building2 className="w-6 h-6 text-primary-foreground" />
-            </div>
+          <Link to="/" className="flex items-center gap-3 group">
+            <img 
+              src={logoVilaOlimpica} 
+              alt="Logo Vila Olímpica" 
+              className="w-12 h-12 object-contain group-hover:scale-110 transition-transform"
+            />
             <div className="flex flex-col">
               <span className="font-bold text-lg text-foreground leading-tight">
                 Vila Olímpica
               </span>
               <span className="text-xs text-muted-foreground">Condomínio</span>
             </div>
-          </a>
+          </Link>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6">
