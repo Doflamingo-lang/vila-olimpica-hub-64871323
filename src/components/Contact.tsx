@@ -1,159 +1,115 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Phone, MessageCircle, Clock } from "lucide-react";
+import { MapPin, Phone, MessageCircle, Clock, Send } from "lucide-react";
 
 const Contact = () => {
   return (
-    <section id="contato" className="py-20 bg-background">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <span className="text-accent font-semibold text-sm uppercase tracking-wider">
+    <section id="contato" className="py-24 bg-background relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-secondary/50 to-transparent pointer-events-none" />
+      
+      <div className="container mx-auto px-4 relative z-10">
+        {/* Header */}
+        <div className="max-w-3xl mx-auto text-center mb-16">
+          <span className="inline-block px-4 py-1.5 bg-accent/10 border border-accent/20 rounded-full text-accent text-sm font-semibold mb-4">
             Contato
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mt-2 mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
             Entre em Contato
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground">
             Estamos aqui para ajudar. Entre em contato conosco para qualquer dúvida ou informação.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto">
           {/* Contact Info */}
           <div>
-            <h3 className="text-2xl font-bold text-foreground mb-6">
+            <h3 className="text-2xl font-bold text-foreground mb-8">
               Informações de Contato
             </h3>
             
-            <div className="space-y-6 mb-8">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-6 h-6 text-accent" />
+            <div className="space-y-5 mb-8">
+              {[
+                { icon: MapPin, title: "Endereço", content: ["Bairro do Zimpeto", "Maputo, Moçambique"] },
+                { icon: Phone, title: "Telefone", content: ["+258 21 123 4567", "+258 84 345 6789"] },
+                { icon: MessageCircle, title: "WhatsApp", content: ["+258 84 300 1234", "+258 84 345 6789"], links: ["https://wa.me/258843001234", "https://wa.me/258843456789"] },
+                { icon: Clock, title: "Horário", content: ["Segunda a Sexta: 9h00 - 18h00", "Sábado: 9h00 - 13h00"] },
+              ].map((item, index) => (
+                <div key={index} className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border hover:border-primary/20 transition-colors">
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <item.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground mb-1">{item.title}</h4>
+                    {item.content.map((line, i) => (
+                      item.links ? (
+                        <a key={i} href={item.links[i]} target="_blank" rel="noopener noreferrer" className="block text-muted-foreground hover:text-primary transition-colors">
+                          {line}
+                        </a>
+                      ) : (
+                        <p key={i} className="text-muted-foreground">{line}</p>
+                      )
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-1">Endereço</h4>
-                  <p className="text-muted-foreground">
-                    Bairro do Zimpeto<br />
-                    Maputo, Moçambique
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Phone className="w-6 h-6 text-accent" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-1">Telefone</h4>
-                  <p className="text-muted-foreground">
-                    +258 21 123 4567<br />
-                    +258 84 345 6789
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <MessageCircle className="w-6 h-6 text-accent" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-1">WhatsApp</h4>
-                  <p className="text-muted-foreground">
-                    <a href="https://wa.me/258843001234" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
-                      +258 84 300 1234
-                    </a><br />
-                    <a href="https://wa.me/258843456789" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
-                      +258 84 345 6789
-                    </a>
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-6 h-6 text-accent" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-1">Horário</h4>
-                  <p className="text-muted-foreground">
-                    Segunda a Sexta: 9h00 - 18h00<br />
-                    Sábado: 9h00 - 13h00
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
 
-            <div className="bg-gradient-to-br from-primary to-primary-glow rounded-xl p-6 text-primary-foreground">
-              <h4 className="text-xl font-bold mb-2">Emergências 24/7</h4>
-              <p className="text-primary-foreground/90 mb-4">
-                Para situações urgentes, nossa equipe está disponível 24 horas por dia.
-              </p>
-              <p className="text-2xl font-bold">+258 82 000 0000</p>
+            <div className="bg-gradient-to-br from-primary to-primary/90 rounded-2xl p-6 text-primary-foreground relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl" />
+              <div className="relative z-10">
+                <h4 className="text-xl font-bold mb-2">Emergências 24/7</h4>
+                <p className="text-primary-foreground/85 mb-4">
+                  Para situações urgentes, nossa equipe está disponível 24 horas.
+                </p>
+                <p className="text-3xl font-bold">+258 82 000 0000</p>
+              </div>
             </div>
           </div>
 
           {/* Contact Form */}
-          <div>
-            <div className="bg-card rounded-xl border border-border p-8 shadow-elegant">
-              <h3 className="text-2xl font-bold text-foreground mb-6">
-                Envie uma Mensagem
-              </h3>
-              
-              <form className="space-y-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
-                    Nome Completo
-                  </label>
-                  <Input 
-                    id="name"
-                    type="text" 
-                    placeholder="Seu nome"
-                    className="w-full"
-                  />
-                </div>
+          <div className="bg-card rounded-2xl border border-border p-6 md:p-8 shadow-card">
+            <h3 className="text-2xl font-bold text-foreground mb-6">
+              Envie uma Mensagem
+            </h3>
+            
+            <form className="space-y-5">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
+                  Nome Completo
+                </label>
+                <Input id="name" type="text" placeholder="Seu nome" className="h-12" />
+              </div>
 
+              <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
                     Email
                   </label>
-                  <Input 
-                    id="email"
-                    type="email" 
-                    placeholder="seu@email.com"
-                    className="w-full"
-                  />
+                  <Input id="email" type="email" placeholder="seu@email.com" className="h-12" />
                 </div>
-
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-2">
                     Telefone
                   </label>
-                  <Input 
-                    id="phone"
-                    type="tel" 
-                    placeholder="+258 84 123 4567"
-                    className="w-full"
-                  />
+                  <Input id="phone" type="tel" placeholder="+258 84 123 4567" className="h-12" />
                 </div>
+              </div>
 
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
-                    Mensagem
-                  </label>
-                  <Textarea 
-                    id="message"
-                    placeholder="Como podemos ajudar?"
-                    rows={5}
-                    className="w-full"
-                  />
-                </div>
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
+                  Mensagem
+                </label>
+                <Textarea id="message" placeholder="Como podemos ajudar?" rows={5} />
+              </div>
 
-                <Button variant="hero" size="lg" className="w-full">
-                  Enviar Mensagem
-                </Button>
-              </form>
-            </div>
+              <Button size="lg" className="w-full h-12 shadow-lg">
+                <Send className="w-4 h-4 mr-2" />
+                Enviar Mensagem
+              </Button>
+            </form>
           </div>
         </div>
       </div>
