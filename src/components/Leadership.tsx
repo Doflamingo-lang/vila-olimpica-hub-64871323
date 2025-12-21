@@ -1,5 +1,11 @@
-import { Users, Award, Building2, Phone } from "lucide-react";
+import { Users, Award, Phone, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import presidenteImage from "@/assets/presidente-sindico.jpg";
+import equipe1 from "@/assets/equipe-1.jpg";
+import equipe2 from "@/assets/equipe-2.jpg";
+import equipe3 from "@/assets/equipe-3.jpg";
+import equipe4 from "@/assets/equipe-4.jpg";
 
 const Leadership = () => {
   const teamMembers = [
@@ -7,21 +13,25 @@ const Leadership = () => {
       role: "Vice-Presidente",
       name: "Maria Santos",
       department: "Administração",
+      image: equipe1,
     },
     {
       role: "Tesoureiro",
       name: "Carlos Machava",
       department: "Finanças",
+      image: equipe2,
     },
     {
-      role: "Secretário",
+      role: "Secretária",
       name: "Ana Sitoe",
       department: "Comunicação",
+      image: equipe3,
     },
     {
       role: "Conselheiro",
       name: "Pedro Langa",
       department: "Infraestrutura",
+      image: equipe4,
     },
   ];
 
@@ -70,8 +80,7 @@ const Leadership = () => {
               </p>
               <p className="text-primary-foreground/90 max-w-xl leading-relaxed mb-6">
                 "É uma honra liderar este condomínio e trabalhar em prol do bem-estar de todas as famílias. 
-                Nossa missão é garantir transparência, segurança e qualidade de vida para cada morador. 
-                Juntos, construímos uma comunidade forte e unida."
+                Nossa missão é garantir transparência, segurança e qualidade de vida para cada morador."
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
                 <a
@@ -81,6 +90,12 @@ const Leadership = () => {
                   <Phone className="w-4 h-4" />
                   Entrar em Contato
                 </a>
+                <Link to="/administracao">
+                  <Button variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+                    Ver Biografia Completa
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -88,14 +103,22 @@ const Leadership = () => {
 
         {/* Team Section */}
         <div className="bg-card border border-border rounded-2xl p-8">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-accent/15 rounded-lg flex items-center justify-center">
-              <Users className="w-6 h-6 text-accent" />
+          <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-accent/15 rounded-lg flex items-center justify-center">
+                <Users className="w-6 h-6 text-accent" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-foreground">Equipe de Trabalho</h3>
+                <p className="text-muted-foreground">Membros do conselho administrativo</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-2xl font-bold text-foreground">Equipe de Trabalho</h3>
-              <p className="text-muted-foreground">Membros do conselho administrativo</p>
-            </div>
+            <Link to="/administracao">
+              <Button variant="outline" size="sm">
+                Ver Todos
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -104,8 +127,12 @@ const Leadership = () => {
                 key={index}
                 className="bg-secondary/50 rounded-xl p-6 text-center hover:shadow-elegant transition-all hover:-translate-y-1"
               >
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Building2 className="w-7 h-7 text-primary" />
+                <div className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-4 border-2 border-primary/20">
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <span className="text-xs font-semibold text-accent uppercase tracking-wider">
                   {member.role}

@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import ResidentArea from "./pages/ResidentArea";
 import AboutPage from "./pages/AboutPage";
+import AdministrationPage from "./pages/AdministrationPage";
 import PropertiesPage from "./pages/PropertiesPage";
 import PropertyDetailsPage from "./pages/PropertyDetailsPage";
 import MarketplacePage from "./pages/MarketplacePage";
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/area-morador" element={<ResidentArea />} />
           <Route path="/sobre" element={<AboutPage />} />
+          <Route path="/administracao" element={<AdministrationPage />} />
           <Route path="/imoveis" element={<PropertiesPage />} />
           <Route path="/imoveis/:id" element={<PropertyDetailsPage />} />
           <Route path="/marketplace" element={<MarketplacePage />} />
