@@ -14,7 +14,8 @@ import {
   Newspaper,
   Download,
   Building,
-  Megaphone
+  Megaphone,
+  Receipt
 } from "lucide-react";
 import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 import NewsManagement from "@/components/admin/NewsManagement";
@@ -22,6 +23,7 @@ import DocumentsManagement from "@/components/admin/DocumentsManagement";
 import DocumentDownloadsStats from "@/components/admin/DocumentDownloadsStats";
 import PropertiesManagement from "@/components/admin/PropertiesManagement";
 import NoticesManagement from "@/components/admin/NoticesManagement";
+import FeesManagement from "@/components/admin/FeesManagement";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
@@ -279,6 +281,7 @@ const AdminDashboard = () => {
     { icon: LayoutDashboard, label: "Dashboard", section: "dashboard" },
     { icon: Building, label: "Imóveis", section: "properties" },
     { icon: Megaphone, label: "Avisos", section: "notices" },
+    { icon: Receipt, label: "Taxas", section: "fees" },
     { icon: Calendar, label: "Reservas", section: "reservations" },
     { icon: Store, label: "Marketplace", section: "services" },
     { icon: Newspaper, label: "Notícias", section: "news" },
@@ -513,6 +516,11 @@ const AdminDashboard = () => {
           {/* Notices Section */}
           {activeSection === "notices" && (
             <NoticesManagement />
+          )}
+
+          {/* Fees Section */}
+          {activeSection === "fees" && (
+            <FeesManagement />
           )}
 
           {/* Reservations Section */}
