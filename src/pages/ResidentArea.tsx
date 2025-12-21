@@ -96,7 +96,8 @@ const ResidentArea = () => {
       icon: <Calendar className="w-8 h-8" />,
       title: "Reservas",
       description: "Reserve áreas comuns como salão de festas e churrasqueira",
-      action: "Fazer Reserva"
+      action: "Fazer Reserva",
+      link: "/reservas"
     },
     {
       icon: <FileText className="w-8 h-8" />,
@@ -191,11 +192,17 @@ const ResidentArea = () => {
                       {service.status}
                     </div>
                   )}
-                  {service.action && (
+                  {service.action && service.link ? (
+                    <Link to={service.link}>
+                      <Button variant="outline" className="w-full mt-2">
+                        {service.action}
+                      </Button>
+                    </Link>
+                  ) : service.action ? (
                     <Button variant="outline" className="w-full mt-2">
                       {service.action}
                     </Button>
-                  )}
+                  ) : null}
                   {service.badge && (
                     <span className="inline-block bg-accent text-accent-foreground px-3 py-1 rounded-full text-sm font-semibold">
                       {service.badge}

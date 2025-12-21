@@ -12,6 +12,7 @@ import NewsPage from "./pages/NewsPage";
 import TransparencyPage from "./pages/TransparencyPage";
 import ContactPage from "./pages/ContactPage";
 import AuthPage from "./pages/AuthPage";
+import ReservationsPage from "./pages/ReservationsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/transparencia" element={<TransparencyPage />} />
           <Route path="/contato" element={<ContactPage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/reservas" element={<ReservationsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
