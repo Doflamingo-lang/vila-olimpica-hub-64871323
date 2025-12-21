@@ -44,7 +44,7 @@ const Navbar = () => {
                 {item.label}
               </Link>
             ))}
-            <Link to="/area-morador">
+            <Link to="/auth">
               <Button variant="hero" size="sm">
                 Área do Morador
               </Button>
@@ -79,7 +79,7 @@ const Navbar = () => {
                   {item.label}
                 </Link>
               ))}
-              <Link to="/area-morador" className="w-full">
+              <Link to="/auth" className="w-full">
                 <Button variant="hero" size="sm" className="w-full" onClick={() => setIsOpen(false)}>
                   Área do Morador
                 </Button>
