@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Home, MapPin, Bath, Bed, Square } from "lucide-react";
+import { Link } from "react-router-dom";
 import imovel1 from "@/assets/imovel-1.jpg";
 import imovel2 from "@/assets/imovel-2.jpg";
 import imovel3 from "@/assets/imovel-3.jpg";
@@ -112,9 +113,11 @@ const Properties = () => {
                   <div className="text-3xl font-bold text-primary">
                     {property.price}
                   </div>
-                  <Button variant="outline">
-                    Ver Detalhes
-                  </Button>
+                  <Link to={`/imoveis/${property.id}`}>
+                    <Button variant="outline">
+                      Ver Detalhes
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -122,10 +125,12 @@ const Properties = () => {
         </div>
 
         <div className="text-center mt-12">
-          <Button variant="hero" size="lg">
-            <Home className="mr-2" />
-            Ver Todos os Imóveis
-          </Button>
+          <Link to="/imoveis">
+            <Button variant="default" size="lg">
+              <Home className="mr-2" />
+              Ver Todos os Imóveis
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
