@@ -1,11 +1,14 @@
-import { Building2, ArrowLeft, Calendar, ArrowRight, Tag, Clock, User } from "lucide-react";
+import { Building2, ArrowLeft, Calendar, ArrowRight, Clock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import NewsDetailsDialog from "@/components/NewsDetailsDialog";
 
 const NewsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
+  const [selectedNews, setSelectedNews] = useState<any>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const categories = ["Todos", "Infraestrutura", "Comunicado", "Segurança", "Eventos", "Manutenção"];
 
@@ -84,6 +87,11 @@ const NewsPage = () => {
 
   const featuredNews = news[0];
 
+  const handleReadMore = (item: any) => {
+    setSelectedNews(item);
+    setDialogOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -150,16 +158,25 @@ const NewsPage = () => {
                   </div>
                 </div>
                 <h2 className="text-3xl font-bold text-foreground mb-4">{featuredNews.title}</h2>
-                <p className="text-muted-foreground mb-6">{featuredNews.content}</p>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <User className="w-4 h-4" />
-                    {featuredNews.author}
+                <p className="text-muted-foreground mb-6 line-clamp-4">{featuredNews.excerpt}</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <User className="w-4 h-4" />
+                      {featuredNews.author}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      {featuredNews.readTime} de leitura
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    {featuredNews.readTime} de leitura
-                  </div>
+                  <Button 
+                    variant="default"
+                    onClick={() => handleReadMore(featuredNews)}
+                  >
+                    Ler mais
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -239,7 +256,12 @@ const NewsPage = () => {
                       <User className="w-4 h-4" />
                       {item.author}
                     </span>
-                    <Button variant="ghost" size="sm" className="group/btn">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="group/btn"
+                      onClick={() => handleReadMore(item)}
+                    >
                       Ler mais
                       <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                     </Button>
@@ -267,6 +289,13 @@ const NewsPage = () => {
           </Button>
         </div>
       </section>
+
+      {/* News Details Dialog */}
+      <NewsDetailsDialog
+        news={selectedNews}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
 
       <WhatsAppButton />
     </div>
