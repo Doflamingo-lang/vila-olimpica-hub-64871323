@@ -13,11 +13,13 @@ import {
   Check,
   X,
   Newspaper,
-  Download
+  Download,
+  Building
 } from "lucide-react";
 import NewsManagement from "@/components/admin/NewsManagement";
 import DocumentsManagement from "@/components/admin/DocumentsManagement";
 import DocumentDownloadsStats from "@/components/admin/DocumentDownloadsStats";
+import PropertiesManagement from "@/components/admin/PropertiesManagement";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
@@ -273,6 +275,7 @@ const AdminDashboard = () => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", section: "dashboard" },
+    { icon: Building, label: "Imóveis", section: "properties" },
     { icon: Calendar, label: "Reservas", section: "reservations" },
     { icon: Store, label: "Marketplace", section: "services" },
     { icon: Newspaper, label: "Notícias", section: "news" },
@@ -495,6 +498,11 @@ const AdminDashboard = () => {
                 </Card>
               </div>
             </>
+          )}
+
+          {/* Properties Section */}
+          {activeSection === "properties" && (
+            <PropertiesManagement />
           )}
 
           {/* Reservations Section */}
