@@ -9,6 +9,7 @@ const Navbar = () => {
   const menuItems = [
     { label: "Início", href: "/", isRoute: true },
     { label: "Sobre", href: "/sobre", isRoute: true },
+    { label: "Administração", href: "/administracao", isRoute: true },
     { label: "Imóveis", href: "/imoveis", isRoute: true },
     { label: "Marketplace", href: "/marketplace", isRoute: true },
     { label: "Notícias", href: "/noticias", isRoute: true },
