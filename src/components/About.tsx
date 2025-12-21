@@ -46,8 +46,8 @@ const About = () => {
               key={index}
               className="bg-card p-6 rounded-xl border border-border hover:shadow-elegant transition-all group hover:-translate-y-1"
             >
-              <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <feature.icon className="w-7 h-7 text-primary-foreground" />
+              <div className="w-14 h-14 bg-accent/15 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <feature.icon className="w-7 h-7 text-accent" />
               </div>
               <h3 className="text-xl font-bold text-foreground mb-2">
                 {feature.title}
@@ -59,7 +59,7 @@ const About = () => {
           ))}
         </div>
 
-        <div className="bg-gradient-to-br from-primary to-primary-glow rounded-2xl p-8 md:p-12 text-center shadow-glow">
+        <div className="bg-primary rounded-2xl p-8 md:p-12 text-center">
           <h3 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
             Faça Parte da Nossa Comunidade
           </h3>
@@ -70,7 +70,7 @@ const About = () => {
             <a href="#imoveis" className="inline-flex items-center justify-center px-8 py-3 bg-accent text-accent-foreground rounded-lg font-semibold hover:bg-accent/90 transition-all shadow-md hover:shadow-lg">
               Ver Imóveis Disponíveis
             </a>
-            <a href="#contato" className="inline-flex items-center justify-center px-8 py-3 bg-background/20 backdrop-blur-sm border-2 border-primary-foreground/30 text-primary-foreground rounded-lg font-semibold hover:bg-background/30 transition-all">
+            <a href="#contato" className="inline-flex items-center justify-center px-8 py-3 bg-primary-foreground/20 border border-primary-foreground/30 text-primary-foreground rounded-lg font-semibold hover:bg-primary-foreground/30 transition-all">
               Entre em Contato
             </a>
           </div>
