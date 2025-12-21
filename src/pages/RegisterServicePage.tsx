@@ -1,4 +1,4 @@
-import { Building2, ArrowLeft, Store, Phone, Mail, MapPin, Clock, Image, FileText, Send, Upload, X } from "lucide-react";
+import { Building2, ArrowLeft, Store, Phone, MessageCircle, MapPin, Clock, Image, FileText, Send, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,7 +24,7 @@ const RegisterServicePage = () => {
     businessName: "",
     category: "",
     phone: "",
-    email: "",
+    whatsapp: "",
     location: "",
     description: "",
     fullDescription: "",
@@ -116,7 +116,7 @@ const RegisterServicePage = () => {
     e.preventDefault();
     
     // Validação básica
-    if (!formData.ownerName || !formData.businessName || !formData.category || !formData.phone || !formData.email || !formData.description) {
+    if (!formData.ownerName || !formData.businessName || !formData.category || !formData.phone || !formData.whatsapp || !formData.description) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -125,12 +125,12 @@ const RegisterServicePage = () => {
       return;
     }
 
-    // Validação de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+    // Validação do número de WhatsApp (deve conter apenas números, +, e espaços)
+    const whatsappRegex = /^[\d\s+]+$/;
+    if (!whatsappRegex.test(formData.whatsapp)) {
       toast({
-        title: "Email inválido",
-        description: "Por favor, insira um email válido.",
+        title: "WhatsApp inválido",
+        description: "Por favor, insira apenas números (ex: +258 84 123 4567).",
         variant: "destructive",
       });
       return;
@@ -164,7 +164,7 @@ const RegisterServicePage = () => {
           business_name: formData.businessName.trim(),
           category: formData.category,
           phone: formData.phone.trim(),
-          email: formData.email.trim().toLowerCase(),
+          email: formData.whatsapp.replace(/\s/g, '').replace('+', ''),
           location: formData.location.trim() || null,
           description: formData.description.trim(),
           full_description: formData.fullDescription.trim() || null,
@@ -188,7 +188,7 @@ const RegisterServicePage = () => {
         businessName: "",
         category: "",
         phone: "",
-        email: "",
+        whatsapp: "",
         location: "",
         description: "",
         fullDescription: "",
@@ -289,19 +289,22 @@ const RegisterServicePage = () => {
                       </div>
                     </div>
                     <div>
-                      <Label htmlFor="email">Email *</Label>
+                      <Label htmlFor="whatsapp">WhatsApp *</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
-                          id="email"
-                          type="email"
-                          placeholder="seu@email.com"
-                          value={formData.email}
-                          onChange={(e) => handleChange("email", e.target.value)}
+                          id="whatsapp"
+                          type="tel"
+                          placeholder="+258 84 123 4567"
+                          value={formData.whatsapp}
+                          onChange={(e) => handleChange("whatsapp", e.target.value)}
                           className="pl-10"
-                          maxLength={255}
+                          maxLength={20}
                         />
                       </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Número para contacto via WhatsApp
+                      </p>
                     </div>
                   </div>
                 </div>
