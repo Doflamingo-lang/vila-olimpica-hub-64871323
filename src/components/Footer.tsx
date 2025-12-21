@@ -1,4 +1,5 @@
-import { Building2, Facebook, Instagram, Linkedin, MessageCircle } from "lucide-react";
+import { Facebook, Instagram, Linkedin, MessageCircle } from "lucide-react";
+import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -9,10 +10,12 @@ const Footer = () => {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-accent-foreground" />
-              </div>
+            <div className="flex items-center gap-3 mb-4">
+              <img 
+                src={logoVilaOlimpica} 
+                alt="Logo Vila Olímpica" 
+                className="w-14 h-14 object-contain bg-white/90 rounded-lg p-1"
+              />
               <div className="flex flex-col">
                 <span className="font-bold text-lg leading-tight">Vila Olímpica</span>
                 <span className="text-xs text-primary-foreground/80">Condomínio</span>

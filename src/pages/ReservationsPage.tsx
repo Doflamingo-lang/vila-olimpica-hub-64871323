@@ -1,4 +1,5 @@
-import { Building2, ArrowLeft, Calendar as CalendarIcon, Clock, Users, Info, Check, X, Loader2, LogOut, Home } from "lucide-react";
+import { ArrowLeft, Calendar as CalendarIcon, Clock, Users, Info, Check, X, Loader2, LogOut, Home } from "lucide-react";
+import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";

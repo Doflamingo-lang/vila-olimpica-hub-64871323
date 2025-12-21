@@ -1,4 +1,5 @@
-import { Building2, ArrowLeft, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
+import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
@@ -144,10 +145,12 @@ const AuthPage = () => {
       <header className="fixed top-0 w-full bg-background/95 backdrop-blur-md border-b border-border z-50 shadow-sm">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Building2 className="w-6 h-6 text-primary-foreground" />
-              </div>
+            <Link to="/" className="flex items-center gap-3 group">
+              <img 
+                src={logoVilaOlimpica} 
+                alt="Logo Vila Olímpica" 
+                className="w-12 h-12 object-contain group-hover:scale-110 transition-transform"
+              />
               <div className="flex flex-col">
                 <span className="font-bold text-lg text-foreground leading-tight">Vila Olímpica</span>
                 <span className="text-xs text-muted-foreground">Condomínio</span>
@@ -168,9 +171,11 @@ const AuthPage = () => {
         <div className="w-full max-w-md">
           <div className="bg-card rounded-2xl border border-border p-8 shadow-elegant">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Building2 className="w-8 h-8 text-primary-foreground" />
-              </div>
+              <img 
+                src={logoVilaOlimpica} 
+                alt="Logo Vila Olímpica" 
+                className="w-20 h-20 object-contain mx-auto mb-4"
+              />
               <h1 className="text-2xl font-bold text-foreground">
                 {isLogin ? "Área do Morador" : "Criar Conta"}
               </h1>
