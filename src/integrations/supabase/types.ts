@@ -44,6 +44,60 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_services: {
+        Row: {
+          business_name: string
+          category: string
+          created_at: string
+          description: string
+          email: string
+          full_description: string | null
+          hours: string | null
+          id: string
+          image_url: string | null
+          location: string | null
+          owner_name: string
+          phone: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          business_name: string
+          category: string
+          created_at?: string
+          description: string
+          email: string
+          full_description?: string | null
+          hours?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          owner_name: string
+          phone: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          business_name?: string
+          category?: string
+          created_at?: string
+          description?: string
+          email?: string
+          full_description?: string | null
+          hours?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          owner_name?: string
+          phone?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       reservations: {
         Row: {
           area_id: string

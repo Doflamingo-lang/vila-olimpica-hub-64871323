@@ -152,33 +152,34 @@ const RegisterServicePage = () => {
         setIsUploading(false);
       }
 
-      // Construir mensagem para WhatsApp
-      const message = `
-*Novo Cadastro de Serviço - Marketplace Vila Olímpica*
+      // Obter usuário logado (opcional)
+      const { data: { user } } = await supabase.auth.getUser();
 
-*Proprietário:* ${formData.ownerName}
-*Nome do Negócio:* ${formData.businessName}
-*Categoria:* ${formData.category}
-*Telefone:* ${formData.phone}
-*Email:* ${formData.email}
-*Localização:* ${formData.location}
-*Horário:* ${formData.hours}
-${imageUrl ? `*Imagem:* ${imageUrl}` : ''}
+      // Salvar no banco de dados
+      const { error: dbError } = await supabase
+        .from('marketplace_services')
+        .insert({
+          user_id: user?.id || null,
+          owner_name: formData.ownerName.trim(),
+          business_name: formData.businessName.trim(),
+          category: formData.category,
+          phone: formData.phone.trim(),
+          email: formData.email.trim().toLowerCase(),
+          location: formData.location.trim() || null,
+          description: formData.description.trim(),
+          full_description: formData.fullDescription.trim() || null,
+          hours: formData.hours.trim() || null,
+          image_url: imageUrl,
+          status: 'pending'
+        });
 
-*Descrição:*
-${formData.description}
-
-*Descrição Completa:*
-${formData.fullDescription}
-      `.trim();
-
-      // Abrir WhatsApp com a mensagem
-      const encodedMessage = encodeURIComponent(message);
-      window.open(`https://wa.me/258843001234?text=${encodedMessage}`, '_blank');
+      if (dbError) {
+        throw dbError;
+      }
 
       toast({
         title: "Solicitação enviada!",
-        description: "A sua solicitação foi enviada. Entraremos em contacto em breve para confirmar o cadastro.",
+        description: "O seu serviço foi cadastrado e está aguardando aprovação. Entraremos em contacto em breve.",
       });
 
       // Limpar formulário
@@ -195,10 +196,14 @@ ${formData.fullDescription}
       });
       removeImage();
 
+      // Redirecionar para o marketplace
+      navigate('/marketplace');
+
     } catch (error) {
+      console.error('Erro ao cadastrar serviço:', error);
       toast({
         title: "Erro ao enviar",
-        description: "Ocorreu um erro. Por favor, tente novamente.",
+        description: "Ocorreu um erro ao cadastrar o serviço. Por favor, tente novamente.",
         variant: "destructive",
       });
     } finally {
