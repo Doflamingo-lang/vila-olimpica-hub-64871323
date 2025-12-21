@@ -7,13 +7,13 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
-    { label: "Início", href: "#inicio" },
-    { label: "Sobre", href: "#sobre" },
-    { label: "Imóveis", href: "#imoveis" },
-    { label: "Empreendedores", href: "#empreendedores" },
-    { label: "Notícias", href: "#noticias" },
-    { label: "Transparência", href: "#transparencia" },
-    { label: "Contato", href: "#contato" },
+    { label: "Início", href: "/", isRoute: true },
+    { label: "Sobre", href: "/sobre", isRoute: true },
+    { label: "Imóveis", href: "/imoveis", isRoute: true },
+    { label: "Marketplace", href: "/marketplace", isRoute: true },
+    { label: "Notícias", href: "/noticias", isRoute: true },
+    { label: "Transparência", href: "/transparencia", isRoute: true },
+    { label: "Contato", href: "/contato", isRoute: true },
   ];
 
   return (
@@ -36,13 +36,13 @@ const Navbar = () => {
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6">
             {menuItems.map((item) => (
-              <a
+              <Link
                 key={item.label}
-                href={item.href}
+                to={item.href}
                 className="text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
             <Link to="/area-morador">
               <Button variant="hero" size="sm">
@@ -70,14 +70,14 @@ const Navbar = () => {
           <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col gap-4">
               {menuItems.map((item) => (
-                <a
+                <Link
                   key={item.label}
-                  href={item.href}
+                  to={item.href}
                   className="text-sm font-medium text-foreground hover:text-primary transition-colors px-2"
                   onClick={() => setIsOpen(false)}
                 >
                   {item.label}
-                </a>
+                </Link>
               ))}
               <Link to="/area-morador" className="w-full">
                 <Button variant="hero" size="sm" className="w-full" onClick={() => setIsOpen(false)}>
