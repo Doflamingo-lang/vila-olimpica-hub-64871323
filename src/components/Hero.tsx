@@ -37,13 +37,17 @@ const Hero = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-12">
-            <Button variant="accent" size="lg" className="group">
-              Explorar Imóveis
-              <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
-            <Button variant="outline" size="lg" className="bg-background/10 backdrop-blur-sm border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground hover:text-primary">
-              Saiba Mais
-            </Button>
+            <a href="#imoveis">
+              <Button variant="accent" size="lg" className="group w-full sm:w-auto">
+                Explorar Imóveis
+                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </a>
+            <a href="#sobre">
+              <Button variant="outline" size="lg" className="bg-background/10 backdrop-blur-sm border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground hover:text-primary w-full sm:w-auto">
+                Saiba Mais
+              </Button>
+            </a>
           </div>
 
           {/* Stats */}
