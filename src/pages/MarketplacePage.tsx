@@ -300,13 +300,12 @@ const MarketplacePage = () => {
           <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
             Você é morador e tem um negócio ou serviço? Anuncie aqui!
           </p>
-          <Button 
-            variant="default"
-            onClick={() => window.open('https://wa.me/258843001234?text=Olá! Gostaria de cadastrar meu negócio no Marketplace da Vila.', '_blank')}
-          >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Cadastrar Meu Serviço
-          </Button>
+          <Link to="/marketplace/cadastrar">
+            <Button variant="default">
+              <Store className="w-4 h-4 mr-2" />
+              Cadastrar Meu Serviço
+            </Button>
+          </Link>
         </div>
       </section>
 

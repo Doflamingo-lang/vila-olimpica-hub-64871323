@@ -9,6 +9,7 @@ import AboutPage from "./pages/AboutPage";
 import PropertiesPage from "./pages/PropertiesPage";
 import PropertyDetailsPage from "./pages/PropertyDetailsPage";
 import MarketplacePage from "./pages/MarketplacePage";
+import RegisterServicePage from "./pages/RegisterServicePage";
 import NewsPage from "./pages/NewsPage";
 import TransparencyPage from "./pages/TransparencyPage";
 import ContactPage from "./pages/ContactPage";
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/imoveis" element={<PropertiesPage />} />
           <Route path="/imoveis/:id" element={<PropertyDetailsPage />} />
           <Route path="/marketplace" element={<MarketplacePage />} />
+          <Route path="/marketplace/cadastrar" element={<RegisterServicePage />} />
           <Route path="/noticias" element={<NewsPage />} />
           <Route path="/transparencia" element={<TransparencyPage />} />
           <Route path="/contato" element={<ContactPage />} />
