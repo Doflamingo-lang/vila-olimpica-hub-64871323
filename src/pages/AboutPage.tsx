@@ -1,9 +1,10 @@
-import { Building2, Shield, Users, Heart, MapPin, Award, Target, CheckCircle, ArrowLeft } from "lucide-react";
+import { Building2, Shield, Users, Heart, MapPin, Award, Target, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import heroImage from "@/assets/hero-condominio.jpg";
-import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const AboutPage = () => {
   const features = [
@@ -46,30 +47,7 @@ const AboutPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="fixed top-0 w-full bg-background/95 backdrop-blur-md border-b border-border z-50 shadow-sm">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-3 group">
-              <img 
-                src={logoVilaOlimpica} 
-                alt="Logo Vila Olímpica" 
-                className="w-12 h-12 object-contain group-hover:scale-110 transition-transform"
-              />
-              <div className="flex flex-col">
-                <span className="font-bold text-lg text-foreground leading-tight">Vila Olímpica</span>
-                <span className="text-xs text-muted-foreground">Condomínio</span>
-              </div>
-            </Link>
-            <Link to="/">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Hero Section */}
       <section className="pt-24 pb-16 bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
@@ -204,6 +182,7 @@ const AboutPage = () => {
         </div>
       </section>
 
+      <Footer />
       <WhatsAppButton />
     </div>
   );
