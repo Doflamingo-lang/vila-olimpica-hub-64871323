@@ -20,7 +20,7 @@ const ContactPage = () => {
     {
       icon: Phone,
       title: "Telefone",
-      details: ["+258 21 123 4567", "+258 84 345 6789"],
+      details: ["+258 84 281 4557", "+258 84 345 6789"],
     },
     {
       icon: MessageCircle,
