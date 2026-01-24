@@ -128,52 +128,6 @@ const Leadership = () => {
           </div>
         </div>
 
-        {/* Team Section */}
-        <div className="bg-card border border-border rounded-2xl p-8">
-          <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-accent/15 rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-accent" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-foreground">Equipe de Trabalho</h3>
-                <p className="text-muted-foreground">Membros do conselho administrativo</p>
-              </div>
-            </div>
-            <Link to="/administracao">
-              <Button variant="outline" size="sm">
-                Ver Todos
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {teamMembers.map((member, index) => (
-              <div
-                key={index}
-                className="bg-secondary/50 rounded-xl p-6 text-center hover:shadow-elegant transition-all hover:-translate-y-1"
-              >
-                <div className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-4 border-2 border-primary/20">
-                  <img
-                    src={member.image}
-                    alt={member.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <span className="text-xs font-semibold text-accent uppercase tracking-wider">
-                  {member.role}
-                </span>
-                <h4 className="text-lg font-bold text-foreground mt-1 mb-1">
-                  {member.name}
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  {member.department}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );
