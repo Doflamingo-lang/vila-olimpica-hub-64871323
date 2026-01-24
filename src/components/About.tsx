@@ -78,7 +78,7 @@ const About = () => {
             <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
               <div className="text-center lg:text-left">
                 <h3 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-                  Faça Parte da Nossa Comunidade
+                  Faça Parte do Nosso Condomínio
                 </h3>
                 <p className="text-lg md:text-xl text-primary-foreground/85 max-w-xl">
                   Descubra as oportunidades de viver em um dos condomínios mais bem estruturados da região.
