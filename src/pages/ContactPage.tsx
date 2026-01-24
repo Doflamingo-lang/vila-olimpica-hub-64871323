@@ -20,13 +20,13 @@ const ContactPage = () => {
     {
       icon: Phone,
       title: "Telefone",
-      details: ["+258 84 281 4557", "+258 84 345 6789"],
+      details: ["+258 84 281 4557"],
     },
     {
       icon: MessageCircle,
       title: "WhatsApp",
-      details: ["+258 84 300 1234", "+258 84 345 6789"],
-      links: ["https://wa.me/258843001234", "https://wa.me/258843456789"],
+      details: ["+258 84 281 4557"],
+      links: ["https://wa.me/2588842814557"],
     },
     {
       icon: Clock,
@@ -37,24 +37,24 @@ const ContactPage = () => {
 
   const departments = [
     {
-      name: "Administração Geral",
-      phone: "+258 84 300 1234",
+      name: "Administração",
+      phone: "+258 84 281 4557",
       description: "Assuntos gerais, reclamações e sugestões",
     },
     {
-      name: "Financeiro",
-      phone: "+258 84 300 1235",
-      description: "Taxas condominiais, boletos e pagamentos",
-    },
-    {
-      name: "Manutenção",
-      phone: "+258 84 300 1236",
-      description: "Reparos, obras e manutenção predial",
-    },
-    {
-      name: "Segurança",
-      phone: "+258 84 300 1237",
+      name: "Departamento de Segurança",
+      phone: "+258 85 610 7137",
       description: "Ocorrências, controle de acesso e vigilância",
+    },
+    {
+      name: "Bombeiros",
+      phone: "+258 84 764 4237",
+      description: "Em caso de emergencias",
+    },
+    {
+      name: "FIPAG",
+      phone: "+258 82 918 7642",
+      description: "FIPAG",
     },
   ];
 
@@ -91,21 +91,23 @@ const ContactPage = () => {
                   <info.icon className="w-6 h-6 text-accent" />
                 </div>
                 <h3 className="font-bold text-foreground mb-2">{info.title}</h3>
-                {info.details.map((detail, i) => (
+                {info.details.map((detail, i) =>
                   info.links ? (
-                    <a 
-                      key={i} 
-                      href={info.links[i]} 
-                      target="_blank" 
+                    <a
+                      key={i}
+                      href={info.links[i]}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="block text-muted-foreground hover:text-accent transition-colors"
                     >
                       {detail}
                     </a>
                   ) : (
-                    <p key={i} className="text-muted-foreground">{detail}</p>
-                  )
-                ))}
+                    <p key={i} className="text-muted-foreground">
+                      {detail}
+                    </p>
+                  ),
+                )}
               </div>
             ))}
           </div>
@@ -120,19 +122,15 @@ const ContactPage = () => {
             <div>
               <div className="bg-card rounded-xl border border-border p-8 shadow-elegant">
                 <h2 className="text-2xl font-bold text-foreground mb-6">Envie uma Mensagem</h2>
-                
+
                 {formSubmitted ? (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <CheckCircle className="w-8 h-8 text-green-600" />
                     </div>
                     <h3 className="text-xl font-bold text-foreground mb-2">Mensagem Enviada!</h3>
-                    <p className="text-muted-foreground mb-6">
-                      Obrigado pelo seu contato. Responderemos em breve.
-                    </p>
-                    <Button onClick={() => setFormSubmitted(false)}>
-                      Enviar Nova Mensagem
-                    </Button>
+                    <p className="text-muted-foreground mb-6">Obrigado pelo seu contato. Responderemos em breve.</p>
+                    <Button onClick={() => setFormSubmitted(false)}>Enviar Nova Mensagem</Button>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-6">
@@ -169,12 +167,7 @@ const ContactPage = () => {
                       <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
                         Mensagem
                       </label>
-                      <Textarea 
-                        id="message" 
-                        placeholder="Como podemos ajudar?" 
-                        rows={5} 
-                        required 
-                      />
+                      <Textarea id="message" placeholder="Como podemos ajudar?" rows={5} required />
                     </div>
 
                     <Button type="submit" variant="hero" size="lg" className="w-full">
@@ -191,13 +184,18 @@ const ContactPage = () => {
               <h2 className="text-2xl font-bold text-foreground mb-6">Departamentos</h2>
               <div className="space-y-4 mb-8">
                 {departments.map((dept, index) => (
-                  <div key={index} className="bg-card p-6 rounded-xl border border-border hover:shadow-elegant transition-all">
+                  <div
+                    key={index}
+                    className="bg-card p-6 rounded-xl border border-border hover:shadow-elegant transition-all"
+                  >
                     <h3 className="font-bold text-foreground mb-1">{dept.name}</h3>
                     <p className="text-sm text-muted-foreground mb-3">{dept.description}</p>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
-                      onClick={() => window.open(`https://wa.me/${dept.phone.replace(/\s/g, '').replace('+', '')}`, '_blank')}
+                      onClick={() =>
+                        window.open(`https://wa.me/${dept.phone.replace(/\s/g, "").replace("+", "")}`, "_blank")
+                      }
                     >
                       <MessageCircle className="w-4 h-4 mr-2" />
                       {dept.phone}
@@ -213,10 +211,10 @@ const ContactPage = () => {
                   Para situações urgentes, nossa equipe está disponível 24 horas por dia.
                 </p>
                 <p className="text-3xl font-bold mb-4">+258 82 000 0000</p>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="bg-background/20 backdrop-blur-sm border-2 border-primary-foreground/30 text-primary-foreground hover:bg-background/30"
-                  onClick={() => window.open('https://wa.me/258820000000', '_blank')}
+                  onClick={() => window.open("https://wa.me/258820000000", "_blank")}
                 >
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Ligar Agora
@@ -232,9 +230,7 @@ const ContactPage = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl font-bold text-foreground mb-4">Nossa Localização</h2>
-            <p className="text-muted-foreground mb-8">
-              Visite-nos no Bairro do Zimpeto, Maputo, Moçambique
-            </p>
+            <p className="text-muted-foreground mb-8">Visite-nos no Bairro do Zimpeto, Maputo, Moçambique</p>
             <div className="bg-card rounded-xl border border-border overflow-hidden h-96">
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3584.5!2d32.55!3d-25.85!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjXCsDUxJzAwLjAiUyAzMsKwMzMnMDAuMCJF!5e0!3m2!1sen!2smz!4v1234567890"
