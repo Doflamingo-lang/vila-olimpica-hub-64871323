@@ -210,11 +210,11 @@ const ContactPage = () => {
                 <p className="text-primary-foreground/90 mb-4">
                   Para situações urgentes, nossa equipe está disponível 24 horas por dia.
                 </p>
-                <p className="text-3xl font-bold mb-4">+258 82 000 0000</p>
+                <p className="text-3xl font-bold mb-4">+258 85 610 7137</p>
                 <Button
                   variant="outline"
                   className="bg-background/20 backdrop-blur-sm border-2 border-primary-foreground/30 text-primary-foreground hover:bg-background/30"
-                  onClick={() => window.open("https://wa.me/258820000000", "_blank")}
+                  onClick={() => window.open("https://wa.me/258856107137", "_blank")}
                 >
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Ligar Agora

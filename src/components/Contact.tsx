@@ -64,7 +64,7 @@ const Contact = () => {
                 <p className="text-primary-foreground/85 mb-4">
                   Para situações urgentes, nossa equipe está disponível 24 horas.
                 </p>
-                <p className="text-3xl font-bold">+258 82 000 0000</p>
+                <p className="text-3xl font-bold">+258 85 610 7137</p>
               </div>
             </div>
           </div>
