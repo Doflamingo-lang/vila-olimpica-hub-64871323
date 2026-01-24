@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Home, Users, TrendingUp, Play, ChevronDown } from "lucide-react";
+import { ArrowRight, Home, Users, Building2, Play, ChevronDown } from "lucide-react";
 import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 import heroBackground from "@/assets/hero-background.jpg";
 
@@ -47,8 +47,8 @@ const Hero = () => {
             
             {/* Description */}
             <p className="text-lg md:text-xl text-primary-foreground/85 mb-8 leading-relaxed max-w-xl animate-fade-up opacity-0" style={{ animationDelay: "0.3s", animationFillMode: "forwards" }}>
-              Sua plataforma completa de serviços, transparência e comunidade. 
-              Descubra imóveis, conecte-se com empreendedores locais e acompanhe tudo sobre o condomínio.
+              O maior centro residencial planeado de Moçambique, nascido em 2011 como legado dos X Jogos Africanos. 
+              Uma comunidade vibrante focada na auto-sustentabilidade e excelência na gestão.
             </p>
 
             {/* CTA Buttons */}
@@ -74,22 +74,22 @@ const Hero = () => {
                 <div className="w-10 h-10 md:w-12 md:h-12 bg-accent/20 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                   <Home className="w-5 h-5 md:w-6 md:h-6 text-accent" />
                 </div>
-                <div className="text-2xl md:text-3xl font-bold text-primary-foreground">150+</div>
-                <div className="text-xs md:text-sm text-primary-foreground/70 font-medium">Residências</div>
+                <div className="text-2xl md:text-3xl font-bold text-primary-foreground">1.120</div>
+                <div className="text-xs md:text-sm text-primary-foreground/70 font-medium">Apartamentos</div>
               </div>
               <div className="text-center p-4 md:p-6 bg-primary-foreground/10 backdrop-blur-md rounded-2xl border border-primary-foreground/20 hover:bg-primary-foreground/15 transition-colors group">
                 <div className="w-10 h-10 md:w-12 md:h-12 bg-accent/20 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                   <Users className="w-5 h-5 md:w-6 md:h-6 text-accent" />
                 </div>
-                <div className="text-2xl md:text-3xl font-bold text-primary-foreground">500+</div>
+                <div className="text-2xl md:text-3xl font-bold text-primary-foreground">4.000+</div>
                 <div className="text-xs md:text-sm text-primary-foreground/70 font-medium">Moradores</div>
               </div>
               <div className="text-center p-4 md:p-6 bg-primary-foreground/10 backdrop-blur-md rounded-2xl border border-primary-foreground/20 hover:bg-primary-foreground/15 transition-colors group">
                 <div className="w-10 h-10 md:w-12 md:h-12 bg-accent/20 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                  <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-accent" />
+                  <Building2 className="w-5 h-5 md:w-6 md:h-6 text-accent" />
                 </div>
-                <div className="text-2xl md:text-3xl font-bold text-primary-foreground">25+</div>
-                <div className="text-xs md:text-sm text-primary-foreground/70 font-medium">Empreendedores</div>
+                <div className="text-2xl md:text-3xl font-bold text-primary-foreground">35</div>
+                <div className="text-xs md:text-sm text-primary-foreground/70 font-medium">Blocos</div>
               </div>
             </div>
           </div>
@@ -106,16 +106,16 @@ const Hero = () => {
                     className="w-16 h-16 object-contain rounded-2xl bg-white/90 p-1"
                   />
                   <div>
-                    <h3 className="text-xl font-bold text-primary-foreground">Qualidade de Vida</h3>
-                    <p className="text-primary-foreground/70 text-sm">Infraestrutura completa</p>
+                    <h3 className="text-xl font-bold text-primary-foreground">Legado Histórico</h3>
+                    <p className="text-primary-foreground/70 text-sm">X Jogos Africanos 2011</p>
                   </div>
                 </div>
                 <ul className="space-y-3">
                   {[
-                    "Segurança 24 horas",
-                    "Áreas de lazer completas",
-                    "Gestão transparente",
-                    "Comunidade ativa",
+                    "Tipologia T3 em todos os blocos",
+                    "Vista para o Estádio Nacional",
+                    "Gestão transparente e participativa",
+                    "Comunidade vibrante e segura",
                   ].map((item, index) => (
                     <li key={index} className="flex items-center gap-3 text-primary-foreground/90">
                       <span className="w-2 h-2 bg-accent rounded-full" />
