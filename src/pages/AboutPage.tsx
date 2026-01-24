@@ -245,7 +245,7 @@ const AboutPage = () => {
       {/* CTA Section */}
       <section className="py-16 bg-secondary/50">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-4">Faça Parte da Nossa Comunidade</h2>
+          <h2 className="text-3xl font-bold text-foreground mb-4">Faça Parte do Nosso Condomínio</h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
             Descubra as oportunidades de viver em um dos maiores e mais vibrantes centros residenciais de Moçambique.
           </p>
