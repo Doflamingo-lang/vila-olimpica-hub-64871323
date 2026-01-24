@@ -7,6 +7,12 @@ import { useState, useEffect } from "react";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import EntrepreneurDetailsDialog from "@/components/EntrepreneurDetailsDialog";
 import { supabase } from "@/integrations/supabase/client";
+import empreendedor1 from "@/assets/empreendedor-1.jpg";
+import empreendedor2 from "@/assets/empreendedor-2.jpg";
+import empreendedor3 from "@/assets/empreendedor-3.jpg";
+import empreendedor4 from "@/assets/empreendedor-4.jpg";
+import empreendedor5 from "@/assets/empreendedor-5.jpg";
+import empreendedor6 from "@/assets/empreendedor-6.webp";
 
 interface MarketplaceService {
   id: string;
@@ -20,13 +26,102 @@ interface MarketplaceService {
   email: string;
   location: string | null;
   hours: string | null;
+  isExample?: boolean;
 }
+
+// Dados de exemplo para exibição inicial
+const exampleServices: MarketplaceService[] = [
+  {
+    id: "example-1",
+    owner_name: "Amina Mutemba",
+    business_name: "Vendedora de Produtos Frescos",
+    category: "Alimentação",
+    description: "Frutas e vegetais frescos diariamente. Apoie o comércio local!",
+    full_description: "Oferecemos uma variedade de frutas e vegetais frescos cultivados localmente. Entregas ao domicílio dentro do condomínio. Qualidade garantida todos os dias.",
+    image_url: empreendedor1,
+    phone: "+258 84 123 4567",
+    email: "amina.mutemba@gmail.com",
+    location: "Vila Olímpica - Zimpeto",
+    hours: "06:00 - 18:00",
+    isExample: true,
+  },
+  {
+    id: "example-2",
+    owner_name: "Carlos Mahumane",
+    business_name: "Mini-Mercado",
+    category: "Comércio",
+    description: "Produtos essenciais para o dia a dia, sempre à disposição.",
+    full_description: "Mini-mercado completo com produtos de primeira necessidade, bebidas, snacks e muito mais. Aberto todos os dias para sua conveniência.",
+    image_url: empreendedor2,
+    phone: "+258 82 234 5678",
+    email: "minimercado.carlos@outlook.com",
+    location: "Bloco 15 - Vila Olímpica",
+    hours: "07:00 - 22:00",
+    isExample: true,
+  },
+  {
+    id: "example-3",
+    owner_name: "Beatriz Nhachungue",
+    business_name: "Espaço de Coworking",
+    category: "Serviços",
+    description: "Ambiente profissional para trabalhar e realizar reuniões.",
+    full_description: "Espaço de trabalho compartilhado com internet de alta velocidade, salas de reunião e ambiente climatizado. Ideal para freelancers e pequenas equipas.",
+    image_url: empreendedor3,
+    phone: "+258 87 345 6789",
+    email: "beatriz.coworking@gmail.com",
+    location: "Vila Olímpica - Zona Central",
+    hours: "08:00 - 20:00",
+    isExample: true,
+  },
+  {
+    id: "example-4",
+    owner_name: "Nádia Cossa",
+    business_name: "Atelier de Moda",
+    category: "Moda",
+    description: "Criação e confecção de roupas sob medida e exclusivas.",
+    full_description: "Atelier especializado em moda africana contemporânea. Criamos peças únicas e sob medida para todas as ocasiões. Capulanas, vestidos, fatos e muito mais.",
+    image_url: empreendedor4,
+    phone: "+258 85 456 7890",
+    email: "nadia.atelier@gmail.com",
+    location: "Bloco 22 - Vila Olímpica",
+    hours: "09:00 - 18:00",
+    isExample: true,
+  },
+  {
+    id: "example-5",
+    owner_name: "José Machel",
+    business_name: "Transporte e Logística",
+    category: "Transporte",
+    description: "Serviços de transporte confiável e mudanças em Maputo.",
+    full_description: "Serviços de transporte de carga e mudanças em toda a região de Maputo. Veículos seguros e equipa profissional. Orçamento gratuito.",
+    image_url: empreendedor5,
+    phone: "+258 86 567 8901",
+    email: "jose.transporte@hotmail.com",
+    location: "Vila Olímpica - Zimpeto",
+    hours: "06:00 - 20:00",
+    isExample: true,
+  },
+  {
+    id: "example-6",
+    owner_name: "Fernando Sitoe",
+    business_name: "Produtos Agrícolas",
+    category: "Agricultura",
+    description: "Produtos frescos direto da machamba para sua mesa.",
+    full_description: "Produtos agrícolas frescos e orgânicos, cultivados com dedicação. Oferecemos entregas ao domicílio dentro do condomínio. Variedade de frutas, vegetais e legumes da época.",
+    image_url: empreendedor6,
+    phone: "+258 84 678 9012",
+    email: "fernando.agricultura@gmail.com",
+    location: "Vila Olímpica - Zimpeto, Maputo",
+    hours: "05:00 - 17:00",
+    isExample: true,
+  },
+];
 
 const MarketplacePage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
   const [selectedEntrepreneur, setSelectedEntrepreneur] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [services, setServices] = useState<MarketplaceService[]>([]);
+  const [dbServices, setDbServices] = useState<MarketplaceService[]>([]);
   const [loading, setLoading] = useState(true);
 
   const categories = [
@@ -52,7 +147,7 @@ const MarketplacePage = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setServices(data || []);
+      setDbServices(data || []);
     } catch (error) {
       console.error('Error fetching services:', error);
     } finally {
@@ -60,9 +155,12 @@ const MarketplacePage = () => {
     }
   };
 
+  // Combinar serviços do banco de dados com exemplos
+  const allServices = [...dbServices, ...exampleServices];
+
   const filteredServices = selectedCategory === "Todos"
-    ? services
-    : services.filter((s) => s.category === selectedCategory);
+    ? allServices
+    : allServices.filter((s) => s.category === selectedCategory);
 
   const handleViewDetails = (service: MarketplaceService) => {
     setSelectedEntrepreneur({
