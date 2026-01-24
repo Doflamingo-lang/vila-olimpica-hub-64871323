@@ -33,17 +33,19 @@ const About = () => {
       
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
-        <div className="max-w-3xl mx-auto text-center mb-16">
+        <div className="max-w-4xl mx-auto text-center mb-16">
           <span className="inline-block px-4 py-1.5 bg-accent/10 border border-accent/20 rounded-full text-accent text-sm font-semibold mb-4">
             Sobre Nós
           </span>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
             Condomínio{" "}
             <span className="text-primary">Vila Olímpica</span>
+            {" "}do Zimpeto
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-            Localizado no Bairro do Zimpeto, Maputo. Um espaço pensado para o bem-estar, 
-            segurança e qualidade de vida das famílias moçambicanas.
+            Nascido em 2011 como projecto estratégico do Fundo para o Fomento de Habitação (FFH) 
+            para os X Jogos Africanos. Hoje, uma comunidade vibrante onde residem milhares de 
+            moradores em busca de um estilo de vida moderno e seguro.
           </p>
         </div>
 
