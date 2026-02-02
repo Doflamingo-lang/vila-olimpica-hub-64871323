@@ -1,4 +1,4 @@
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,10 @@ import { z } from "zod";
 const emailSchema = z.string().email("Email inválido");
 const passwordSchema = z.string().min(6, "A senha deve ter pelo menos 6 caracteres");
 
+type AuthView = "login" | "signup" | "forgot-password" | "email-sent" | "password-reset-sent";
+
 const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [view, setView] = useState<AuthView>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -51,13 +53,15 @@ const AuthPage = () => {
       newErrors.email = emailResult.error.errors[0].message;
     }
 
-    const passwordResult = passwordSchema.safeParse(password);
-    if (!passwordResult.success) {
-      newErrors.password = passwordResult.error.errors[0].message;
-    }
+    if (view !== "forgot-password") {
+      const passwordResult = passwordSchema.safeParse(password);
+      if (!passwordResult.success) {
+        newErrors.password = passwordResult.error.errors[0].message;
+      }
 
-    if (!isLogin && password !== confirmPassword) {
-      newErrors.confirmPassword = "As senhas não coincidem";
+      if (view === "signup" && password !== confirmPassword) {
+        newErrors.confirmPassword = "As senhas não coincidem";
+      }
     }
 
     setErrors(newErrors);
@@ -72,14 +76,20 @@ const AuthPage = () => {
     setIsLoading(true);
 
     try {
-      if (isLogin) {
+      if (view === "login") {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
         });
         
         if (error) {
-          if (error.message.includes("Invalid login credentials")) {
+          if (error.message.includes("Email not confirmed")) {
+            toast({
+              title: "Email não verificado",
+              description: "Por favor, verifique seu email antes de fazer login.",
+              variant: "destructive",
+            });
+          } else if (error.message.includes("Invalid login credentials")) {
             toast({
               title: "Erro de Login",
               description: "Email ou senha incorretos. Verifique suas credenciais.",
@@ -98,7 +108,7 @@ const AuthPage = () => {
             description: "Login realizado com sucesso.",
           });
         }
-      } else {
+      } else if (view === "signup") {
         const { error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
@@ -122,10 +132,21 @@ const AuthPage = () => {
             });
           }
         } else {
+          setView("email-sent");
+        }
+      } else if (view === "forgot-password") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${window.location.origin}/auth`,
+        });
+        
+        if (error) {
           toast({
-            title: "Cadastro realizado!",
-            description: "Sua conta foi criada com sucesso. Você será redirecionado.",
+            title: "Erro",
+            description: error.message,
+            variant: "destructive",
           });
+        } else {
+          setView("password-reset-sent");
         }
       }
     } catch (error) {
@@ -138,6 +159,275 @@ const AuthPage = () => {
       setIsLoading(false);
     }
   };
+
+  const resetForm = () => {
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setErrors({});
+  };
+
+  const renderEmailSentView = () => (
+    <div className="text-center py-8">
+      <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+        <CheckCircle className="w-10 h-10 text-primary" />
+      </div>
+      <h2 className="text-2xl font-bold text-foreground mb-4">Verifique seu Email</h2>
+      <p className="text-muted-foreground mb-6">
+        Enviamos um link de verificação para <strong className="text-foreground">{email}</strong>. 
+        Por favor, verifique sua caixa de entrada e clique no link para ativar sua conta.
+      </p>
+      <div className="bg-muted/50 rounded-lg p-4 mb-6">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5" />
+          <p className="text-sm text-muted-foreground text-left">
+            Se não encontrar o email, verifique sua pasta de spam ou lixo eletrônico.
+          </p>
+        </div>
+      </div>
+      <Button
+        variant="outline"
+        onClick={() => {
+          resetForm();
+          setView("login");
+        }}
+        className="w-full"
+      >
+        Voltar ao Login
+      </Button>
+    </div>
+  );
+
+  const renderPasswordResetSentView = () => (
+    <div className="text-center py-8">
+      <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+        <Mail className="w-10 h-10 text-primary" />
+      </div>
+      <h2 className="text-2xl font-bold text-foreground mb-4">Email Enviado</h2>
+      <p className="text-muted-foreground mb-6">
+        Enviamos instruções para redefinir sua senha para <strong className="text-foreground">{email}</strong>.
+      </p>
+      <div className="bg-muted/50 rounded-lg p-4 mb-6">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5" />
+          <p className="text-sm text-muted-foreground text-left">
+            Se não encontrar o email, verifique sua pasta de spam ou lixo eletrônico.
+          </p>
+        </div>
+      </div>
+      <Button
+        variant="outline"
+        onClick={() => {
+          resetForm();
+          setView("login");
+        }}
+        className="w-full"
+      >
+        Voltar ao Login
+      </Button>
+    </div>
+  );
+
+  const renderForgotPasswordView = () => (
+    <>
+      <div className="text-center mb-8">
+        <img 
+          src={logoVilaOlimpica} 
+          alt="Logo Vila Olímpica" 
+          className="w-20 h-20 object-contain mx-auto mb-4"
+        />
+        <h1 className="text-2xl font-bold text-foreground">Recuperar Senha</h1>
+        <p className="text-muted-foreground mt-2">
+          Digite seu email para receber as instruções
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+            Email
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={`pl-10 ${errors.email ? 'border-destructive' : ''}`}
+              disabled={isLoading}
+              required
+            />
+          </div>
+          {errors.email && (
+            <p className="text-sm text-destructive mt-1">{errors.email}</p>
+          )}
+        </div>
+
+        <Button type="submit" variant="hero" size="lg" className="w-full" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Enviando...
+            </>
+          ) : (
+            "Enviar Email de Recuperação"
+          )}
+        </Button>
+      </form>
+
+      <div className="mt-6 text-center">
+        <button
+          type="button"
+          onClick={() => {
+            resetForm();
+            setView("login");
+          }}
+          className="text-primary font-semibold hover:underline"
+        >
+          Voltar ao Login
+        </button>
+      </div>
+    </>
+  );
+
+  const renderLoginSignupView = () => (
+    <>
+      <div className="text-center mb-8">
+        <img 
+          src={logoVilaOlimpica} 
+          alt="Logo Vila Olímpica" 
+          className="w-20 h-20 object-contain mx-auto mb-4"
+        />
+        <h1 className="text-2xl font-bold text-foreground">
+          {view === "login" ? "Área do Morador" : "Criar Conta"}
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          {view === "login" ? "Faça login para acessar sua área" : "Cadastre-se para acessar os serviços"}
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+            Email
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={`pl-10 ${errors.email ? 'border-destructive' : ''}`}
+              disabled={isLoading}
+              required
+            />
+          </div>
+          {errors.email && (
+            <p className="text-sm text-destructive mt-1">{errors.email}</p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
+            Senha
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={`pl-10 pr-10 ${errors.password ? 'border-destructive' : ''}`}
+              disabled={isLoading}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
+          {errors.password && (
+            <p className="text-sm text-destructive mt-1">{errors.password}</p>
+          )}
+        </div>
+
+        {view === "signup" && (
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-2">
+              Confirmar Senha
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                id="confirmPassword"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={`pl-10 ${errors.confirmPassword ? 'border-destructive' : ''}`}
+                disabled={isLoading}
+                required
+              />
+            </div>
+            {errors.confirmPassword && (
+              <p className="text-sm text-destructive mt-1">{errors.confirmPassword}</p>
+            )}
+          </div>
+        )}
+
+        {view === "login" && (
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => {
+                setErrors({});
+                setView("forgot-password");
+              }}
+              className="text-sm text-primary hover:underline"
+            >
+              Esqueceu sua senha?
+            </button>
+          </div>
+        )}
+
+        <Button type="submit" variant="hero" size="lg" className="w-full" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              {view === "login" ? "Entrando..." : "Cadastrando..."}
+            </>
+          ) : (
+            view === "login" ? "Entrar" : "Cadastrar"
+          )}
+        </Button>
+      </form>
+
+      <div className="mt-6 text-center">
+        <p className="text-muted-foreground">
+          {view === "login" ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
+          <button
+            type="button"
+            onClick={() => {
+              setView(view === "login" ? "signup" : "login");
+              setErrors({});
+            }}
+            className="text-primary font-semibold hover:underline"
+          >
+            {view === "login" ? "Cadastre-se" : "Fazer Login"}
+          </button>
+        </p>
+      </div>
+    </>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex flex-col">
@@ -170,123 +460,10 @@ const AuthPage = () => {
       <main className="flex-1 flex items-center justify-center pt-24 pb-12 px-4">
         <div className="w-full max-w-md">
           <div className="bg-card rounded-2xl border border-border p-8 shadow-elegant">
-            <div className="text-center mb-8">
-              <img 
-                src={logoVilaOlimpica} 
-                alt="Logo Vila Olímpica" 
-                className="w-20 h-20 object-contain mx-auto mb-4"
-              />
-              <h1 className="text-2xl font-bold text-foreground">
-                {isLogin ? "Área do Morador" : "Criar Conta"}
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                {isLogin ? "Faça login para acessar sua área" : "Cadastre-se para acessar os serviços"}
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={`pl-10 ${errors.email ? 'border-destructive' : ''}`}
-                    disabled={isLoading}
-                    required
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-sm text-destructive mt-1">{errors.email}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
-                  Senha
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className={`pl-10 pr-10 ${errors.password ? 'border-destructive' : ''}`}
-                    disabled={isLoading}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="text-sm text-destructive mt-1">{errors.password}</p>
-                )}
-              </div>
-
-              {!isLogin && (
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-2">
-                    Confirmar Senha
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="confirmPassword"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className={`pl-10 ${errors.confirmPassword ? 'border-destructive' : ''}`}
-                      disabled={isLoading}
-                      required
-                    />
-                  </div>
-                  {errors.confirmPassword && (
-                    <p className="text-sm text-destructive mt-1">{errors.confirmPassword}</p>
-                  )}
-                </div>
-              )}
-
-              <Button type="submit" variant="hero" size="lg" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {isLogin ? "Entrando..." : "Cadastrando..."}
-                  </>
-                ) : (
-                  isLogin ? "Entrar" : "Cadastrar"
-                )}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-muted-foreground">
-                {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLogin(!isLogin);
-                    setErrors({});
-                  }}
-                  className="text-primary font-semibold hover:underline"
-                >
-                  {isLogin ? "Cadastre-se" : "Fazer Login"}
-                </button>
-              </p>
-            </div>
+            {view === "email-sent" && renderEmailSentView()}
+            {view === "password-reset-sent" && renderPasswordResetSentView()}
+            {view === "forgot-password" && renderForgotPasswordView()}
+            {(view === "login" || view === "signup") && renderLoginSignupView()}
           </div>
         </div>
       </main>
