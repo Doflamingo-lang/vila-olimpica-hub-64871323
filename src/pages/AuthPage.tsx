@@ -136,7 +136,7 @@ const AuthPage = () => {
         }
       } else if (view === "forgot-password") {
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: `${window.location.origin}/reset-password`,
         });
         
         if (error) {
