@@ -48,7 +48,6 @@ interface Property {
   features: string[] | null;
   image_url: string | null;
   is_featured: boolean;
-  isExample?: boolean;
 }
 
 const PROPERTY_TYPES = [
@@ -71,64 +70,6 @@ const TRANSACTION_TYPES = [
 const WHATSAPP_NUMBER = "258842814557";
 
 const fallbackImages = [imovel1, imovel2, imovel3, imovel4];
-
-// Dados de exemplo para exibição inicial
-const exampleProperties: Property[] = [
-  {
-    id: "example-1",
-    title: "Apartamento T3 - Bloco A",
-    description: "Apartamento espaçoso com acabamentos de qualidade. Vista privilegiada para o Estádio Nacional do Zimpeto.",
-    property_type: "apartment",
-    transaction_type: "sale",
-    price: 12500000,
-    area: 120,
-    bedrooms: 3,
-    bathrooms: 2,
-    parking_spots: 1,
-    neighborhood: "Vila Olímpica",
-    city: "Maputo",
-    features: ["Varanda", "Ar Condicionado", "Portaria 24h"],
-    image_url: imovel1,
-    is_featured: true,
-    isExample: true,
-  },
-  {
-    id: "example-2",
-    title: "Apartamento T2 - Bloco B",
-    description: "Ideal para jovens casais. Ambiente acolhedor e bem localizado dentro do condomínio.",
-    property_type: "apartment",
-    transaction_type: "rent",
-    price: 45000,
-    area: 85,
-    bedrooms: 2,
-    bathrooms: 1,
-    parking_spots: 1,
-    neighborhood: "Vila Olímpica",
-    city: "Maputo",
-    features: ["Varanda", "Elevador"],
-    image_url: imovel2,
-    is_featured: false,
-    isExample: true,
-  },
-  {
-    id: "example-3",
-    title: "Apartamento T4 - Vila Premium",
-    description: "O maior apartamento disponível. Perfeito para famílias grandes que buscam conforto e espaço.",
-    property_type: "apartment",
-    transaction_type: "sale",
-    price: 18000000,
-    area: 200,
-    bedrooms: 4,
-    bathrooms: 3,
-    parking_spots: 2,
-    neighborhood: "Vila Olímpica - Zona Premium",
-    city: "Maputo",
-    features: ["Piscina", "Academia", "Churrasqueira", "Varanda", "Ar Condicionado", "Portaria 24h", "Elevador"],
-    image_url: imovel3,
-    is_featured: true,
-    isExample: true,
-  },
-];
 
 const PropertiesPage = () => {
   const [dbProperties, setDbProperties] = useState<Property[]>([]);
@@ -174,8 +115,7 @@ const PropertiesPage = () => {
     setIsLoading(false);
   };
 
-  // Combinar imóveis do banco de dados com exemplos
-  const allProperties = [...dbProperties, ...exampleProperties];
+  const allProperties = dbProperties;
 
   const filteredProperties = allProperties.filter((property) => {
     const matchesSearch =
@@ -214,9 +154,9 @@ const PropertiesPage = () => {
 
   const formatPrice = (price: number | null) => {
     if (!price) return "Consulte";
-    return new Intl.NumberFormat("pt-BR", {
+    return new Intl.NumberFormat("pt-MZ", {
       style: "currency",
-      currency: "BRL",
+      currency: "MZN",
       maximumFractionDigits: 0,
     }).format(price);
   };

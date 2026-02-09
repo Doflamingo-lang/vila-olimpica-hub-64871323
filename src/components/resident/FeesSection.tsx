@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import PaymentDialog from "./PaymentDialog";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,8 @@ const FeesSection = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFee, setSelectedFee] = useState<Fee | null>(null);
   const [showAllFees, setShowAllFees] = useState(false);
+  const [paymentFee, setPaymentFee] = useState<Fee | null>(null);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -98,9 +101,9 @@ const FeesSection = () => {
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    return new Intl.NumberFormat("pt-MZ", {
       style: "currency",
-      currency: "BRL",
+      currency: "MZN",
     }).format(value);
   };
 
@@ -257,13 +260,26 @@ const FeesSection = () => {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setSelectedFee(fee)}
-                          >
-                            Detalhes
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setSelectedFee(fee)}
+                            >
+                              Detalhes
+                            </Button>
+                            {fee.status !== "paid" && (
+                              <Button 
+                                size="sm"
+                                onClick={() => {
+                                  setPaymentFee(fee);
+                                  setPaymentDialogOpen(true);
+                                }}
+                              >
+                                Pagar
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -347,17 +363,29 @@ const FeesSection = () => {
                 )}
 
                 {selectedFee.status !== "paid" && (
-                  <div className="bg-muted p-4 rounded-lg mt-4">
-                    <p className="text-sm text-muted-foreground">
-                      Para realizar o pagamento, entre em contato com a administração do condomínio ou utilize os canais de pagamento disponíveis.
-                    </p>
-                  </div>
+                  <Button 
+                    className="w-full mt-4"
+                    onClick={() => {
+                      setPaymentFee(selectedFee);
+                      setPaymentDialogOpen(true);
+                      setSelectedFee(null);
+                    }}
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Pagar Agora
+                  </Button>
                 )}
               </div>
             </>
           )}
         </DialogContent>
       </Dialog>
+      <PaymentDialog
+        fee={paymentFee}
+        open={paymentDialogOpen}
+        onOpenChange={setPaymentDialogOpen}
+        onPaymentSuccess={fetchFees}
+      />
     </>
   );
 };
