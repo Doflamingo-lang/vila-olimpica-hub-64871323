@@ -22,6 +22,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Fee {
   id: string;
@@ -142,6 +146,21 @@ const StepIndicator = ({ step }: { step: Step }) => {
   );
 };
 
+const MONTH_NAMES_FULL: Record<string, string> = {
+  "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
+  "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
+  "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro",
+};
+
+const getPaymentMethodLabel = (method: PaymentMethod) => {
+  switch (method) {
+    case "mpesa": return "M-Pesa";
+    case "emola": return "e-Mola";
+    case "card": return "Cartão Bancário";
+    default: return "—";
+  }
+};
+
 const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDialogProps) => {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(null);
   const [step, setStep] = useState<Step>("method");
@@ -152,6 +171,7 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
   const [cardName, setCardName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const resetState = () => {
     setSelectedMethod(null);
@@ -194,17 +214,50 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
     setStep("processing");
     setIsProcessing(true);
 
-    // Simulate payment — replace with real edge function call
+    // Simulate payment processing
     await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    // Update the fee status in the database
+    const now = new Date().toISOString();
+    const { error: updateError } = await supabase
+      .from("condominium_fees")
+      .update({
+        status: "paid",
+        paid_at: now,
+        payment_method: selectedMethod,
+      })
+      .eq("id", fee.id);
+
+    if (updateError) {
+      console.error("Error updating fee:", updateError);
+      setIsProcessing(false);
+      setStep("method");
+      toast({ title: "Erro no pagamento", description: "Não foi possível processar o pagamento. Tente novamente.", variant: "destructive" });
+      return;
+    }
 
     setIsProcessing(false);
     setStep("success");
 
+    // Send email notification (fire-and-forget)
+    const paidDate = format(new Date(now), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR });
+    supabase.functions.invoke("send-payment-notification", {
+      body: {
+        email: user?.email || "",
+        referenceMonth: MONTH_NAMES_FULL[fee.reference_month] || fee.reference_month,
+        referenceYear: fee.reference_year,
+        amount: Number(fee.amount),
+        paymentMethod: getPaymentMethodLabel(selectedMethod),
+        paidAt: paidDate,
+        receiptId: fee.id,
+      },
+    }).catch((err) => console.error("Email notification error:", err));
+
     toast({
-      title: "Pagamento iniciado!",
+      title: "Pagamento processado!",
       description: selectedMethod === "card"
-        ? "O pagamento foi processado com sucesso."
-        : `Confirme o pagamento no seu ${selectedMethod === "mpesa" ? "M-Pesa" : "e-Mola"}.`,
+        ? "O pagamento foi processado com sucesso. Receberá um email de confirmação."
+        : `Pagamento via ${selectedMethod === "mpesa" ? "M-Pesa" : "e-Mola"} processado. Receberá um email de confirmação.`,
     });
 
     setTimeout(() => {
