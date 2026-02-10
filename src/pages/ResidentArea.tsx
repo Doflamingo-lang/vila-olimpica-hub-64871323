@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import NoticesSection from "@/components/resident/NoticesSection";
 import FeesSection from "@/components/resident/FeesSection";
+import TransactionHistory from "@/components/resident/TransactionHistory";
 
 const ResidentArea = () => {
   const { user, session, isAdmin, isLoading, signOut } = useAuth();
@@ -160,10 +161,11 @@ const ResidentArea = () => {
 
         {/* Tabs Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-3 w-full max-w-md">
+          <TabsList className="grid grid-cols-4 w-full max-w-lg">
             <TabsTrigger value="overview">Resumo</TabsTrigger>
             <TabsTrigger value="notices">Avisos</TabsTrigger>
             <TabsTrigger value="fees">Pagamentos</TabsTrigger>
+            <TabsTrigger value="history">Transações</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -247,6 +249,10 @@ const ResidentArea = () => {
 
           <TabsContent value="fees">
             <FeesSection />
+          </TabsContent>
+
+          <TabsContent value="history">
+            <TransactionHistory />
           </TabsContent>
         </Tabs>
       </div>
