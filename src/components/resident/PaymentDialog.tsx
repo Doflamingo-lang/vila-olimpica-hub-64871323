@@ -243,7 +243,6 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
     const paidDate = format(new Date(now), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR });
     supabase.functions.invoke("send-payment-notification", {
       body: {
-        email: user?.email || "",
         referenceMonth: MONTH_NAMES_FULL[fee.reference_month] || fee.reference_month,
         referenceYear: fee.reference_year,
         amount: Number(fee.amount),

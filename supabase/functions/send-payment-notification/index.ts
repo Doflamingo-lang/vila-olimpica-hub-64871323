@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -10,7 +11,6 @@ const corsHeaders = {
 };
 
 interface PaymentNotificationRequest {
-  email: string;
   referenceMonth: string;
   referenceYear: number;
   amount: number;
@@ -28,16 +28,62 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const body: PaymentNotificationRequest = await req.json();
-    const { email, referenceMonth, referenceYear, amount, paymentMethod, paidAt, receiptId } = body;
+    // Authenticate the user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
-    if (!email || !referenceMonth || !referenceYear || !amount) {
-      throw new Error("Missing required fields");
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const userId = claimsData.claims.sub;
+    const userEmail = claimsData.claims.email;
+
+    const body: PaymentNotificationRequest = await req.json();
+    const { referenceMonth, referenceYear, amount, paymentMethod, paidAt, receiptId } = body;
+
+    if (!referenceMonth || !referenceYear || !amount || !receiptId) {
+      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Verify the payment actually exists and belongs to this user
+    const { data: feeData, error: feeError } = await supabase
+      .from("condominium_fees")
+      .select("id, user_id, status")
+      .eq("id", receiptId)
+      .eq("user_id", userId)
+      .eq("status", "paid")
+      .maybeSingle();
+
+    if (feeError || !feeData) {
+      return new Response(JSON.stringify({ error: "Payment not found or not authorized" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     const emailResponse = await resend.emails.send({
       from: "Vila Olímpica <noreply@vilaolimp.co.mz>",
-      to: [email],
+      to: [userEmail as string],
       subject: `Pagamento Confirmado — Taxa ${referenceMonth}/${referenceYear}`,
       html: `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
@@ -100,7 +146,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error sending payment notification:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
