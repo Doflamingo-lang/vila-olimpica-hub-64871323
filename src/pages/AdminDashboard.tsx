@@ -16,7 +16,8 @@ import {
   Building,
   Megaphone,
   Receipt,
-  UserPlus
+  UserPlus,
+  Shield
 } from "lucide-react";
 import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 import NewsManagement from "@/components/admin/NewsManagement";
@@ -26,6 +27,7 @@ import PropertiesManagement from "@/components/admin/PropertiesManagement";
 import NoticesManagement from "@/components/admin/NoticesManagement";
 import FeesManagement from "@/components/admin/FeesManagement";
 import AccessRequestsManagement from "@/components/admin/AccessRequestsManagement";
+import AdminsManagement from "@/components/admin/AdminsManagement";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
@@ -290,6 +292,7 @@ const AdminDashboard = () => {
     { icon: FileText, label: "Documentos", section: "documents" },
     { icon: Download, label: "Estatísticas", section: "downloads" },
     { icon: UserPlus, label: "Pedidos Acesso", section: "access-requests" },
+    { icon: Shield, label: "Administradores", section: "admins" },
   ];
 
   if (authLoading || isLoading) {
@@ -763,6 +766,10 @@ const AdminDashboard = () => {
           {/* Access Requests Section */}
           {activeSection === "access-requests" && (
             <AccessRequestsManagement />
+          )}
+          {/* Admins Section */}
+          {activeSection === "admins" && (
+            <AdminsManagement />
           )}
         </div>
       </main>
