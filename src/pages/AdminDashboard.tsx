@@ -34,8 +34,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import EnrollMFA from "@/components/mfa/EnrollMFA";
-import VerifyMFA from "@/components/mfa/VerifyMFA";
 import { cn } from "@/lib/utils";
 import {
   Table,
@@ -112,36 +110,9 @@ const AdminDashboard = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [serviceFilter, setServiceFilter] = useState<string>("all");
   const [activeSection, setActiveSection] = useState<string>("dashboard");
-  const [mfaStatus, setMfaStatus] = useState<"loading" | "needs-enroll" | "needs-verify" | "verified">("loading");
   
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Check MFA status for admins
-  useEffect(() => {
-    if (!authLoading && session && isAdmin) {
-      checkAdminMFA();
-    }
-  }, [authLoading, session, isAdmin]);
-
-  const checkAdminMFA = async () => {
-    setMfaStatus("loading");
-    const { data: factorsData } = await supabase.auth.mfa.listFactors();
-    const hasVerifiedFactor = factorsData?.totp?.some((f) => f.status === "verified");
-    
-    if (!hasVerifiedFactor) {
-      setMfaStatus("needs-enroll");
-      return;
-    }
-
-    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (aalData?.currentLevel !== "aal2") {
-      setMfaStatus("needs-verify");
-      return;
-    }
-
-    setMfaStatus("verified");
-  };
 
   useEffect(() => {
     if (!authLoading) {
@@ -154,11 +125,11 @@ const AdminDashboard = () => {
           variant: "destructive",
         });
         navigate("/area-morador");
-      } else if (mfaStatus === "verified") {
+      } else {
         fetchData();
       }
     }
-  }, [authLoading, session, isAdmin, navigate, mfaStatus]);
+  }, [authLoading, session, isAdmin, navigate]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -321,7 +292,7 @@ const AdminDashboard = () => {
     { icon: UserPlus, label: "Pedidos Acesso", section: "access-requests" },
   ];
 
-  if (authLoading || (isLoading && mfaStatus === "verified")) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -331,51 +302,6 @@ const AdminDashboard = () => {
 
   if (!isAdmin) {
     return null;
-  }
-
-  // MFA enforcement for admins
-  if (mfaStatus === "loading") {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (mfaStatus === "needs-enroll") {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="w-full max-w-lg space-y-6">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-foreground">2FA Obrigatório para Administradores</h1>
-            <p className="text-muted-foreground mt-2">
-              Para acessar o painel administrativo, é necessário ativar a verificação de dois fatores.
-            </p>
-          </div>
-          <EnrollMFA
-            onEnrolled={() => checkAdminMFA()}
-            onCancelled={async () => {
-              await signOut();
-              navigate("/");
-            }}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (mfaStatus === "needs-verify") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex items-center justify-center px-4">
-        <VerifyMFA
-          onVerified={() => setMfaStatus("verified")}
-          onCancel={async () => {
-            await signOut();
-            navigate("/");
-          }}
-        />
-      </div>
-    );
   }
 
   return (
