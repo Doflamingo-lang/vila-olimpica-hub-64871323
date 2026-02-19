@@ -4,11 +4,6 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import mussagyJumaImage from "@/assets/mussagy-juma.jpg";
-import equipe1 from "@/assets/equipe-1.jpg";
-import equipe2 from "@/assets/equipe-2.jpg";
-import equipe3 from "@/assets/equipe-3.jpg";
-import equipe4 from "@/assets/equipe-4.jpg";
-import equipe5 from "@/assets/equipe-5.jpg";
 
 const AdministrationPage = () => {
   const timeline = [
@@ -36,49 +31,6 @@ const AdministrationPage = () => {
       year: "2027",
       title: "Horizonte",
       description: "Meta de consolidar a Vila como modelo de sustentabilidade em Moçambique.",
-    },
-  ];
-
-  const teamMembers = [
-    {
-      role: "Vice-Presidente",
-      name: "Maria Santos",
-      department: "Administração",
-      image: equipe1,
-      bio: "Responsável pela gestão administrativa e coordenação das atividades do condomínio.",
-      email: "vice.presidente@vilaolimpica.co.mz",
-    },
-    {
-      role: "Tesoureiro",
-      name: "Carlos Machava",
-      department: "Finanças",
-      image: equipe2,
-      bio: "Gerencia as finanças do condomínio, incluindo orçamentos e relatórios financeiros.",
-      email: "tesouraria@vilaolimpica.co.mz",
-    },
-    {
-      role: "Secretária",
-      name: "Ana Sitoe",
-      department: "Comunicação",
-      image: equipe3,
-      bio: "Coordena a comunicação interna e externa, organizando reuniões e eventos.",
-      email: "secretaria@vilaolimpica.co.mz",
-    },
-    {
-      role: "Conselheiro",
-      name: "Pedro Langa",
-      department: "Infraestrutura",
-      image: equipe4,
-      bio: "Supervisiona a manutenção das instalações e projectos de melhoria.",
-      email: "infraestrutura@vilaolimpica.co.mz",
-    },
-    {
-      role: "Conselheira",
-      name: "Fátima Nhaca",
-      department: "Eventos e Comunidade",
-      image: equipe5,
-      bio: "Organiza eventos comunitários e promove a integração entre moradores.",
-      email: "comunidade@vilaolimpica.co.mz",
     },
   ];
 
@@ -284,62 +236,6 @@ const AdministrationPage = () => {
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Team Section */}
-        <section className="py-20 bg-secondary/50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-accent/15 rounded-full mb-4">
-                <Users className="w-4 h-4 text-accent" />
-                <span className="text-accent text-sm font-semibold">Equipe de Trabalho</span>
-              </div>
-              <h2 className="text-4xl font-bold text-foreground mb-4">
-                Conselho Administrativo
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Profissionais dedicados que trabalham juntos para garantir o melhor funcionamento do condomínio.
-              </p>
-            </div>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {teamMembers.map((member, index) => (
-                <div
-                  key={index}
-                  className="bg-card border border-border rounded-2xl overflow-hidden hover:shadow-elegant transition-all group"
-                >
-                  <div className="h-64 overflow-hidden">
-                    <img
-                      src={member.image}
-                      alt={member.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
-                  <div className="p-6">
-                    <span className="text-xs font-semibold text-accent uppercase tracking-wider">
-                      {member.role}
-                    </span>
-                    <h3 className="text-xl font-bold text-foreground mt-1 mb-1">
-                      {member.name}
-                    </h3>
-                    <p className="text-sm text-primary font-medium mb-3">
-                      {member.department}
-                    </p>
-                    <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                      {member.bio}
-                    </p>
-                    <a
-                      href={`mailto:${member.email}`}
-                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                    >
-                      <Mail className="w-4 h-4" />
-                      {member.email}
-                    </a>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </section>

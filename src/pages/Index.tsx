@@ -5,7 +5,7 @@ import Leadership from "@/components/Leadership";
 import Properties from "@/components/Properties";
 import Entrepreneurs from "@/components/Entrepreneurs";
 import News from "@/components/News";
-import Archive from "@/components/Archive";
+
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -20,7 +20,7 @@ const Index = () => {
       <Properties />
       <Entrepreneurs />
       <News />
-      <Archive />
+      
       <Contact />
       <Footer />
       <WhatsAppButton />
