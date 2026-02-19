@@ -432,7 +432,7 @@ const AuthPage = () => {
         </Button>
       </form>
 
-      <div className="mt-6 text-center">
+      <div className="mt-6 text-center space-y-3">
         <p className="text-muted-foreground">
           {view === "login" ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
           <button
@@ -446,6 +446,14 @@ const AuthPage = () => {
             {view === "login" ? "Cadastre-se" : "Fazer Login"}
           </button>
         </p>
+        <div className="border-t border-border pt-3">
+          <p className="text-sm text-muted-foreground">
+            Ainda não é morador registado?{" "}
+            <Link to="/pedido-acesso" className="text-primary font-semibold hover:underline">
+              Solicitar acesso
+            </Link>
+          </p>
+        </div>
       </div>
     </>
   );
