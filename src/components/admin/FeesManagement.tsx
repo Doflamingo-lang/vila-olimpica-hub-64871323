@@ -133,6 +133,32 @@ const FeesManagement = () => {
     setSendToAll(false);
   };
 
+  const sendFeeNotification = async (
+    emails: string[],
+    feeData: { reference_month: string; reference_year: number; amount: number; due_date: string }
+  ) => {
+    try {
+      const { error } = await supabase.functions.invoke("send-fee-notification", {
+        body: {
+          emails,
+          referenceMonth: feeData.reference_month,
+          referenceYear: feeData.reference_year,
+          amount: feeData.amount,
+          dueDate: feeData.due_date,
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Notificação", description: `Email enviado para ${emails.length} morador(es).` });
+    } catch (err) {
+      console.error("Error sending fee notification:", err);
+      toast({
+        title: "Aviso",
+        description: "Taxa criada, mas não foi possível enviar a notificação por email.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getResidentEmail = (userId: string) => {
     const resident = residents.find((r) => r.id === userId);
     return resident?.email || userId.slice(0, 8) + "...";
@@ -210,6 +236,9 @@ const FeesManagement = () => {
           title: "Sucesso",
           description: `Taxa enviada para ${feesToInsert.length} moradores.`,
         });
+        // Send email notifications to all residents
+        const emails = residents.map((r) => r.email);
+        sendFeeNotification(emails, baseFeeData);
         setIsDialogOpen(false);
         resetForm();
         fetchFees();
@@ -225,6 +254,11 @@ const FeesManagement = () => {
         toast({ title: "Erro", description: "Não foi possível criar a taxa.", variant: "destructive" });
       } else {
         toast({ title: "Sucesso", description: "Taxa cadastrada com sucesso." });
+        // Send email notification to the specific resident
+        const resident = residents.find((r) => r.id === formData.user_id);
+        if (resident) {
+          sendFeeNotification([resident.email], baseFeeData);
+        }
         setIsDialogOpen(false);
         resetForm();
         fetchFees();
