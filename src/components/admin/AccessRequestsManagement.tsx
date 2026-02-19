@@ -1,0 +1,238 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { Check, X, UserPlus, Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface AccessRequest {
+  id: string;
+  full_name: string;
+  block: string;
+  building: string;
+  apartment: string;
+  resident_type: string;
+  phone: string;
+  email: string;
+  status: string;
+  created_at: string;
+}
+
+const AccessRequestsManagement = () => {
+  const [requests, setRequests] = useState<AccessRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState<string>("all");
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  const fetchRequests = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from("access_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching access requests:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os pedidos de acesso.",
+        variant: "destructive",
+      });
+    } else {
+      setRequests(data || []);
+    }
+    setIsLoading(false);
+  };
+
+  const handleUpdateStatus = async (id: string, newStatus: string) => {
+    const { error } = await supabase
+      .from("access_requests")
+      .update({ status: newStatus })
+      .eq("id", id);
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Sucesso",
+        description: newStatus === "approved" ? "Pedido aprovado!" : "Pedido rejeitado.",
+      });
+      fetchRequests();
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase
+      .from("access_requests")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o pedido.",
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Sucesso", description: "Pedido excluído." });
+      fetchRequests();
+    }
+  };
+
+  const filteredRequests = filter === "all"
+    ? requests
+    : requests.filter((r) => r.status === filter);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Pedidos de Acesso</CardTitle>
+            <CardDescription>Aprove ou rejeite pedidos de novos moradores</CardDescription>
+          </div>
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filtrar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="pending">Pendentes</SelectItem>
+              <SelectItem value="approved">Aprovados</SelectItem>
+              <SelectItem value="rejected">Rejeitados</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {filteredRequests.length === 0 ? (
+          <div className="text-center py-12">
+            <UserPlus className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Nenhum pedido de acesso encontrado.</p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Localização</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Contacto</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredRequests.map((request) => (
+                <TableRow key={request.id}>
+                  <TableCell className="font-medium">{request.full_name}</TableCell>
+                  <TableCell>
+                    <div className="text-xs">
+                      <p>Bloco {request.block} · Ed. {request.building}</p>
+                      <p className="text-muted-foreground">Apt. {request.apartment}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="px-2 py-1 bg-secondary rounded text-xs capitalize">
+                      {request.resident_type === "proprietario" ? "Proprietário" : "Inquilino"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-xs">
+                      <p>{request.phone}</p>
+                      <p className="text-muted-foreground">{request.email}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className={cn(
+                      "px-2 py-1 rounded-full text-xs font-medium",
+                      request.status === "approved"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : request.status === "rejected"
+                        ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                    )}>
+                      {request.status === "approved" ? "Aprovado" :
+                       request.status === "rejected" ? "Rejeitado" : "Pendente"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {format(new Date(request.created_at), "dd/MM/yyyy")}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {request.status === "pending" && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => handleUpdateStatus(request.id, "approved")}
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleUpdateStatus(request.id, "rejected")}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleDelete(request.id)}
+                      >
+                        <X className="w-4 h-4 text-muted-foreground" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default AccessRequestsManagement;
