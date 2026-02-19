@@ -7,12 +7,12 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
-import VerifyMFA from "@/components/mfa/VerifyMFA";
+
 
 const emailSchema = z.string().email("Email inválido");
 const passwordSchema = z.string().min(6, "A senha deve ter pelo menos 6 caracteres");
 
-type AuthView = "login" | "signup" | "forgot-password" | "email-sent" | "password-reset-sent" | "mfa-verify";
+type AuthView = "login" | "signup" | "forgot-password" | "email-sent" | "password-reset-sent";
 
 const AuthPage = () => {
   const [view, setView] = useState<AuthView>("login");
@@ -27,37 +27,22 @@ const AuthPage = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is already logged in
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Don't auto-redirect if we're in MFA verify mode
-        if (view === "mfa-verify") return;
-        
-        // Check if user has MFA but hasn't completed challenge
-        const { data: factorsData } = await supabase.auth.mfa.listFactors();
-        const hasVerifiedFactor = factorsData?.totp?.some((f) => f.status === "verified");
-        const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-        
-        if (hasVerifiedFactor && aal.data?.currentLevel !== "aal2") {
-          setView("mfa-verify");
-          return;
-        }
-        
         navigate("/area-morador");
       }
     };
     checkSession();
 
-    // Listen for auth state changes - only redirect if not in MFA flow
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session && view !== "mfa-verify") {
-        // Will be handled by checkSession or MFA flow
+      if (session) {
+        navigate("/area-morador");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, view]);
+  }, [navigate]);
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string; confirmPassword?: string } = {};
@@ -117,17 +102,11 @@ const AuthPage = () => {
             });
           }
         } else if (data?.session) {
-          // Check if user has MFA enrolled
-          const { data: factorsData } = await supabase.auth.mfa.listFactors();
-          const hasVerifiedFactor = factorsData?.totp?.some((f) => f.status === "verified");
-          if (hasVerifiedFactor) {
-            setView("mfa-verify");
-          } else {
-            toast({
-              title: "Bem-vindo!",
-              description: "Login realizado com sucesso.",
-            });
-          }
+          toast({
+            title: "Bem-vindo!",
+            description: "Login realizado com sucesso.",
+          });
+          navigate("/area-morador");
         }
       } else if (view === "signup") {
         const { error } = await supabase.auth.signUp({
@@ -487,31 +466,14 @@ const AuthPage = () => {
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center pt-24 pb-12 px-4">
-        {view === "mfa-verify" ? (
-          <VerifyMFA
-            onVerified={() => {
-              toast({
-                title: "Bem-vindo!",
-                description: "Verificação concluída com sucesso.",
-              });
-              navigate("/area-morador");
-            }}
-            onCancel={async () => {
-              await supabase.auth.signOut();
-              setView("login");
-              resetForm();
-            }}
-          />
-        ) : (
-          <div className="w-full max-w-md">
-            <div className="bg-card rounded-2xl border border-border p-8 shadow-elegant">
-              {view === "email-sent" && renderEmailSentView()}
-              {view === "password-reset-sent" && renderPasswordResetSentView()}
-              {view === "forgot-password" && renderForgotPasswordView()}
-              {(view === "login" || view === "signup") && renderLoginSignupView()}
-            </div>
+        <div className="w-full max-w-md">
+          <div className="bg-card rounded-2xl border border-border p-8 shadow-elegant">
+            {view === "email-sent" && renderEmailSentView()}
+            {view === "password-reset-sent" && renderPasswordResetSentView()}
+            {view === "forgot-password" && renderForgotPasswordView()}
+            {(view === "login" || view === "signup") && renderLoginSignupView()}
           </div>
-        )}
+        </div>
       </main>
     </div>
   );

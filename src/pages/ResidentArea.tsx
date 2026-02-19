@@ -13,7 +13,7 @@ import {
   MessageCircle,
   LogOut,
   Loader2,
-  Shield
+  Shield,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import NoticesSection from "@/components/resident/NoticesSection";
 import FeesSection from "@/components/resident/FeesSection";
 import TransactionHistory from "@/components/resident/TransactionHistory";
-import MFASettings from "@/components/mfa/MFASettings";
+
 
 const ResidentArea = () => {
   const { user, session, isAdmin, isLoading, signOut } = useAuth();
@@ -162,12 +162,11 @@ const ResidentArea = () => {
 
         {/* Tabs Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+          <TabsList className="grid grid-cols-4 w-full max-w-2xl">
             <TabsTrigger value="overview">Resumo</TabsTrigger>
             <TabsTrigger value="notices">Avisos</TabsTrigger>
             <TabsTrigger value="fees">Pagamentos</TabsTrigger>
             <TabsTrigger value="history">Transações</TabsTrigger>
-            <TabsTrigger value="security">Segurança</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -257,9 +256,6 @@ const ResidentArea = () => {
             <TransactionHistory />
           </TabsContent>
 
-          <TabsContent value="security">
-            <MFASettings />
-          </TabsContent>
         </Tabs>
       </div>
     </div>
