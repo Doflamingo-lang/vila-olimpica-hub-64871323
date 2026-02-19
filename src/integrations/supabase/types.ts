@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_requests: {
+        Row: {
+          apartment: string
+          block: string
+          building: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          resident_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          apartment: string
+          block: string
+          building: string
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          phone: string
+          resident_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          apartment?: string
+          block?: string
+          building?: string
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string
+          resident_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       common_areas: {
         Row: {
           capacity: number | null
