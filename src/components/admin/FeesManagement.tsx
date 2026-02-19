@@ -28,7 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Receipt, Loader2, Trash2, Edit2, Search } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Receipt, Loader2, Trash2, Edit2, Search, Users, User } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +46,12 @@ interface CondominiumFee {
   created_at: string;
 }
 
+interface Resident {
+  id: string;
+  email: string;
+  created_at: string;
+}
+
 const months = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
@@ -52,11 +59,15 @@ const months = [
 
 const FeesManagement = () => {
   const [fees, setFees] = useState<CondominiumFee[]>([]);
+  const [residents, setResidents] = useState<Resident[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingResidents, setIsLoadingResidents] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingFee, setEditingFee] = useState<CondominiumFee | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchUserId, setSearchUserId] = useState("");
+  const [sendToAll, setSendToAll] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -71,7 +82,21 @@ const FeesManagement = () => {
 
   useEffect(() => {
     fetchFees();
+    fetchResidents();
   }, []);
+
+  const fetchResidents = async () => {
+    setIsLoadingResidents(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("list-residents");
+      if (error) throw error;
+      setResidents(data.residents || []);
+    } catch (error) {
+      console.error("Error fetching residents:", error);
+    } finally {
+      setIsLoadingResidents(false);
+    }
+  };
 
   const fetchFees = async () => {
     setIsLoading(true);
@@ -105,12 +130,18 @@ const FeesManagement = () => {
       payment_method: "",
     });
     setEditingFee(null);
+    setSendToAll(false);
+  };
+
+  const getResidentEmail = (userId: string) => {
+    const resident = residents.find((r) => r.id === userId);
+    return resident?.email || userId.slice(0, 8) + "...";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.user_id || !formData.reference_month || !formData.amount || !formData.due_date) {
+    if (!formData.reference_month || !formData.amount || !formData.due_date) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios.",
@@ -119,8 +150,18 @@ const FeesManagement = () => {
       return;
     }
 
-    const feeData = {
-      user_id: formData.user_id,
+    if (!sendToAll && !formData.user_id && !editingFee) {
+      toast({
+        title: "Erro",
+        description: "Selecione um morador ou ative 'Enviar para todos'.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const baseFeeData = {
       reference_month: formData.reference_month,
       reference_year: formData.reference_year,
       amount: parseFloat(formData.amount),
@@ -133,50 +174,68 @@ const FeesManagement = () => {
     if (editingFee) {
       const { error } = await supabase
         .from("condominium_fees")
-        .update(feeData)
+        .update({ ...baseFeeData, user_id: formData.user_id })
         .eq("id", editingFee.id);
 
       if (error) {
-        toast({
-          title: "Erro",
-          description: "Não foi possível atualizar a taxa.",
-          variant: "destructive",
-        });
+        toast({ title: "Erro", description: "Não foi possível atualizar a taxa.", variant: "destructive" });
+      } else {
+        toast({ title: "Sucesso", description: "Taxa atualizada com sucesso." });
+        setIsDialogOpen(false);
+        resetForm();
+        fetchFees();
+      }
+    } else if (sendToAll) {
+      // Create fee for all residents
+      const feesToInsert = residents.map((r) => ({
+        ...baseFeeData,
+        user_id: r.id,
+      }));
+
+      if (feesToInsert.length === 0) {
+        toast({ title: "Erro", description: "Nenhum morador cadastrado.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { error } = await supabase
+        .from("condominium_fees")
+        .insert(feesToInsert);
+
+      if (error) {
+        console.error("Error creating fees:", error);
+        toast({ title: "Erro", description: "Não foi possível criar as taxas.", variant: "destructive" });
       } else {
         toast({
           title: "Sucesso",
-          description: "Taxa atualizada com sucesso.",
+          description: `Taxa enviada para ${feesToInsert.length} moradores.`,
         });
         setIsDialogOpen(false);
         resetForm();
         fetchFees();
       }
     } else {
+      // Single resident
       const { error } = await supabase
         .from("condominium_fees")
-        .insert([feeData]);
+        .insert([{ ...baseFeeData, user_id: formData.user_id }]);
 
       if (error) {
         console.error("Error creating fee:", error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível criar a taxa.",
-          variant: "destructive",
-        });
+        toast({ title: "Erro", description: "Não foi possível criar a taxa.", variant: "destructive" });
       } else {
-        toast({
-          title: "Sucesso",
-          description: "Taxa cadastrada com sucesso.",
-        });
+        toast({ title: "Sucesso", description: "Taxa cadastrada com sucesso." });
         setIsDialogOpen(false);
         resetForm();
         fetchFees();
       }
     }
+    setIsSubmitting(false);
   };
 
   const handleEdit = (fee: CondominiumFee) => {
     setEditingFee(fee);
+    setSendToAll(false);
     setFormData({
       user_id: fee.user_id,
       reference_month: fee.reference_month,
@@ -196,25 +255,15 @@ const FeesManagement = () => {
       .eq("id", id);
 
     if (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível excluir a taxa.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível excluir a taxa.", variant: "destructive" });
     } else {
-      toast({
-        title: "Sucesso",
-        description: "Taxa excluída com sucesso.",
-      });
+      toast({ title: "Sucesso", description: "Taxa excluída com sucesso." });
       fetchFees();
     }
   };
 
   const handleUpdateStatus = async (id: string, newStatus: string) => {
-    const updateData: { status: string; paid_at?: string | null } = { 
-      status: newStatus 
-    };
-    
+    const updateData: { status: string; paid_at?: string | null } = { status: newStatus };
     if (newStatus === "paid") {
       updateData.paid_at = new Date().toISOString();
     } else {
@@ -227,49 +276,37 @@ const FeesManagement = () => {
       .eq("id", id);
 
     if (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o status.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível atualizar o status.", variant: "destructive" });
     } else {
-      toast({
-        title: "Sucesso",
-        description: "Status atualizado com sucesso.",
-      });
+      toast({ title: "Sucesso", description: "Status atualizado com sucesso." });
       fetchFees();
     }
   };
 
   const filteredFees = fees.filter((fee) => {
     const matchesStatus = statusFilter === "all" || fee.status === statusFilter;
-    const matchesUser = !searchUserId || fee.user_id.toLowerCase().includes(searchUserId.toLowerCase());
+    const residentEmail = getResidentEmail(fee.user_id).toLowerCase();
+    const matchesUser = !searchUserId || 
+      fee.user_id.toLowerCase().includes(searchUserId.toLowerCase()) ||
+      residentEmail.includes(searchUserId.toLowerCase());
     return matchesStatus && matchesUser;
   });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "paid":
-        return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
-      case "pending":
-        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
-      case "overdue":
-        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-      default:
-        return "bg-muted text-muted-foreground";
+      case "paid": return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+      case "pending": return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
+      case "overdue": return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+      default: return "bg-muted text-muted-foreground";
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case "paid":
-        return "Pago";
-      case "pending":
-        return "Pendente";
-      case "overdue":
-        return "Atrasado";
-      default:
-        return status;
+      case "paid": return "Pago";
+      case "pending": return "Pendente";
+      case "overdue": return "Atrasado";
+      default: return status;
     }
   };
 
@@ -313,23 +350,78 @@ const FeesManagement = () => {
                   <DialogDescription>
                     {editingFee 
                       ? "Atualize os dados da taxa condominial"
-                      : "Preencha os dados para cadastrar uma nova taxa"}
+                      : "Preencha os dados e escolha enviar para todos ou para um morador específico"}
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="user_id">ID do Usuário *</Label>
-                    <Input
-                      id="user_id"
-                      value={formData.user_id}
-                      onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
-                      placeholder="UUID do morador"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Utilize o ID do usuário do sistema de autenticação
-                    </p>
-                  </div>
+                  {/* Send to all toggle - only show when creating */}
+                  {!editingFee && (
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
+                      <div className="flex items-center gap-2">
+                        {sendToAll ? (
+                          <Users className="w-5 h-5 text-primary" />
+                        ) : (
+                          <User className="w-5 h-5 text-primary" />
+                        )}
+                        <div>
+                          <p className="text-sm font-medium">
+                            {sendToAll ? "Enviar para todos os moradores" : "Morador específico"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {sendToAll 
+                              ? `${residents.length} moradores cadastrados` 
+                              : "Selecione um morador abaixo"}
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={sendToAll}
+                        onCheckedChange={setSendToAll}
+                      />
+                    </div>
+                  )}
+
+                  {/* Resident selector - show when not sending to all */}
+                  {(!sendToAll || editingFee) && (
+                    <div>
+                      <Label htmlFor="user_id">Morador *</Label>
+                      {isLoadingResidents ? (
+                        <div className="flex items-center gap-2 py-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-sm text-muted-foreground">Carregando moradores...</span>
+                        </div>
+                      ) : residents.length > 0 ? (
+                        <Select
+                          value={formData.user_id}
+                          onValueChange={(value) => setFormData({ ...formData, user_id: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um morador" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {residents.map((resident) => (
+                              <SelectItem key={resident.id} value={resident.id}>
+                                {resident.email}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div>
+                          <Input
+                            id="user_id"
+                            value={formData.user_id}
+                            onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
+                            placeholder="UUID do morador"
+                            required={!sendToAll}
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Nenhum morador encontrado. Insira o ID manualmente.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -433,8 +525,9 @@ const FeesManagement = () => {
                     >
                       Cancelar
                     </Button>
-                    <Button type="submit" className="flex-1">
-                      {editingFee ? "Atualizar" : "Cadastrar"}
+                    <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                      {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      {editingFee ? "Atualizar" : sendToAll ? `Enviar para ${residents.length} moradores` : "Cadastrar"}
                     </Button>
                   </div>
                 </form>
@@ -448,7 +541,7 @@ const FeesManagement = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por ID do usuário..."
+                placeholder="Buscar por email ou ID do morador..."
                 value={searchUserId}
                 onChange={(e) => setSearchUserId(e.target.value)}
                 className="pl-10"
@@ -478,7 +571,7 @@ const FeesManagement = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Referência</TableHead>
-                    <TableHead>ID Usuário</TableHead>
+                    <TableHead>Morador</TableHead>
                     <TableHead>Valor</TableHead>
                     <TableHead>Vencimento</TableHead>
                     <TableHead>Status</TableHead>
@@ -493,8 +586,8 @@ const FeesManagement = () => {
                         {fee.reference_month}/{fee.reference_year}
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs font-mono">
-                          {fee.user_id.slice(0, 8)}...
+                        <span className="text-xs">
+                          {getResidentEmail(fee.user_id)}
                         </span>
                       </TableCell>
                       <TableCell>
