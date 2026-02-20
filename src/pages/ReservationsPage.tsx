@@ -1,4 +1,4 @@
-import { ArrowLeft, Calendar as CalendarIcon, Clock, Users, Info, Check, X, Loader2, LogOut, Home } from "lucide-react";
+import { ArrowLeft, Calendar as CalendarIcon, Clock, Users, Info, Check, X, Loader2, LogOut, Home, AlertTriangle } from "lucide-react";
 import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -294,6 +294,26 @@ const ReservationsPage = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Regras do Termo de Uso */}
+        <Card className="mb-8 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              Termo de Uso de Espaços Comuns — Regras Obrigatórias
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+              <li><strong>Garantia de sanitários:</strong> Deve garantir e providenciar sanitários (casas de banho) para os participantes do evento.</li>
+              <li><strong>Responsabilidade eléctrica:</strong> A corrente eléctrica é da responsabilidade do requerente, porém deve interagir com a Administração para o efeito.</li>
+              <li><strong>Níveis de som:</strong> Deve respeitar os níveis máximos de som, de acordo com o Regulamento Interno do Condomínio e o horário de emissão do mesmo que vai até às 22h.</li>
+              <li><strong>Limpeza do local:</strong> Garantir a limpeza do local após o evento.</li>
+              <li><strong>Lista de convidados:</strong> Apresentar à Administração a lista de convidados que só terão acesso à entrada no Condomínio através desta.</li>
+              <li><strong>Responsabilidade por condutas:</strong> Será da responsabilidade do requerente qualquer conduta negativa que advier dos seus convidados, sob pena de ser notificado pela Administração para responder sobre.</li>
+            </ol>
+          </CardContent>
+        </Card>
+
         {/* Tabs */}
         <div className="flex gap-4 mb-8">
           <Button
