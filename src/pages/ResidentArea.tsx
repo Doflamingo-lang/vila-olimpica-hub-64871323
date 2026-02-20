@@ -29,9 +29,14 @@ const ResidentArea = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Redirect to auth if not logged in
+  // Redirect to auth if not logged in, or to change password if needed
   if (!isLoading && !session) {
     navigate("/auth");
+    return null;
+  }
+
+  if (!isLoading && session?.user?.user_metadata?.must_change_password) {
+    navigate("/alterar-senha");
     return null;
   }
 

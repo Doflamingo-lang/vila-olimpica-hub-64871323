@@ -19,6 +19,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ReservationsPage from "./pages/ReservationsPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AccessRequestPage from "./pages/AccessRequestPage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/reservas" element={<ReservationsPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/pedido-acesso" element={<AccessRequestPage />} />
+          <Route path="/alterar-senha" element={<ChangePasswordPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
