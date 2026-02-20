@@ -64,9 +64,9 @@ const Hero = () => {
             
             {/* Description */}
             <p className="text-lg md:text-xl text-primary-foreground/90 mb-8 leading-relaxed max-w-xl animate-fade-up opacity-0" style={{ animationDelay: "0.3s", animationFillMode: "forwards" }}>
-              O maior centro residencial planeado de Moçambique, nascido em 2011 como legado dos 
-              <span className="font-semibold text-accent"> X Jogos Africanos</span>. Uma comunidade vibrante com 
-              <span className="font-semibold"> 4.000 moradores</span> focada na excelência e transparência.
+              Um projecto emblemático do <span className="font-semibold text-accent">Fundo para o Fomento de Habitação (FFH)</span>, 
+              nascido em 2011 como legado dos X Jogos Africanos. Uma comunidade vibrante com mais de 
+              <span className="font-semibold"> 2.643 moradores</span> focada na excelência e transparência.
             </p>
 
             {/* CTA Buttons */}
@@ -93,7 +93,7 @@ const Hero = () => {
                   <Home className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-primary-foreground">1.120</div>
+                  <div className="text-xl font-bold text-primary-foreground">1.024</div>
                   <div className="text-xs text-primary-foreground/70">Apartamentos</div>
                 </div>
               </div>
@@ -102,7 +102,7 @@ const Hero = () => {
                   <Building2 className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-primary-foreground">35</div>
+                  <div className="text-xl font-bold text-primary-foreground">32</div>
                   <div className="text-xs text-primary-foreground/70">Blocos</div>
                 </div>
               </div>
@@ -111,7 +111,7 @@ const Hero = () => {
                   <Users className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-primary-foreground">4.000+</div>
+                  <div className="text-xl font-bold text-primary-foreground">2.643+</div>
                   <div className="text-xs text-primary-foreground/70">Moradores</div>
                 </div>
               </div>

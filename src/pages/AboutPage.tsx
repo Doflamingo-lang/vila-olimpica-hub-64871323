@@ -35,9 +35,9 @@ const AboutPage = () => {
 
   const stats = [
     { value: "2011", label: "Ano de Fundação" },
-    { value: "4.000+", label: "Moradores" },
-    { value: "1.120", label: "Apartamentos" },
-    { value: "35", label: "Blocos" },
+    { value: "2.643+", label: "Moradores" },
+    { value: "1.024", label: "Apartamentos" },
+    { value: "32", label: "Blocos" },
   ];
 
   const values = [
@@ -112,13 +112,13 @@ const AboutPage = () => {
                 Fundo para o Fomento de Habitação (FFH).
               </p>
               <p className="text-lg text-muted-foreground mb-4">
-                Hoje, residem lá aproximadamente <strong className="text-foreground">4.000 moradores</strong>, 
-                distribuídos por <strong className="text-foreground">1.120 apartamentos</strong>, o que torna 
-                este complexo um dos maiores e mais vibrantes centros residenciais planeados de Moçambique.
+              Hoje, residem lá mais de <strong className="text-foreground">2.643 moradores</strong>, 
+                distribuídos por <strong className="text-foreground">1.024 apartamentos</strong> em 
+                <strong className="text-foreground">32 blocos</strong>, tornando este complexo uma referência em habitação planeada em Moçambique.
               </p>
               <p className="text-lg text-muted-foreground mb-6">
-                Este empreendimento representa um marco de modernidade na arquitetura habitacional de Maputo, 
-                oferecendo uma estrutura robusta de <strong className="text-foreground">35 blocos com tipologia T3</strong>. 
+              Este empreendimento representa um marco de modernidade na arquitetura habitacional de Maputo, 
+                oferecendo uma estrutura robusta de <strong className="text-foreground">32 blocos com tipologia T3</strong>.
                 A sua criação foi o principal motor de desenvolvimento do bairro do Zimpeto, transformando a 
                 região num novo polo de centralidade urbana.
               </p>
@@ -223,22 +223,6 @@ const AboutPage = () => {
             </div>
           </div>
 
-          {/* Timeline */}
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-12">Nossa Jornada</h2>
-            <div className="space-y-8">
-              {timeline.map((item, index) => (
-                <div key={index} className="flex items-start gap-6">
-                  <div className="w-24 flex-shrink-0">
-                    <span className="text-2xl font-bold text-accent">{item.year}</span>
-                  </div>
-                  <div className="flex-1 bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <p className="text-foreground">{item.event}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 
