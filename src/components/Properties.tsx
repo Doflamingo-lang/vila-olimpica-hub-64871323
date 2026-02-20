@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Home, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import vilaAerial from "@/assets/vila-olimpica-aerial-2.jpg";
+import vilaAerial from "@/assets/vila-olimpica-aerial-3.jpg";
 
 const Properties = () => {
   return (
