@@ -106,6 +106,7 @@ Deno.serve(async (req) => {
         apartment: accessRequest.apartment,
         resident_type: accessRequest.resident_type,
         phone: accessRequest.phone,
+        must_change_password: true,
       },
     });
 
@@ -139,7 +140,7 @@ Deno.serve(async (req) => {
           <p style="margin: 4px 0;"><strong>Email:</strong> ${accessRequest.email}</p>
           <p style="margin: 4px 0;"><strong>Senha temporária:</strong> ${tempPassword}</p>
         </div>
-        <p style="color: #c0392b;"><strong>Importante:</strong> Recomendamos que altere a sua senha após o primeiro acesso.</p>
+        <p style="color: #c0392b;"><strong>Importante:</strong> Será obrigatório alterar a sua senha no primeiro acesso.</p>
         <p>Localização: Bloco ${accessRequest.block} · Ed. ${accessRequest.building} · Apt. ${accessRequest.apartment}</p>
         <br/>
         <p>Atenciosamente,<br/>Administração Vila Olímpica</p>

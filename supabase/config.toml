@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.approve-access-request]
 verify_jwt = false
+
+[functions.notify-admin-access-request]
+verify_jwt = false

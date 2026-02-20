@@ -57,6 +57,19 @@ const AccessRequestPage = () => {
 
       if (error) throw error;
 
+      // Notify admin via email (fire and forget)
+      supabase.functions.invoke("notify-admin-access-request", {
+        body: {
+          full_name: data.full_name,
+          email: data.email,
+          phone: data.phone,
+          block: data.block,
+          building: data.building,
+          apartment: data.apartment,
+          resident_type: data.resident_type,
+        },
+      }).catch(console.error);
+
       setIsSubmitted(true);
       toast({
         title: "Pedido enviado!",

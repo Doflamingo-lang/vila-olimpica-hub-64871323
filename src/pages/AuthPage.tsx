@@ -96,6 +96,12 @@ const AuthPage = () => {
             });
           }
         } else if (data?.session) {
+          // Check if user must change temporary password
+          const mustChange = data.session.user.user_metadata?.must_change_password;
+          if (mustChange) {
+            navigate("/alterar-senha");
+            return;
+          }
           toast({
             title: "Bem-vindo!",
             description: "Login realizado com sucesso.",
