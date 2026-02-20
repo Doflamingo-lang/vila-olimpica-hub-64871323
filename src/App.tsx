@@ -20,6 +20,7 @@ import ReservationsPage from "./pages/ReservationsPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AccessRequestPage from "./pages/AccessRequestPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
+import UserGuidePage from "./pages/UserGuidePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/pedido-acesso" element={<AccessRequestPage />} />
           <Route path="/alterar-senha" element={<ChangePasswordPage />} />
+          <Route path="/guia" element={<UserGuidePage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

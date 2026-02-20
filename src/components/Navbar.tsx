@@ -16,6 +16,7 @@ const Navbar = () => {
     { label: "Notícias", href: "/noticias", isRoute: true },
     { label: "Arquivo", href: "/arquivo", isRoute: true },
     { label: "Contato", href: "/contato", isRoute: true },
+    { label: "Guia", href: "/guia", isRoute: true },
   ];
 
   return (
