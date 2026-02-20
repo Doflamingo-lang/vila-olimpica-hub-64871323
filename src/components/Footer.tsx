@@ -105,6 +105,9 @@ const Footer = () => {
           <p>
             © {currentYear} Condomínio Vila Olímpica. Todos os direitos reservados.
           </p>
+          <p className="text-primary-foreground/60 text-xs mt-1">
+            Desenvolvido por Efata Services SU Lda
+          </p>
           <div className="flex gap-6">
             <a href="#" className="hover:text-accent transition-colors">
               Política de Privacidade
