@@ -94,7 +94,10 @@ Deno.serve(async (req) => {
     // Generate temporary password
     const tempPassword = generatePassword();
 
-    // Create user account
+    // Try to create user account, or get existing user
+    let userId: string;
+    let isNewUser = true;
+
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email: accessRequest.email,
       password: tempPassword,
@@ -111,17 +114,49 @@ Deno.serve(async (req) => {
     });
 
     if (createError) {
-      return new Response(JSON.stringify({ error: `Failed to create user: ${createError.message}` }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // If user already exists, find them and update their password
+      if (createError.message.includes("already been registered")) {
+        const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers();
+        const existingUser = users?.find((u: any) => u.email === accessRequest.email);
+        
+        if (!existingUser || listError) {
+          return new Response(JSON.stringify({ error: "Utilizador existe mas não foi possível encontrá-lo" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Update the existing user's password and metadata
+        await adminClient.auth.admin.updateUserById(existingUser.id, {
+          password: tempPassword,
+          user_metadata: {
+            full_name: accessRequest.full_name,
+            block: accessRequest.block,
+            building: accessRequest.building,
+            apartment: accessRequest.apartment,
+            resident_type: accessRequest.resident_type,
+            phone: accessRequest.phone,
+            must_change_password: true,
+          },
+        });
+
+        userId = existingUser.id;
+        isNewUser = false;
+      } else {
+        return new Response(JSON.stringify({ error: `Falha ao criar utilizador: ${createError.message}` }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else {
+      userId = newUser.user.id;
     }
 
-    // Assign resident role
-    await adminClient.from("user_roles").insert({
-      user_id: newUser.user.id,
+    // Assign resident role (ignore if already exists)
+    await adminClient.from("user_roles").upsert({
+      user_id: userId,
       role: "resident",
-    });
+    }, { onConflict: "user_id,role" });
 
     // Update access request status
     await adminClient
