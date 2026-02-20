@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Receipt, Loader2, Trash2, Edit2, Search, Users, User } from "lucide-react";
 import { format } from "date-fns";
@@ -72,7 +73,7 @@ const FeesManagement = () => {
 
   const [formData, setFormData] = useState({
     user_id: "",
-    reference_month: "",
+    reference_months: [] as string[],
     reference_year: new Date().getFullYear(),
     amount: "",
     due_date: "",
@@ -122,7 +123,7 @@ const FeesManagement = () => {
   const resetForm = () => {
     setFormData({
       user_id: "",
-      reference_month: "",
+      reference_months: [],
       reference_year: new Date().getFullYear(),
       amount: "",
       due_date: "",
@@ -167,7 +168,9 @@ const FeesManagement = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.reference_month || !formData.amount || !formData.due_date) {
+    const selectedMonths = editingFee ? [formData.reference_months[0]] : formData.reference_months;
+
+    if (!selectedMonths.length || !formData.amount || !formData.due_date) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios.",
@@ -187,20 +190,21 @@ const FeesManagement = () => {
 
     setIsSubmitting(true);
 
-    const baseFeeData = {
-      reference_month: formData.reference_month,
+    const buildFeeData = (month: string) => ({
+      reference_month: month,
       reference_year: formData.reference_year,
       amount: parseFloat(formData.amount),
       due_date: formData.due_date,
       status: formData.status,
       payment_method: formData.payment_method || null,
       paid_at: formData.status === "paid" ? new Date().toISOString() : null,
-    };
+    });
 
     if (editingFee) {
+      const feeData = buildFeeData(selectedMonths[0]);
       const { error } = await supabase
         .from("condominium_fees")
-        .update({ ...baseFeeData, user_id: formData.user_id })
+        .update({ ...feeData, user_id: formData.user_id })
         .eq("id", editingFee.id);
 
       if (error) {
@@ -212,11 +216,13 @@ const FeesManagement = () => {
         fetchFees();
       }
     } else if (sendToAll) {
-      // Create fee for all residents
-      const feesToInsert = residents.map((r) => ({
-        ...baseFeeData,
-        user_id: r.id,
-      }));
+      // Create fee for all residents × all selected months
+      const feesToInsert = selectedMonths.flatMap((month) =>
+        residents.map((r) => ({
+          ...buildFeeData(month),
+          user_id: r.id,
+        }))
+      );
 
       if (feesToInsert.length === 0) {
         toast({ title: "Erro", description: "Nenhum morador cadastrado.", variant: "destructive" });
@@ -234,30 +240,33 @@ const FeesManagement = () => {
       } else {
         toast({
           title: "Sucesso",
-          description: `Taxa enviada para ${feesToInsert.length} moradores.`,
+          description: `${selectedMonths.length} taxa(s) enviada(s) para ${residents.length} moradores.`,
         });
-        // Send email notifications to all residents
         const emails = residents.map((r) => r.email);
-        sendFeeNotification(emails, baseFeeData);
+        sendFeeNotification(emails, buildFeeData(selectedMonths[0]));
         setIsDialogOpen(false);
         resetForm();
         fetchFees();
       }
     } else {
-      // Single resident
+      // Single resident, multiple months
+      const feesToInsert = selectedMonths.map((month) => ({
+        ...buildFeeData(month),
+        user_id: formData.user_id,
+      }));
+
       const { error } = await supabase
         .from("condominium_fees")
-        .insert([{ ...baseFeeData, user_id: formData.user_id }]);
+        .insert(feesToInsert);
 
       if (error) {
         console.error("Error creating fee:", error);
         toast({ title: "Erro", description: "Não foi possível criar a taxa.", variant: "destructive" });
       } else {
-        toast({ title: "Sucesso", description: "Taxa cadastrada com sucesso." });
-        // Send email notification to the specific resident
+        toast({ title: "Sucesso", description: `${selectedMonths.length} taxa(s) cadastrada(s) com sucesso.` });
         const resident = residents.find((r) => r.id === formData.user_id);
         if (resident) {
-          sendFeeNotification([resident.email], baseFeeData);
+          sendFeeNotification([resident.email], buildFeeData(selectedMonths[0]));
         }
         setIsDialogOpen(false);
         resetForm();
@@ -272,7 +281,7 @@ const FeesManagement = () => {
     setSendToAll(false);
     setFormData({
       user_id: fee.user_id,
-      reference_month: fee.reference_month,
+      reference_months: [fee.reference_month],
       reference_year: fee.reference_year,
       amount: fee.amount.toString(),
       due_date: fee.due_date,
@@ -457,35 +466,55 @@ const FeesManagement = () => {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="reference_month">Mês de Referência *</Label>
+                  <div>
+                    <Label>Ano *</Label>
+                    <Input
+                      type="number"
+                      value={formData.reference_year}
+                      onChange={(e) => setFormData({ ...formData, reference_year: parseInt(e.target.value) })}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label>{editingFee ? "Mês de Referência *" : "Meses de Referência * (selecione um ou mais)"}</Label>
+                    {editingFee ? (
                       <Select
-                        value={formData.reference_month}
-                        onValueChange={(value) => setFormData({ ...formData, reference_month: value })}
+                        value={formData.reference_months[0] || ""}
+                        onValueChange={(value) => setFormData({ ...formData, reference_months: [value] })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                         <SelectContent>
                           {months.map((month) => (
-                            <SelectItem key={month} value={month}>
-                              {month}
-                            </SelectItem>
+                            <SelectItem key={month} value={month}>{month}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="reference_year">Ano *</Label>
-                      <Input
-                        id="reference_year"
-                        type="number"
-                        value={formData.reference_year}
-                        onChange={(e) => setFormData({ ...formData, reference_year: parseInt(e.target.value) })}
-                        required
-                      />
-                    </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2 mt-2 p-3 border rounded-lg max-h-[200px] overflow-y-auto">
+                        {months.map((month) => (
+                          <label key={month} className="flex items-center gap-2 cursor-pointer text-sm hover:bg-muted/50 rounded px-2 py-1.5">
+                            <Checkbox
+                              checked={formData.reference_months.includes(month)}
+                              onCheckedChange={(checked) => {
+                                const updated = checked
+                                  ? [...formData.reference_months, month]
+                                  : formData.reference_months.filter((m) => m !== month);
+                                setFormData({ ...formData, reference_months: updated });
+                              }}
+                            />
+                            {month}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {!editingFee && formData.reference_months.length > 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {formData.reference_months.length} mês(es) selecionado(s)
+                      </p>
+                    )}
                   </div>
 
                   <div>
