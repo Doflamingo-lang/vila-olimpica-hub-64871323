@@ -210,7 +210,7 @@ const PropertiesPage = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="pt-24 pb-16 bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
+      <section className="pt-24 pb-16 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <span className="text-accent font-semibold text-sm uppercase tracking-wider">
@@ -538,7 +538,7 @@ const PropertiesPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-br from-accent to-accent-glow text-accent-foreground">
+      <section className="py-16 bg-accent text-accent-foreground">
         <div className="container mx-auto px-4 text-center">
           <Home className="w-16 h-16 mx-auto mb-4" />
           <h2 className="text-3xl font-bold mb-4">

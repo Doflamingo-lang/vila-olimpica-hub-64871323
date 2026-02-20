@@ -56,7 +56,7 @@ const ChangePasswordPage = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="w-full max-w-md bg-card rounded-2xl border border-border p-8 shadow-elegant text-center">
           <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-10 h-10 text-primary" />
@@ -74,7 +74,7 @@ const ChangePasswordPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <header className="fixed top-0 w-full bg-background/95 backdrop-blur-md border-b border-border z-50 shadow-sm">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">

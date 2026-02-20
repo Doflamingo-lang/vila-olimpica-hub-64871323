@@ -4,7 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Definition of the design system. All colors, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
 
@@ -122,7 +122,7 @@ All colors MUST be HSL.
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent to-accent/80;
+    @apply text-accent;
   }
   
   .animate-float {

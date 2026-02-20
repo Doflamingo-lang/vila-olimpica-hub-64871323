@@ -52,7 +52,7 @@ const NewsDetailsDialog = ({ news, open, onOpenChange }: NewsDetailsDialogProps)
             alt={news.title}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <div className="absolute inset-0 bg-black/40" />
           <div className="absolute bottom-4 left-6 right-6">
             <span className="px-3 py-1 bg-accent text-accent-foreground rounded-full text-xs font-semibold">
               {news.category}

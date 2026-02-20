@@ -6,7 +6,7 @@ import vilaAerial from "@/assets/vila-olimpica-aerial-2.jpg";
 const Properties = () => {
   return (
     <section id="imoveis" className="py-24 bg-background relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-secondary/30 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-secondary/20 pointer-events-none" />
       
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -17,7 +17,7 @@ const Properties = () => {
               alt="Vista aérea do Condomínio Vila Olímpica"
               className="w-full h-72 lg:h-96 object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-primary/40" />
             <div className="absolute bottom-6 left-6 right-6">
               <span className="px-3 py-1 bg-accent text-accent-foreground rounded-full text-xs font-semibold">
                 Vila Olímpica

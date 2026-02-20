@@ -107,7 +107,7 @@ const AccessRequestPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground py-6 shadow-lg">
+      <header className="bg-primary text-primary-foreground py-6 shadow-lg">
         <div className="container mx-auto px-4">
           <Link to="/" className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground transition-colors mb-4">
             <ArrowLeft className="w-5 h-5" />
