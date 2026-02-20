@@ -233,7 +233,7 @@ const ContactPage = () => {
             <p className="text-muted-foreground mb-8">Visite-nos no Bairro do Zimpeto, Maputo, Moçambique</p>
             <div className="bg-card rounded-xl border border-border overflow-hidden h-96">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3584.0!2d32.6056!3d-25.8617!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1ee6943b0a5a7b7d%3A0x7c3a8e7a6f5d4c2b!2sVila%20Ol%C3%ADmpica%2C%20Zimpeto!5e0!3m2!1spt!2smz!4v1700000000000"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3584.0!2d32.6056!3d-25.8617!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1ee6922cd101bc49%3A0xb9fc1254fa431f94!2sCondom%C3%ADnio%20Vila%20Olimpica%20de%20Zimpeto!5e0!3m2!1spt!2smz!4v1700000000000"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
