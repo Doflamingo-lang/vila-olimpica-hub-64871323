@@ -65,24 +65,52 @@ const AccessRequestsManagement = () => {
     setIsLoading(false);
   };
 
-  const handleUpdateStatus = async (id: string, newStatus: string) => {
-    const { error } = await supabase
-      .from("access_requests")
-      .update({ status: newStatus })
-      .eq("id", id);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-    if (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o status.",
-        variant: "destructive",
-      });
+  const handleUpdateStatus = async (id: string, newStatus: string) => {
+    if (newStatus === "approved") {
+      setProcessingId(id);
+      try {
+        const { data, error } = await supabase.functions.invoke("approve-access-request", {
+          body: { request_id: id },
+        });
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+
+        toast({
+          title: "Sucesso",
+          description: "Conta criada e credenciais enviadas por email!",
+        });
+        fetchRequests();
+      } catch (err: any) {
+        toast({
+          title: "Erro ao aprovar",
+          description: err.message || "Não foi possível criar a conta do morador.",
+          variant: "destructive",
+        });
+      } finally {
+        setProcessingId(null);
+      }
     } else {
-      toast({
-        title: "Sucesso",
-        description: newStatus === "approved" ? "Pedido aprovado!" : "Pedido rejeitado.",
-      });
-      fetchRequests();
+      const { error } = await supabase
+        .from("access_requests")
+        .update({ status: newStatus })
+        .eq("id", id);
+
+      if (error) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível atualizar o status.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Sucesso",
+          description: "Pedido rejeitado.",
+        });
+        fetchRequests();
+      }
     }
   };
 
@@ -195,26 +223,32 @@ const AccessRequestsManagement = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {request.status === "pending" && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                            onClick={() => handleUpdateStatus(request.id, "approved")}
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => handleUpdateStatus(request.id, "rejected")}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
+                       {request.status === "pending" && (
+                         <>
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                             onClick={() => handleUpdateStatus(request.id, "approved")}
+                             disabled={processingId === request.id}
+                           >
+                             {processingId === request.id ? (
+                               <Loader2 className="w-4 h-4 animate-spin" />
+                             ) : (
+                               <Check className="w-4 h-4" />
+                             )}
+                           </Button>
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                             onClick={() => handleUpdateStatus(request.id, "rejected")}
+                             disabled={processingId === request.id}
+                           >
+                             <X className="w-4 h-4" />
+                           </Button>
+                         </>
+                       )}
                       <Button
                         size="sm"
                         variant="ghost"
