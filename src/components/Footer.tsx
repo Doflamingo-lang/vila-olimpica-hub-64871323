@@ -1,4 +1,4 @@
-import { Facebook, Instagram, Linkedin, MessageCircle } from "lucide-react";
+import { Facebook, Mail } from "lucide-react";
 import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 
 const Footer = () => {
@@ -79,36 +79,22 @@ const Footer = () => {
             <h4 className="font-bold text-lg mb-4">Conecte-se</h4>
             <div className="space-y-3 mb-4">
               <a 
-                href="https://wa.me/258843001234" 
-                target="_blank"
-                rel="noopener noreferrer"
+                href="mailto:vilaolimpica.cmvomz@gmail.com" 
                 className="flex items-center gap-2 text-primary-foreground/80 hover:text-accent transition-colors text-sm"
               >
-                <MessageCircle className="w-4 h-4" />
-                +258 84 300 1234
+                <Mail className="w-4 h-4" />
+                vilaolimpica.cmvomz@gmail.com
               </a>
             </div>
             <div className="flex gap-3">
               <a 
-                href="#" 
+                href="https://www.facebook.com/profile.php?id=61587924010292" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 bg-primary-foreground/10 hover:bg-accent rounded-lg flex items-center justify-center transition-colors"
                 aria-label="Facebook"
               >
                 <Facebook className="w-5 h-5" />
-              </a>
-              <a 
-                href="#" 
-                className="w-10 h-10 bg-primary-foreground/10 hover:bg-accent rounded-lg flex items-center justify-center transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a 
-                href="#" 
-                className="w-10 h-10 bg-primary-foreground/10 hover:bg-accent rounded-lg flex items-center justify-center transition-colors"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-5 h-5" />
               </a>
             </div>
           </div>
