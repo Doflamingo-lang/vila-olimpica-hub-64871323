@@ -31,7 +31,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Receipt, Loader2, Trash2, Edit2, Search, Users, User } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -386,7 +385,7 @@ const FeesManagement = () => {
                   Nova Taxa
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
+              <DialogContent className="max-w-md max-h-[85vh] flex flex-col overflow-hidden">
                 <DialogHeader>
                   <DialogTitle>
                     {editingFee ? "Editar Taxa" : "Cadastrar Taxa"}
@@ -397,8 +396,8 @@ const FeesManagement = () => {
                       : "Preencha os dados e escolha enviar para todos ou para um morador específico"}
                   </DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="max-h-[60vh] pr-4">
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+                <div className="flex-1 overflow-y-auto pr-2 space-y-4 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-muted/30 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-primary/60" style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--primary) / 0.4) hsl(var(--muted) / 0.3)' }}>
                   {/* Send to all toggle - only show when creating */}
                   {!editingFee && (
                     <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
@@ -576,8 +575,9 @@ const FeesManagement = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  </div>
 
-                  <div className="flex gap-2 pt-4">
+                  <div className="flex gap-2 pt-4 border-t mt-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -595,7 +595,6 @@ const FeesManagement = () => {
                     </Button>
                   </div>
                 </form>
-                </ScrollArea>
               </DialogContent>
             </Dialog>
           </div>
