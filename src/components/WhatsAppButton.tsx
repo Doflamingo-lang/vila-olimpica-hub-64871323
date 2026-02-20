@@ -28,7 +28,7 @@ const WhatsAppButton = () => {
       {isOpen && (
         <div className="fixed bottom-24 right-4 md:right-8 z-50 animate-in slide-in-from-bottom-4 fade-in">
           <div className="bg-background border-2 border-primary rounded-2xl shadow-2xl w-80 overflow-hidden">
-            <div className="bg-gradient-to-r from-primary to-primary-glow p-4">
+            <div className="bg-primary p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-primary-foreground/20 rounded-full flex items-center justify-center">

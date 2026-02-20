@@ -134,7 +134,7 @@ const ArchivePage = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="pt-24 pb-16 bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
+      <section className="pt-24 pb-16 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <span className="text-accent font-semibold text-sm uppercase tracking-wider">Arquivo</span>
@@ -249,7 +249,7 @@ const ArchivePage = () => {
                   >
                     <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
                       <CollapsibleTrigger asChild>
-                        <button className="w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/15 hover:to-accent/15 transition-colors">
+                        <button className="w-full px-6 py-4 flex items-center justify-between bg-primary/10 hover:bg-primary/15 transition-colors">
                           <div className="flex items-center gap-3">
                             <Folder className="w-6 h-6 text-accent" />
                             <span className="font-semibold text-foreground text-lg">{folder}</span>

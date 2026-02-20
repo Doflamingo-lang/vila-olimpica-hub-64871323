@@ -7,7 +7,7 @@ const Contact = () => {
   return (
     <section id="contato" className="py-24 bg-background relative overflow-hidden">
       {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-secondary/50 to-transparent pointer-events-none" />
+      <div className="absolute top-0 right-0 w-1/3 h-full bg-secondary/30 pointer-events-none" />
       
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
@@ -38,7 +38,7 @@ const Contact = () => {
                 { icon: Clock, title: "Horário", content: ["Segunda a Sexta: 9h00 - 18h00", "Sábado: 9h00 - 13h00"] },
               ].map((item, index) => (
                 <div key={index} className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border hover:border-primary/20 transition-colors">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
                     <item.icon className="w-5 h-5 text-primary" />
                   </div>
                   <div>
@@ -57,7 +57,7 @@ const Contact = () => {
               ))}
             </div>
 
-            <div className="bg-gradient-to-br from-primary to-primary/90 rounded-2xl p-6 text-primary-foreground relative overflow-hidden">
+            <div className="bg-primary rounded-2xl p-6 text-primary-foreground relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl" />
               <div className="relative z-10">
                 <h4 className="text-xl font-bold mb-2">Emergências 24/7</h4>

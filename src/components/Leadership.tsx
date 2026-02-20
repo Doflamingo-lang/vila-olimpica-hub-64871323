@@ -52,7 +52,7 @@ const Leadership = () => {
         </div>
 
         {/* President Section */}
-        <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-8 md:p-12 mb-12 overflow-hidden relative">
+        <div className="bg-primary rounded-2xl p-8 md:p-12 mb-12 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary-foreground/5 rounded-full blur-2xl" />
           

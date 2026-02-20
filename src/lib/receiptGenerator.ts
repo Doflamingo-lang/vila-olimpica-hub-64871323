@@ -30,7 +30,7 @@ export const generatePaymentReceipt = (data: ReceiptData) => {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; padding: 20px; }
     .receipt { max-width: 600px; margin: 0 auto; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
-    .header { background: linear-gradient(135deg, #1a365d 0%, #2563eb 100%); color: #fff; padding: 30px; text-align: center; }
+    .header { background: #1a365d; color: #fff; padding: 30px; text-align: center; }
     .header h1 { font-size: 22px; margin-bottom: 4px; }
     .header p { font-size: 13px; opacity: 0.85; }
     .badge { display: inline-block; background: #22c55e; color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-top: 12px; letter-spacing: 1px; }

@@ -17,8 +17,7 @@ const Hero = () => {
           alt="Vista aérea do Condomínio Vila Olímpica"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/75 to-primary/50" />
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-primary/30" />
+        <div className="absolute inset-0 bg-primary/85" />
       </div>
 
       {/* Animated Background Elements */}
@@ -55,10 +54,10 @@ const Hero = () => {
             {/* Title */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-6 leading-[1.05] animate-fade-up opacity-0" style={{ animationDelay: "0.2s", animationFillMode: "forwards" }}>
               Bem-vindo ao
-              <span className="block mt-1 bg-gradient-to-r from-accent via-accent-glow to-accent bg-clip-text text-transparent drop-shadow-lg">
+              <span className="block mt-1 text-accent drop-shadow-lg">
                 Condomínio
               </span>
-              <span className="block bg-gradient-to-r from-accent via-accent-glow to-accent bg-clip-text text-transparent drop-shadow-lg">
+              <span className="block text-accent drop-shadow-lg">
                 Vila Olímpica
               </span>
             </h1>
@@ -124,7 +123,7 @@ const Hero = () => {
             <div className="space-y-4 animate-fade-up opacity-0" style={{ animationDelay: "0.6s", animationFillMode: "forwards" }}>
               {/* Main Feature Card */}
               <div className="relative">
-                <div className="absolute -inset-2 bg-gradient-to-r from-accent/30 to-primary-foreground/10 rounded-3xl blur-xl" />
+                <div className="absolute -inset-2 bg-accent/20 rounded-3xl blur-xl" />
                 <div className="relative bg-primary-foreground/10 backdrop-blur-xl rounded-2xl border border-primary-foreground/25 p-6 shadow-2xl">
                   <div className="flex items-center gap-3 mb-5">
                     <div className="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center">

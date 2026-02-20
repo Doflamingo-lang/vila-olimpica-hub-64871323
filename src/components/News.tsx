@@ -57,7 +57,7 @@ const News = () => {
   return (
     <section id="noticias" className="py-24 bg-background relative overflow-hidden">
       {/* Background decoration */}
-      <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-secondary/40 to-transparent pointer-events-none" />
+      <div className="absolute top-0 left-0 w-full h-1/2 bg-secondary/30 pointer-events-none" />
       
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
@@ -111,7 +111,7 @@ const News = () => {
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="absolute top-4 left-4">
                     <span className="px-3 py-1.5 bg-accent/90 backdrop-blur-md text-accent-foreground rounded-full text-xs font-semibold">
                       {item.category}

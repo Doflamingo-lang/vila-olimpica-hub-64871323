@@ -88,7 +88,7 @@ const MarketplacePage = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="pt-24 pb-16 bg-gradient-to-br from-accent to-accent-glow text-accent-foreground">
+      <section className="pt-24 pb-16 bg-accent text-accent-foreground">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <span className="text-accent-foreground/80 font-semibold text-sm uppercase tracking-wider">Empreendedores Locais</span>

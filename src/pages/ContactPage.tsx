@@ -69,7 +69,7 @@ const ContactPage = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="pt-24 pb-16 bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
+      <section className="pt-24 pb-16 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <span className="text-accent font-semibold text-sm uppercase tracking-wider">Contato</span>
@@ -205,7 +205,7 @@ const ContactPage = () => {
               </div>
 
               {/* Emergency Contact */}
-              <div className="bg-gradient-to-br from-primary to-primary-glow rounded-xl p-6 text-primary-foreground">
+              <div className="bg-primary rounded-xl p-6 text-primary-foreground">
                 <h3 className="text-xl font-bold mb-2">Emergências 24/7</h3>
                 <p className="text-primary-foreground/90 mb-4">
                   Para situações urgentes, nossa equipe está disponível 24 horas por dia.

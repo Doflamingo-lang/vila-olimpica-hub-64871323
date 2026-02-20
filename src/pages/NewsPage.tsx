@@ -77,7 +77,7 @@ const NewsPage = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="pt-24 pb-16 bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
+      <section className="pt-24 pb-16 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <span className="text-accent font-semibold text-sm uppercase tracking-wider">Notícias</span>

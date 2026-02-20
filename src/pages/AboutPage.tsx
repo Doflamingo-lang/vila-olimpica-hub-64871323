@@ -67,7 +67,7 @@ const AboutPage = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="pt-24 pb-16 bg-gradient-to-br from-primary to-primary-glow text-primary-foreground relative overflow-hidden">
+      <section className="pt-24 pb-16 bg-primary text-primary-foreground relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
@@ -160,7 +160,7 @@ const AboutPage = () => {
                     alt={image.alt}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <p className="absolute bottom-4 left-4 right-4 text-white text-sm font-medium">
                       {image.alt}
                     </p>
@@ -182,7 +182,7 @@ const AboutPage = () => {
                   key={index}
                   className="bg-card p-6 rounded-xl border border-border hover:shadow-elegant transition-all group hover:-translate-y-1"
                 >
-                  <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 bg-primary rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <highlight.icon className="w-7 h-7 text-primary-foreground" />
                   </div>
                   <h3 className="text-xl font-bold text-foreground mb-2">{highlight.title}</h3>
@@ -194,7 +194,7 @@ const AboutPage = () => {
 
           {/* Mission & Values */}
           <div className="grid lg:grid-cols-2 gap-12 mb-20">
-            <div className="bg-gradient-to-br from-primary to-primary-glow rounded-2xl p-8 text-primary-foreground relative overflow-hidden">
+            <div className="bg-primary rounded-2xl p-8 text-primary-foreground relative overflow-hidden">
               <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
               <div className="relative z-10">
                 <Target className="w-12 h-12 mb-4" />
