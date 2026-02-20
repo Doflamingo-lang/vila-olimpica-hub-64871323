@@ -29,6 +29,7 @@ import FeesManagement from "@/components/admin/FeesManagement";
 import AccessRequestsManagement from "@/components/admin/AccessRequestsManagement";
 import AdminsManagement from "@/components/admin/AdminsManagement";
 import ReservationsManagement from "@/components/admin/ReservationsManagement";
+import ResidentsManagement from "@/components/admin/ResidentsManagement";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
@@ -292,6 +293,7 @@ const AdminDashboard = () => {
     { icon: Newspaper, label: "Notícias", section: "news" },
     { icon: FileText, label: "Documentos", section: "documents" },
     { icon: Download, label: "Estatísticas", section: "downloads" },
+    { icon: Users, label: "Moradores", section: "residents" },
     { icon: UserPlus, label: "Pedidos Acesso", section: "access-requests" },
     { icon: Shield, label: "Administradores", section: "admins" },
   ];
@@ -676,6 +678,10 @@ const AdminDashboard = () => {
           {/* Downloads Stats Section */}
           {activeSection === "downloads" && (
             <DocumentDownloadsStats />
+          )}
+          {/* Residents Section */}
+          {activeSection === "residents" && (
+            <ResidentsManagement />
           )}
           {/* Access Requests Section */}
           {activeSection === "access-requests" && (
