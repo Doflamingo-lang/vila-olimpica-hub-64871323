@@ -101,20 +101,24 @@ const Footer = () => {
         </div>
 
         {/* Bottom */}
-        <div className="border-t border-primary-foreground/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-primary-foreground/80">
-          <p>
-            © {currentYear} Condomínio Vila Olímpica. Todos os direitos reservados.
-          </p>
-          <p className="text-primary-foreground/60 text-xs mt-1">
-            Desenvolvido por Efata Services SU Lda
-          </p>
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-accent transition-colors">
-              Política de Privacidade
-            </a>
-            <a href="#" className="hover:text-accent transition-colors">
-              Termos de Uso
-            </a>
+        <div className="border-t border-primary-foreground/20 pt-8 flex flex-col items-center gap-4 text-sm text-primary-foreground/80">
+          <div className="flex flex-col md:flex-row justify-between items-center w-full gap-4">
+            <p>
+              © {currentYear} Condomínio Vila Olímpica. Todos os direitos reservados.
+            </p>
+            <div className="flex gap-6">
+              <a href="#" className="hover:text-accent transition-colors">
+                Política de Privacidade
+              </a>
+              <a href="#" className="hover:text-accent transition-colors">
+                Termos de Uso
+              </a>
+            </div>
+          </div>
+          <div className="border-t border-primary-foreground/10 pt-4 w-full text-center">
+            <p className="text-primary-foreground/50 text-xs tracking-widest uppercase font-medium">
+              Desenvolvido por <span className="text-accent font-semibold">Efata Services SU Lda</span>
+            </p>
           </div>
         </div>
       </div>
