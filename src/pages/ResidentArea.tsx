@@ -9,7 +9,7 @@ import {
   Bell, 
   Home,
   ArrowLeft,
-  Download,
+  
   MessageCircle,
   LogOut,
   Loader2,
@@ -61,11 +61,6 @@ const ResidentArea = () => {
     return null;
   }
 
-  const documents = [
-    { name: "Regulamento Interno", date: "2025", icon: <FileText className="w-5 h-5" /> },
-    { name: "Ata Última Assembleia", date: "Dez 2024", icon: <FileText className="w-5 h-5" /> },
-    { name: "Convenção do Condomínio", date: "2024", icon: <FileText className="w-5 h-5" /> }
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -192,27 +187,12 @@ const ResidentArea = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {documents.map((doc, index) => (
-                        <Link to="/arquivo" key={index}>
-                          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                            <div className="flex items-center gap-3">
-                              <div className="text-primary">
-                                {doc.icon}
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-foreground">{doc.name}</p>
-                                <p className="text-xs text-muted-foreground">{doc.date}</p>
-                              </div>
-                            </div>
-                            <Download className="w-4 h-4 text-muted-foreground hover:text-primary" />
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Acesse os documentos do condomínio no arquivo.
+                    </p>
                     <Link to="/arquivo">
-                      <Button variant="outline" className="w-full mt-4">
-                        Ver Todos os Documentos
+                      <Button variant="outline" className="w-full">
+                        Ver Documentos
                       </Button>
                     </Link>
                   </CardContent>
