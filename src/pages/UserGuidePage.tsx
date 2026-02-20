@@ -338,6 +338,45 @@ const UserGuidePage = () => {
             </AccordionContent>
           </AccordionItem>
 
+          {/* 8. FAQ */}
+          <AccordionItem value="faq" className="border rounded-lg px-4">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                  <MessageCircle className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-base">Perguntas Frequentes (FAQ)</p>
+                  <p className="text-sm text-muted-foreground font-normal">Respostas às dúvidas mais comuns</p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 pb-4 space-y-3">
+              <Accordion type="multiple" className="space-y-2">
+                {[
+                  { q: "Como posso solicitar acesso ao portal?", a: "Aceda à página de Pedido de Acesso através do link na página de login. Preencha todos os campos obrigatórios (nome, bloco, edifício, apartamento, tipo de morador, telefone e email) e aguarde a aprovação da administração." },
+                  { q: "Esqueci a minha palavra-passe. O que faço?", a: "Na página de login, clique em \"Esqueceu sua senha?\", introduza o email da sua conta e receberá um link para redefinir a palavra-passe." },
+                  { q: "Quanto tempo demora a aprovação do pedido de acesso?", a: "O tempo de aprovação depende da administração. Normalmente, os pedidos são analisados em poucos dias úteis. Receberá um email com as credenciais após a aprovação." },
+                  { q: "Como pago a taxa condominial?", a: "Na Área do Morador, aceda à secção Pagamentos. Seleccione a taxa pendente, escolha o método de pagamento (M-Pesa, e-Mola, Conta Móvel ou Ponto 24), introduza o número de referência da transacção e confirme." },
+                  { q: "Posso cancelar uma reserva já feita?", a: "Sim, na secção \"Minhas Reservas\" pode cancelar reservas com estado pendente. Atenção: cancelamentos com menos de 24 horas de antecedência poderão resultar em restrições futuras." },
+                  { q: "Como cadastro o meu serviço no Marketplace?", a: "Aceda ao Marketplace no menu principal e clique em \"Cadastrar Serviço\". Preencha os dados do seu negócio e submeta para análise. O serviço ficará visível após aprovação da administração." },
+                  { q: "Quem pode aceder ao Painel Administrativo?", a: "Apenas utilizadores com permissões de administrador. As permissões são atribuídas por outros administradores através da secção \"Administradores\" no painel." },
+                  { q: "Como contacto a administração do condomínio?", a: "Pode utilizar a página de Contato no menu principal, enviar mensagem pelo botão flutuante do WhatsApp no canto inferior direito, ou ir directamente à secção de Contato na Área do Morador." },
+                  { q: "Os meus dados estão seguros?", a: "Sim. O portal utiliza autenticação segura e cada morador apenas tem acesso aos seus próprios dados, pagamentos e reservas. A administração garante a protecção dos dados pessoais." },
+                ].map((item, index) => (
+                  <AccordionItem key={index} value={`faq-${index}`} className="border rounded-md px-3">
+                    <AccordionTrigger className="text-sm hover:no-underline py-3">
+                      {item.q}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm text-muted-foreground pb-3">
+                      {item.a}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </AccordionContent>
+          </AccordionItem>
+
         </Accordion>
 
         {/* Footer note */}
