@@ -2,6 +2,7 @@ import { ArrowLeft, Calendar as CalendarIcon, Clock, Users, Info, Check, X, Load
 import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -66,6 +67,7 @@ const ReservationsPage = () => {
   const [endTime, setEndTime] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [acceptedRules, setAcceptedRules] = useState(false);
   const [activeTab, setActiveTab] = useState<"new" | "my">("new");
   
   const navigate = useNavigate();
@@ -214,6 +216,7 @@ const ReservationsPage = () => {
       setStartTime("");
       setEndTime("");
       setNotes("");
+      setAcceptedRules(false);
       
       // Refresh reservations
       if (user) {
@@ -294,26 +297,6 @@ const ReservationsPage = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Regras do Termo de Uso */}
-        <Card className="mb-8 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-              Termo de Uso de Espaços Comuns — Regras Obrigatórias
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-              <li><strong>Garantia de sanitários:</strong> Deve garantir e providenciar sanitários (casas de banho) para os participantes do evento.</li>
-              <li><strong>Responsabilidade eléctrica:</strong> A corrente eléctrica é da responsabilidade do requerente, porém deve interagir com a Administração para o efeito.</li>
-              <li><strong>Níveis de som:</strong> Deve respeitar os níveis máximos de som, de acordo com o Regulamento Interno do Condomínio e o horário de emissão do mesmo que vai até às 22h.</li>
-              <li><strong>Limpeza do local:</strong> Garantir a limpeza do local após o evento.</li>
-              <li><strong>Lista de convidados:</strong> Apresentar à Administração a lista de convidados que só terão acesso à entrada no Condomínio através desta.</li>
-              <li><strong>Responsabilidade por condutas:</strong> Será da responsabilidade do requerente qualquer conduta negativa que advier dos seus convidados, sob pena de ser notificado pela Administração para responder sobre.</li>
-            </ol>
-          </CardContent>
-        </Card>
-
         {/* Tabs */}
         <div className="flex gap-4 mb-8">
           <Button
@@ -464,12 +447,38 @@ const ReservationsPage = () => {
                       />
                     </div>
 
+                    {/* Regras do Termo de Uso */}
+                    <div className="border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 rounded-lg p-4 space-y-3">
+                      <h4 className="font-semibold text-foreground flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        Termo de Uso de Espaços Comuns — Regras Obrigatórias
+                      </h4>
+                      <ol className="space-y-1.5 text-sm text-muted-foreground list-decimal list-inside">
+                        <li><strong>Garantia de sanitários:</strong> Deve garantir e providenciar sanitários (casas de banho) para os participantes do evento.</li>
+                        <li><strong>Responsabilidade eléctrica:</strong> A corrente eléctrica é da responsabilidade do requerente, porém deve interagir com a Administração para o efeito.</li>
+                        <li><strong>Níveis de som:</strong> Deve respeitar os níveis máximos de som, de acordo com o Regulamento Interno do Condomínio e o horário de emissão do mesmo que vai até às 22h.</li>
+                        <li><strong>Limpeza do local:</strong> Garantir a limpeza do local após o evento.</li>
+                        <li><strong>Lista de convidados:</strong> Apresentar à Administração a lista de convidados que só terão acesso à entrada no Condomínio através desta.</li>
+                        <li><strong>Responsabilidade por condutas:</strong> Será da responsabilidade do requerente qualquer conduta negativa que advier dos seus convidados, sob pena de ser notificado pela Administração para responder sobre.</li>
+                      </ol>
+                      <div className="flex items-start gap-2 pt-2 border-t border-amber-200 dark:border-amber-800">
+                        <Checkbox
+                          id="accept-rules"
+                          checked={acceptedRules}
+                          onCheckedChange={(checked) => setAcceptedRules(checked === true)}
+                        />
+                        <label htmlFor="accept-rules" className="text-sm font-medium cursor-pointer leading-snug">
+                          Li e aceito as regras do Termo de Uso de Espaços Comuns
+                        </label>
+                      </div>
+                    </div>
+
                     <Button 
                       type="submit" 
                       variant="hero" 
                       size="lg" 
                       className="w-full"
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || !acceptedRules}
                     >
                       {isSubmitting ? (
                         <>
