@@ -39,7 +39,7 @@ const getPaymentMethodLabel = (method: string | null) => {
   switch (method) {
     case "mpesa": return "M-Pesa";
     case "emola": return "e-Mola";
-    case "card": return "Cartão Bancário";
+    case "card": return "Cartão Visa";
     default: return method || "—";
   }
 };

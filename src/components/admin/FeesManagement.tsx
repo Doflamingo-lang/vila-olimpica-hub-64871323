@@ -570,8 +570,7 @@ const FeesManagement = () => {
                       <SelectContent>
                         <SelectItem value="mpesa">M-Pesa</SelectItem>
                         <SelectItem value="emola">e-Mola</SelectItem>
-                        <SelectItem value="transfer">Transferência Bancária</SelectItem>
-                        <SelectItem value="cash">Dinheiro</SelectItem>
+                        <SelectItem value="card">Cartão Visa</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

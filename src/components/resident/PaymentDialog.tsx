@@ -156,7 +156,7 @@ const getPaymentMethodLabel = (method: PaymentMethod) => {
   switch (method) {
     case "mpesa": return "M-Pesa";
     case "emola": return "e-Mola";
-    case "card": return "Cartão Bancário";
+    case "card": return "Cartão Visa";
     default: return "—";
   }
 };
@@ -268,7 +268,7 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
   const paymentMethods = [
     { id: "mpesa" as const, name: "M-Pesa", description: "Pague com Vodacom M-Pesa", icon: Smartphone, color: "text-red-600", bgColor: "bg-red-50 dark:bg-red-950/20", borderColor: "border-red-300 dark:border-red-800" },
     { id: "emola" as const, name: "e-Mola", description: "Pague com Movitel e-Mola", icon: Phone, color: "text-orange-600", bgColor: "bg-orange-50 dark:bg-orange-950/20", borderColor: "border-orange-300 dark:border-orange-800" },
-    { id: "card" as const, name: "Cartão Bancário", description: "Visa / Mastercard", icon: CreditCard, color: "text-blue-600", bgColor: "bg-blue-50 dark:bg-blue-950/20", borderColor: "border-blue-300 dark:border-blue-800" },
+    { id: "card" as const, name: "Cartão Visa", description: "Pagamento com cartão Visa", icon: CreditCard, color: "text-blue-600", bgColor: "bg-blue-50 dark:bg-blue-950/20", borderColor: "border-blue-300 dark:border-blue-800" },
   ];
 
   if (!fee) return null;
