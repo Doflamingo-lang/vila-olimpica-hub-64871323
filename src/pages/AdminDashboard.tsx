@@ -28,6 +28,7 @@ import NoticesManagement from "@/components/admin/NoticesManagement";
 import FeesManagement from "@/components/admin/FeesManagement";
 import AccessRequestsManagement from "@/components/admin/AccessRequestsManagement";
 import AdminsManagement from "@/components/admin/AdminsManagement";
+import ReservationsManagement from "@/components/admin/ReservationsManagement";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
@@ -531,94 +532,7 @@ const AdminDashboard = () => {
 
           {/* Reservations Section */}
           {activeSection === "reservations" && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>Reservas Recentes</CardTitle>
-                      <CardDescription>Gerencie todas as reservas do condomínio</CardDescription>
-                    </div>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Filtrar" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas</SelectItem>
-                        <SelectItem value="confirmed">Confirmadas</SelectItem>
-                        <SelectItem value="pending">Pendentes</SelectItem>
-                        <SelectItem value="cancelled">Canceladas</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {filteredReservations.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">Nenhuma reserva encontrada.</p>
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Área</TableHead>
-                          <TableHead>Data</TableHead>
-                          <TableHead>Horário</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Criado em</TableHead>
-                          <TableHead>Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredReservations.slice(0, 10).map((reservation) => (
-                          <TableRow key={reservation.id}>
-                            <TableCell className="font-medium">
-                              {reservation.common_areas?.name}
-                            </TableCell>
-                            <TableCell>
-                              {format(new Date(reservation.reservation_date), "dd/MM/yyyy")}
-                            </TableCell>
-                            <TableCell>
-                              {reservation.start_time.slice(0, 5)} - {reservation.end_time.slice(0, 5)}
-                            </TableCell>
-                            <TableCell>
-                              <span className={cn(
-                                "px-2 py-1 rounded-full text-xs font-medium",
-                                reservation.status === "confirmed"
-                                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                  : reservation.status === "cancelled"
-                                  ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                  : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                              )}>
-                                {reservation.status === "confirmed" ? "Confirmada" :
-                                 reservation.status === "cancelled" ? "Cancelada" : "Pendente"}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {format(new Date(reservation.created_at), "dd/MM/yyyy HH:mm")}
-                            </TableCell>
-                            <TableCell>
-                              <Select
-                                value={reservation.status}
-                                onValueChange={(value) => handleUpdateStatus(reservation.id, value)}
-                              >
-                                <SelectTrigger className="w-32 h-8">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="confirmed">Confirmar</SelectItem>
-                                  <SelectItem value="pending">Pendente</SelectItem>
-                                  <SelectItem value="cancelled">Cancelar</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
+            <ReservationsManagement />
           )}
 
           {/* Marketplace Services Section */}
