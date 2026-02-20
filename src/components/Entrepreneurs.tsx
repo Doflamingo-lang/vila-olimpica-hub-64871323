@@ -44,7 +44,7 @@ const Entrepreneurs = () => {
 
           {/* 3D Store Icon */}
           <div className="flex items-center justify-center">
-            <img src={storeIcon3D} alt="Loja 3D" className="w-64 h-64 md:w-80 md:h-80 object-contain drop-shadow-lg" />
+            <img src={storeIcon3D} alt="Loja 3D" className="w-72 h-72 md:w-96 md:h-96 object-contain drop-shadow-2xl" style={{ transform: 'scaleX(-1)' }} />
           </div>
         </div>
       </div>
