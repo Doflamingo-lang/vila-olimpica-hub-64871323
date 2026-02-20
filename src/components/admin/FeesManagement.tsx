@@ -31,6 +31,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Receipt, Loader2, Trash2, Edit2, Search, Users, User } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -385,7 +386,7 @@ const FeesManagement = () => {
                   Nova Taxa
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
                 <DialogHeader>
                   <DialogTitle>
                     {editingFee ? "Editar Taxa" : "Cadastrar Taxa"}
@@ -396,6 +397,7 @@ const FeesManagement = () => {
                       : "Preencha os dados e escolha enviar para todos ou para um morador específico"}
                   </DialogDescription>
                 </DialogHeader>
+                <ScrollArea className="max-h-[60vh] pr-4">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Send to all toggle - only show when creating */}
                   {!editingFee && (
@@ -593,6 +595,7 @@ const FeesManagement = () => {
                     </Button>
                   </div>
                 </form>
+                </ScrollArea>
               </DialogContent>
             </Dialog>
           </div>
