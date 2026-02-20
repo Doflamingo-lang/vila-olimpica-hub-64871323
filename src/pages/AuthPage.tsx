@@ -1,4 +1,4 @@
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,20 +8,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
-
 const emailSchema = z.string().email("Email inválido");
 const passwordSchema = z.string().min(6, "A senha deve ter pelo menos 6 caracteres");
 
-type AuthView = "login" | "signup" | "forgot-password" | "email-sent" | "password-reset-sent";
+type AuthView = "login" | "forgot-password" | "password-reset-sent";
 
 const AuthPage = () => {
   const [view, setView] = useState<AuthView>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -45,21 +43,17 @@ const AuthPage = () => {
   }, [navigate]);
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string; confirmPassword?: string } = {};
+    const newErrors: { email?: string; password?: string } = {};
     
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
       newErrors.email = emailResult.error.errors[0].message;
     }
 
-    if (view !== "forgot-password") {
+    if (view === "login") {
       const passwordResult = passwordSchema.safeParse(password);
       if (!passwordResult.success) {
         newErrors.password = passwordResult.error.errors[0].message;
-      }
-
-      if (view === "signup" && password !== confirmPassword) {
-        newErrors.confirmPassword = "As senhas não coincidem";
       }
     }
 
@@ -108,32 +102,6 @@ const AuthPage = () => {
           });
           navigate("/area-morador");
         }
-      } else if (view === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/area-morador`,
-          },
-        });
-        
-        if (error) {
-          if (error.message.includes("User already registered")) {
-            toast({
-              title: "Erro de Cadastro",
-              description: "Este email já está cadastrado. Tente fazer login.",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Erro",
-              description: error.message,
-              variant: "destructive",
-            });
-          }
-        } else {
-          setView("email-sent");
-        }
       } else if (view === "forgot-password") {
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
           redirectTo: `${window.location.origin}/reset-password`,
@@ -163,40 +131,8 @@ const AuthPage = () => {
   const resetForm = () => {
     setEmail("");
     setPassword("");
-    setConfirmPassword("");
     setErrors({});
   };
-
-  const renderEmailSentView = () => (
-    <div className="text-center py-8">
-      <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-        <CheckCircle className="w-10 h-10 text-primary" />
-      </div>
-      <h2 className="text-2xl font-bold text-foreground mb-4">Verifique seu Email</h2>
-      <p className="text-muted-foreground mb-6">
-        Enviamos um link de verificação para <strong className="text-foreground">{email}</strong>. 
-        Por favor, verifique sua caixa de entrada e clique no link para ativar sua conta.
-      </p>
-      <div className="bg-muted/50 rounded-lg p-4 mb-6">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5" />
-          <p className="text-sm text-muted-foreground text-left">
-            Se não encontrar o email, verifique sua pasta de spam ou lixo eletrônico.
-          </p>
-        </div>
-      </div>
-      <Button
-        variant="outline"
-        onClick={() => {
-          resetForm();
-          setView("login");
-        }}
-        className="w-full"
-      >
-        Voltar ao Login
-      </Button>
-    </div>
-  );
 
   const renderPasswordResetSentView = () => (
     <div className="text-center py-8">
@@ -292,7 +228,7 @@ const AuthPage = () => {
     </>
   );
 
-  const renderLoginSignupView = () => (
+  const renderLoginView = () => (
     <>
       <div className="text-center mb-8">
         <img 
@@ -300,11 +236,9 @@ const AuthPage = () => {
           alt="Logo Vila Olímpica" 
           className="w-20 h-20 object-contain mx-auto mb-4"
         />
-        <h1 className="text-2xl font-bold text-foreground">
-          {view === "login" ? "Área do Morador" : "Criar Conta"}
-        </h1>
+        <h1 className="text-2xl font-bold text-foreground">Área do Morador</h1>
         <p className="text-muted-foreground mt-2">
-          {view === "login" ? "Faça login para acessar sua área" : "Cadastre-se para acessar os serviços"}
+          Faça login para acessar sua área
         </p>
       </div>
 
@@ -360,86 +294,44 @@ const AuthPage = () => {
           )}
         </div>
 
-        {view === "signup" && (
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-2">
-              Confirmar Senha
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                id="confirmPassword"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={`pl-10 ${errors.confirmPassword ? 'border-destructive' : ''}`}
-                disabled={isLoading}
-                required
-              />
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-sm text-destructive mt-1">{errors.confirmPassword}</p>
-            )}
-          </div>
-        )}
-
-        {view === "login" && (
-          <div className="text-right">
-            <button
-              type="button"
-              onClick={() => {
-                setErrors({});
-                setView("forgot-password");
-              }}
-              className="text-sm text-primary hover:underline"
-            >
-              Esqueceu sua senha?
-            </button>
-          </div>
-        )}
+        <div className="text-right">
+          <button
+            type="button"
+            onClick={() => {
+              setErrors({});
+              setView("forgot-password");
+            }}
+            className="text-sm text-primary hover:underline"
+          >
+            Esqueceu sua senha?
+          </button>
+        </div>
 
         <Button type="submit" variant="hero" size="lg" className="w-full" disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              {view === "login" ? "Entrando..." : "Cadastrando..."}
+              Entrando...
             </>
           ) : (
-            view === "login" ? "Entrar" : "Cadastrar"
+            "Entrar"
           )}
         </Button>
       </form>
 
-      <div className="mt-6 text-center space-y-3">
-        <p className="text-muted-foreground">
-          {view === "login" ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
-          <button
-            type="button"
-            onClick={() => {
-              setView(view === "login" ? "signup" : "login");
-              setErrors({});
-            }}
-            className="text-primary font-semibold hover:underline"
-          >
-            {view === "login" ? "Cadastre-se" : "Fazer Login"}
-          </button>
+      <div className="mt-6 text-center border-t border-border pt-4">
+        <p className="text-sm text-muted-foreground">
+          Ainda não tem acesso?{" "}
+          <Link to="/pedido-acesso" className="text-primary font-semibold hover:underline">
+            Solicitar acesso
+          </Link>
         </p>
-        <div className="border-t border-border pt-3">
-          <p className="text-sm text-muted-foreground">
-            Ainda não é morador registado?{" "}
-            <Link to="/pedido-acesso" className="text-primary font-semibold hover:underline">
-              Solicitar acesso
-            </Link>
-          </p>
-        </div>
       </div>
     </>
   );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex flex-col">
-      {/* Header */}
       <header className="fixed top-0 w-full bg-background/95 backdrop-blur-md border-b border-border z-50 shadow-sm">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
@@ -464,14 +356,12 @@ const AuthPage = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 flex items-center justify-center pt-24 pb-12 px-4">
         <div className="w-full max-w-md">
           <div className="bg-card rounded-2xl border border-border p-8 shadow-elegant">
-            {view === "email-sent" && renderEmailSentView()}
             {view === "password-reset-sent" && renderPasswordResetSentView()}
             {view === "forgot-password" && renderForgotPasswordView()}
-            {(view === "login" || view === "signup") && renderLoginSignupView()}
+            {view === "login" && renderLoginView()}
           </div>
         </div>
       </main>
