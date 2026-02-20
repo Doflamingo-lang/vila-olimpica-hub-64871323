@@ -11,21 +11,6 @@ const Entrepreneurs = () => {
       
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* 3D Store Icon Banner */}
-          <div className="flex items-center justify-center">
-            <div className="relative">
-              <div className="w-56 h-56 md:w-72 md:h-72 bg-gradient-to-br from-green-500 to-green-700 rounded-3xl flex items-center justify-center shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                <img src={storeIcon3D} alt="Loja 3D" className="w-44 h-44 md:w-56 md:h-56 object-contain drop-shadow-lg" />
-              </div>
-              {/* Floating decorative elements */}
-              <div className="absolute -top-4 -right-4 w-16 h-16 bg-accent rounded-xl flex items-center justify-center shadow-lg animate-bounce" style={{ animationDuration: '3s' }}>
-                <Briefcase className="w-8 h-8 text-accent-foreground" />
-              </div>
-              <div className="absolute -bottom-3 -left-3 w-12 h-12 bg-green-400/20 rounded-full blur-sm" />
-              <div className="absolute top-1/2 -right-8 w-6 h-6 bg-green-400/40 rounded-full" />
-            </div>
-          </div>
-
           {/* Content */}
           <div>
             <span className="inline-block px-4 py-1.5 bg-accent/10 border border-accent/20 rounded-full text-accent text-sm font-semibold mb-4">
@@ -55,6 +40,11 @@ const Entrepreneurs = () => {
                 </Button>
               </Link>
             </div>
+          </div>
+
+          {/* 3D Store Icon */}
+          <div className="flex items-center justify-center">
+            <img src={storeIcon3D} alt="Loja 3D" className="w-64 h-64 md:w-80 md:h-80 object-contain drop-shadow-lg" />
           </div>
         </div>
       </div>
