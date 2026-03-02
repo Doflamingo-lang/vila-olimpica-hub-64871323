@@ -1,8 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,13 +10,24 @@ const corsHeaders = {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(value);
 
+const sendEmail = async (apiKey: string, params: { from: string; to: string[]; subject: string; html: string }) => {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify(params),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(JSON.stringify(data));
+  return data;
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Authenticate - must be admin
+    const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -58,7 +66,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     for (const email of emails) {
       try {
-        const emailResponse = await resend.emails.send({
+        const emailResponse = await sendEmail(resendApiKey, {
           from: "Vila Olímpica <noreply@vilaolimp.co.mz>",
           to: [email],
           subject: `Nova Taxa Condominial — ${referenceMonth}/${referenceYear}`,
@@ -68,19 +76,16 @@ const handler = async (req: Request): Promise<Response> => {
                 <h1 style="margin: 0; font-size: 22px;">Vila Olímpica</h1>
                 <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.85;">Condomínio Residencial</p>
               </div>
-              
               <div style="padding: 30px;">
                 <div style="text-align: center; margin-bottom: 24px;">
                   <div style="display: inline-block; background: #fef3c7; color: #d97706; padding: 8px 20px; border-radius: 20px; font-weight: 700; font-size: 14px;">
                     📋 Nova Taxa Condominial
                   </div>
                 </div>
-                
                 <p style="color: #374151; font-size: 15px; line-height: 1.6;">
                   Prezado(a) morador(a),<br><br>
                   Uma nova taxa condominial foi registada para o seu apartamento. Seguem os detalhes:
                 </p>
-                
                 <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                   <tr style="border-bottom: 1px solid #f3f4f6;">
                     <td style="padding: 12px 0; color: #6b7280; font-size: 13px;">Referência</td>
@@ -95,18 +100,15 @@ const handler = async (req: Request): Promise<Response> => {
                     <td style="padding: 12px 0; text-align: right; font-weight: 600; color: #1f2937;">${dueDate}</td>
                   </tr>
                 </table>
-                
                 <div style="text-align: center; margin-top: 24px;">
                   <p style="color: #374151; font-size: 14px;">
                     Acesse a <strong>Área do Morador</strong> para efectuar o pagamento.
                   </p>
                 </div>
-                
                 <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 24px;">
                   Em caso de dúvida, contacte a administração.
                 </p>
               </div>
-              
               <div style="background: #f9fafb; padding: 16px; text-align: center; border-top: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
                 <p style="margin: 0; color: #9ca3af; font-size: 11px;">
                   Este email foi enviado automaticamente. Por favor não responda.
@@ -115,7 +117,7 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
           `,
         });
-        results.push({ email, success: true, id: emailResponse?.data?.id });
+        results.push({ email, success: true, id: emailResponse?.id });
       } catch (err: any) {
         console.error(`Error sending to ${email}:`, err);
         errors.push({ email, error: err.message });
