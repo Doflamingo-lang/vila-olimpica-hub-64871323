@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Receipt, Loader2, Trash2, Edit2, Search, Users, User } from "lucide-react";
+import { Plus, Receipt, Loader2, Trash2, Edit2, Search, Users, User, Eye, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -70,6 +70,10 @@ const FeesManagement = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchUserId, setSearchUserId] = useState("");
   const [sendToAll, setSendToAll] = useState(false);
+  const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+  const [receiptLoading, setReceiptLoading] = useState(false);
+  const [receiptIsPdf, setReceiptIsPdf] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -361,14 +365,22 @@ const FeesManagement = () => {
       toast({ title: "Sem comprovativo", description: "Esta taxa não possui comprovativo anexado.", variant: "destructive" });
       return;
     }
+    setReceiptLoading(true);
+    setReceiptDialogOpen(true);
+    setReceiptUrl(null);
+    setReceiptIsPdf(fee.receipt_url.toLowerCase().endsWith(".pdf"));
+
     const { data } = await supabase.storage
       .from("payment-receipts")
       .createSignedUrl(fee.receipt_url, 300);
+
     if (data?.signedUrl) {
-      window.open(data.signedUrl, "_blank");
+      setReceiptUrl(data.signedUrl);
     } else {
-      toast({ title: "Erro", description: "Não foi possível abrir o comprovativo.", variant: "destructive" });
+      toast({ title: "Erro", description: "Não foi possível carregar o comprovativo.", variant: "destructive" });
+      setReceiptDialogOpen(false);
     }
+    setReceiptLoading(false);
   };
 
   if (isLoading) {
