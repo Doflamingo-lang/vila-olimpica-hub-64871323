@@ -31,7 +31,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Receipt, Loader2, Trash2, Edit2, Search, Users, User, Eye, FileText, AlertTriangle, Image } from "lucide-react";
+import { Plus, Receipt, Loader2, Trash2, Edit2, Search, Users, User, Eye, FileText, AlertTriangle, Image, Download, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -75,6 +75,7 @@ const FeesManagement = () => {
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [receiptLoading, setReceiptLoading] = useState(false);
   const [receiptIsPdf, setReceiptIsPdf] = useState(false);
+  const [isNotifying, setIsNotifying] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -394,6 +395,89 @@ const FeesManagement = () => {
 
   const receipts = fees.filter((f) => f.receipt_url);
   const defaulters = fees.filter((f) => f.status === "overdue" || (f.status === "pending" && new Date(f.due_date) < new Date()));
+
+  const exportDefaultersPDF = () => {
+    const sortedDefaulters = [...defaulters].sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+    const totalAmount = sortedDefaulters.reduce((sum, f) => sum + Number(f.amount), 0);
+    const formatCurrency = (v: number) => new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(v);
+    
+    const rows = sortedDefaulters.map((fee) => {
+      const daysOverdue = Math.floor((new Date().getTime() - new Date(fee.due_date).getTime()) / (1000 * 60 * 60 * 24));
+      return `
+        <tr>
+          <td style="padding:10px 8px;border-bottom:1px solid #e5e7eb;font-size:13px;">${getResidentEmail(fee.user_id)}</td>
+          <td style="padding:10px 8px;border-bottom:1px solid #e5e7eb;font-size:13px;">${fee.reference_month}/${fee.reference_year}</td>
+          <td style="padding:10px 8px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:right;">${formatCurrency(Number(fee.amount))}</td>
+          <td style="padding:10px 8px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:center;">${format(new Date(fee.due_date), "dd/MM/yyyy")}</td>
+          <td style="padding:10px 8px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:center;color:#dc2626;font-weight:600;">${daysOverdue} dias</td>
+        </tr>`;
+    }).join("");
+
+    const html = `<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8"><title>Relatório de Inadimplência</title>
+      <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;padding:30px;background:#fff}
+      .header{text-align:center;margin-bottom:30px;border-bottom:3px solid #1a365d;padding-bottom:20px}
+      .header h1{font-size:20px;color:#1a365d}
+      .header p{font-size:13px;color:#6b7280;margin-top:4px}
+      .summary{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin-bottom:20px;display:flex;justify-content:space-between}
+      .summary div{text-align:center}.summary .label{font-size:12px;color:#6b7280}.summary .val{font-size:18px;font-weight:700;color:#dc2626}
+      table{width:100%;border-collapse:collapse}
+      th{padding:10px 8px;text-align:left;font-size:11px;text-transform:uppercase;color:#6b7280;border-bottom:2px solid #e5e7eb}
+      .footer{margin-top:30px;text-align:center;font-size:11px;color:#9ca3af}
+      @media print{body{padding:15px}.summary{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
+    </head><body>
+      <div class="header"><h1>Vila Olímpica — Condomínio Residencial</h1><p>Relatório de Inadimplência — ${format(new Date(), "dd/MM/yyyy")}</p></div>
+      <div class="summary">
+        <div><span class="label">Total de Taxas em Atraso</span><br><span class="val">${sortedDefaulters.length}</span></div>
+        <div><span class="label">Valor Total em Dívida</span><br><span class="val">${formatCurrency(totalAmount)}</span></div>
+        <div><span class="label">Moradores Afectados</span><br><span class="val">${new Set(sortedDefaulters.map(f => f.user_id)).size}</span></div>
+      </div>
+      <table><thead><tr>
+        <th>Morador</th><th>Referência</th><th style="text-align:right">Valor</th><th style="text-align:center">Vencimento</th><th style="text-align:center">Atraso</th>
+      </tr></thead><tbody>${rows}</tbody>
+      <tfoot><tr><td colspan="2" style="padding:12px 8px;font-weight:700;border-top:2px solid #e5e7eb">Total</td>
+        <td style="padding:12px 8px;text-align:right;font-weight:700;font-size:16px;color:#dc2626;border-top:2px solid #e5e7eb">${formatCurrency(totalAmount)}</td>
+        <td colspan="2" style="border-top:2px solid #e5e7eb"></td></tr></tfoot></table>
+      <div class="footer"><p>Documento gerado automaticamente em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}</p></div>
+      <script>window.onload=function(){window.print()}</script>
+    </body></html>`;
+
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+  };
+
+  const handleNotifyDefaulters = async () => {
+    if (defaulters.length === 0) return;
+    setIsNotifying(true);
+    
+    const overdueFees = defaulters.map((fee) => ({
+      email: getResidentEmail(fee.user_id),
+      referenceMonth: fee.reference_month,
+      referenceYear: fee.reference_year,
+      amount: Number(fee.amount),
+      dueDate: format(new Date(fee.due_date), "dd/MM/yyyy"),
+      daysOverdue: Math.floor((new Date().getTime() - new Date(fee.due_date).getTime()) / (1000 * 60 * 60 * 24)),
+    }));
+
+    try {
+      const { data, error } = await supabase.functions.invoke("send-overdue-notification", {
+        body: { overdueFees },
+      });
+      if (error) throw error;
+      toast({
+        title: "Notificações enviadas",
+        description: `${data?.sent || 0} morador(es) notificado(s) com sucesso.`,
+      });
+    } catch (err) {
+      console.error("Error sending overdue notifications:", err);
+      toast({
+        title: "Erro",
+        description: "Não foi possível enviar as notificações.",
+        variant: "destructive",
+      });
+    }
+    setIsNotifying(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -724,13 +808,29 @@ const FeesManagement = () => {
         <TabsContent value="defaulters">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-destructive" />
-                Lista de Inadimplência
-              </CardTitle>
-              <CardDescription>
-                Moradores com taxas pendentes ou vencidas
-              </CardDescription>
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-destructive" />
+                    Lista de Inadimplência
+                  </CardTitle>
+                  <CardDescription>
+                    Moradores com taxas pendentes ou vencidas
+                  </CardDescription>
+                </div>
+                {defaulters.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={exportDefaultersPDF}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Exportar PDF
+                    </Button>
+                    <Button size="sm" onClick={handleNotifyDefaulters} disabled={isNotifying} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                      {isNotifying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+                      Notificar Todos
+                    </Button>
+                  </div>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {defaulters.length === 0 ? (
