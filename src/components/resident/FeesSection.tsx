@@ -274,7 +274,7 @@ const FeesSection = () => {
                             >
                               Detalhes
                             </Button>
-                            {fee.status !== "paid" && (
+                            {fee.status !== "paid" && fee.status !== "pending_verification" && (
                               <Button 
                                 size="sm"
                                 onClick={() => {
@@ -368,7 +368,7 @@ const FeesSection = () => {
                   </div>
                 )}
 
-                {selectedFee.status !== "paid" && (
+                {selectedFee.status !== "paid" && selectedFee.status !== "pending_verification" && (
                   <Button 
                     className="w-full mt-4"
                     onClick={() => {
