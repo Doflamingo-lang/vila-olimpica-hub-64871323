@@ -808,13 +808,29 @@ const FeesManagement = () => {
         <TabsContent value="defaulters">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-destructive" />
-                Lista de Inadimplência
-              </CardTitle>
-              <CardDescription>
-                Moradores com taxas pendentes ou vencidas
-              </CardDescription>
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-destructive" />
+                    Lista de Inadimplência
+                  </CardTitle>
+                  <CardDescription>
+                    Moradores com taxas pendentes ou vencidas
+                  </CardDescription>
+                </div>
+                {defaulters.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={exportDefaultersPDF}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Exportar PDF
+                    </Button>
+                    <Button size="sm" onClick={handleNotifyDefaulters} disabled={isNotifying} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                      {isNotifying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+                      Notificar Todos
+                    </Button>
+                  </div>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {defaulters.length === 0 ? (
