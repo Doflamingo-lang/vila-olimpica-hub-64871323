@@ -339,6 +339,7 @@ const FeesManagement = () => {
     switch (status) {
       case "paid": return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
       case "pending": return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
+      case "pending_verification": return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
       case "overdue": return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
       default: return "bg-muted text-muted-foreground";
     }
@@ -348,8 +349,24 @@ const FeesManagement = () => {
     switch (status) {
       case "paid": return "Pago";
       case "pending": return "Pendente";
+      case "pending_verification": return "Em Verificação";
       case "overdue": return "Atrasado";
       default: return status;
+    }
+  };
+
+  const handleViewReceipt = async (fee: CondominiumFee) => {
+    if (!(fee as any).receipt_url) {
+      toast({ title: "Sem comprovativo", description: "Esta taxa não possui comprovativo anexado.", variant: "destructive" });
+      return;
+    }
+    const { data } = await supabase.storage
+      .from("payment-receipts")
+      .createSignedUrl((fee as any).receipt_url, 300);
+    if (data?.signedUrl) {
+      window.open(data.signedUrl, "_blank");
+    } else {
+      toast({ title: "Erro", description: "Não foi possível abrir o comprovativo.", variant: "destructive" });
     }
   };
 
