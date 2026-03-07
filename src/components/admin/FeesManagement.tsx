@@ -777,6 +777,57 @@ const FeesManagement = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Receipt Preview Dialog */}
+      <Dialog open={receiptDialogOpen} onOpenChange={setReceiptDialogOpen}>
+        <DialogContent className="sm:max-w-[700px] max-h-[85vh] p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-3 border-b border-border">
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-primary" />
+              Comprovativo de Pagamento
+            </DialogTitle>
+            <DialogDescription>
+              Pré-visualização do comprovativo enviado pelo morador
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-6 pb-6 pt-4 flex items-center justify-center min-h-[300px]">
+            {receiptLoading ? (
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">A carregar comprovativo...</p>
+              </div>
+            ) : receiptUrl ? (
+              <div className="w-full space-y-4">
+                {receiptIsPdf ? (
+                  <iframe
+                    src={receiptUrl}
+                    className="w-full h-[60vh] rounded-lg border border-border"
+                    title="Comprovativo PDF"
+                  />
+                ) : (
+                  <div className="flex justify-center">
+                    <img
+                      src={receiptUrl}
+                      alt="Comprovativo de pagamento"
+                      className="max-w-full max-h-[60vh] rounded-lg border border-border object-contain"
+                    />
+                  </div>
+                )}
+                <div className="flex justify-end">
+                  <a href={receiptUrl} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" size="sm">
+                      <FileText className="w-4 h-4 mr-2" />
+                      Abrir em nova aba
+                    </Button>
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Não foi possível carregar o comprovativo.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
