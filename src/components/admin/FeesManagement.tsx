@@ -635,6 +635,7 @@ const FeesManagement = () => {
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="pending">Pendentes</SelectItem>
+                <SelectItem value="pending_verification">Em Verificação</SelectItem>
                 <SelectItem value="paid">Pagos</SelectItem>
                 <SelectItem value="overdue">Atrasados</SelectItem>
               </SelectContent>
@@ -694,7 +695,16 @@ const FeesManagement = () => {
                             <p>{format(new Date(fee.paid_at), "dd/MM/yyyy")}</p>
                             {fee.payment_method && (
                               <p className="text-muted-foreground capitalize">
-                                {fee.payment_method}
+                                {fee.payment_method === "bank_transfer" ? "Transf. Bancária" : fee.payment_method}
+                              </p>
+                            )}
+                          </div>
+                        ) : fee.status === "pending_verification" ? (
+                          <div className="text-xs">
+                            <p className="text-blue-600 font-medium">Aguarda verificação</p>
+                            {fee.payment_method && (
+                              <p className="text-muted-foreground capitalize">
+                                {fee.payment_method === "bank_transfer" ? "Transf. Bancária" : fee.payment_method}
                               </p>
                             )}
                           </div>
@@ -704,15 +714,26 @@ const FeesManagement = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
+                          {fee.status === "pending_verification" && (fee as any).receipt_url && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 text-xs"
+                              onClick={() => handleViewReceipt(fee)}
+                            >
+                              Ver Comprovativo
+                            </Button>
+                          )}
                           <Select
                             value={fee.status}
                             onValueChange={(value) => handleUpdateStatus(fee.id, value)}
                           >
-                            <SelectTrigger className="w-28 h-8">
+                            <SelectTrigger className="w-32 h-8">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="pending">Pendente</SelectItem>
+                              <SelectItem value="pending_verification">Em Verificação</SelectItem>
                               <SelectItem value="paid">Pago</SelectItem>
                               <SelectItem value="overdue">Atrasado</SelectItem>
                             </SelectContent>
