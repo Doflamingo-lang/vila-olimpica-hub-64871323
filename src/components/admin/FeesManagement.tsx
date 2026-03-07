@@ -357,13 +357,13 @@ const FeesManagement = () => {
   };
 
   const handleViewReceipt = async (fee: CondominiumFee) => {
-    if (!(fee as any).receipt_url) {
+    if (!fee.receipt_url) {
       toast({ title: "Sem comprovativo", description: "Esta taxa não possui comprovativo anexado.", variant: "destructive" });
       return;
     }
     const { data } = await supabase.storage
       .from("payment-receipts")
-      .createSignedUrl((fee as any).receipt_url, 300);
+      .createSignedUrl(fee.receipt_url, 300);
     if (data?.signedUrl) {
       window.open(data.signedUrl, "_blank");
     } else {
@@ -715,7 +715,7 @@ const FeesManagement = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {fee.status === "pending_verification" && (fee as any).receipt_url && (
+                          {fee.status === "pending_verification" && fee.receipt_url && (
                             <Button
                               size="sm"
                               variant="outline"
