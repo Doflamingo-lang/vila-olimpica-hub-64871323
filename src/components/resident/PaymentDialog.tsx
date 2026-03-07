@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,10 @@ import {
   Shield,
   Receipt,
   Clock,
+  Building2,
+  Upload,
+  FileImage,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -43,7 +47,7 @@ interface PaymentDialogProps {
   onPaymentSuccess: () => void;
 }
 
-type PaymentMethod = "mpesa" | "emola" | "card" | null;
+type PaymentMethod = "mpesa" | "emola" | "card" | "bank_transfer" | null;
 type Step = "method" | "form" | "processing" | "success";
 
 const MONTH_NAMES: Record<string, string> = {
@@ -157,9 +161,45 @@ const getPaymentMethodLabel = (method: PaymentMethod) => {
     case "mpesa": return "M-Pesa";
     case "emola": return "e-Mola";
     case "card": return "Cartão Visa";
+    case "bank_transfer": return "Transferência Bancária";
     default: return "—";
   }
 };
+
+const BankDetailsCard = () => (
+  <div className="p-4 rounded-xl bg-accent/50 border border-border space-y-2">
+    <div className="flex items-center gap-2 mb-1">
+      <Building2 className="w-4 h-4 text-primary" />
+      <p className="text-sm font-semibold text-foreground">Dados Bancários</p>
+    </div>
+    <div className="grid grid-cols-1 gap-1.5 text-sm">
+      <div className="flex justify-between">
+        <span className="text-muted-foreground">Banco:</span>
+        <span className="font-medium text-foreground">NEDBANK</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="text-muted-foreground">Titular:</span>
+        <span className="font-medium text-foreground text-right text-xs">COM. DE MORAD. DO COND. VILA OLÍMPICA</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="text-muted-foreground">Nº Conta:</span>
+        <span className="font-mono font-medium text-foreground">00036768907</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="text-muted-foreground">NIB:</span>
+        <span className="font-mono font-medium text-foreground text-xs">004300000003676890746</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="text-muted-foreground">IBAN:</span>
+        <span className="font-mono font-medium text-foreground text-xs">004300000003676890746</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="text-muted-foreground">SWIFT:</span>
+        <span className="font-mono font-medium text-foreground">UNICMZMX</span>
+      </div>
+    </div>
+  </div>
+);
 
 const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDialogProps) => {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(null);
@@ -170,6 +210,9 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
   const [cardCvv, setCardCvv] = useState("");
   const [cardName, setCardName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -182,6 +225,8 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
     setCardCvv("");
     setCardName("");
     setIsProcessing(false);
+    setReceiptFile(null);
+    setReceiptPreview(null);
   };
 
   const handleClose = (isOpen: boolean) => {
@@ -197,6 +242,58 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
   const handleBack = () => {
     setSelectedMethod(null);
     setStep("method");
+    setReceiptFile(null);
+    setReceiptPreview(null);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast({ title: "Ficheiro muito grande", description: "O tamanho máximo é 10MB.", variant: "destructive" });
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: "Formato inválido", description: "Envie uma imagem (JPG, PNG, WebP) ou PDF.", variant: "destructive" });
+      return;
+    }
+
+    setReceiptFile(file);
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setReceiptPreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setReceiptPreview(null);
+    }
+  };
+
+  const removeFile = () => {
+    setReceiptFile(null);
+    setReceiptPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const uploadReceipt = async (feeId: string): Promise<string | null> => {
+    if (!receiptFile || !user) return null;
+
+    const ext = receiptFile.name.split(".").pop() || "jpg";
+    const filePath = `${user.id}/${feeId}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from("payment-receipts")
+      .upload(filePath, receiptFile, { upsert: true });
+
+    if (error) {
+      console.error("Upload error:", error);
+      return null;
+    }
+
+    return filePath;
   };
 
   const handlePayment = async () => {
@@ -210,22 +307,48 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
       toast({ title: "Dados incompletos", description: "Preencha todos os dados do cartão.", variant: "destructive" });
       return;
     }
+    if (selectedMethod === "bank_transfer" && !receiptFile) {
+      toast({ title: "Comprovativo em falta", description: "Anexe o comprovativo de transferência bancária.", variant: "destructive" });
+      return;
+    }
 
     setStep("processing");
     setIsProcessing(true);
 
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    // Upload receipt if bank transfer
+    let receiptUrl: string | null = null;
+    if (selectedMethod === "bank_transfer") {
+      receiptUrl = await uploadReceipt(fee.id);
+      if (!receiptUrl) {
+        setIsProcessing(false);
+        setStep("form");
+        toast({ title: "Erro no upload", description: "Não foi possível enviar o comprovativo. Tente novamente.", variant: "destructive" });
+        return;
+      }
+    } else {
+      // Simulate processing for other methods
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
 
     // Update the fee status in the database
     const now = new Date().toISOString();
+    const updateData: Record<string, unknown> = {
+      status: selectedMethod === "bank_transfer" ? "pending_verification" : "paid",
+      payment_method: selectedMethod,
+      updated_at: now,
+    };
+
+    if (selectedMethod !== "bank_transfer") {
+      updateData.paid_at = now;
+    }
+
+    if (receiptUrl) {
+      updateData.receipt_url = receiptUrl;
+    }
+
     const { error: updateError } = await supabase
       .from("condominium_fees")
-      .update({
-        status: "paid",
-        paid_at: now,
-        payment_method: selectedMethod,
-      })
+      .update(updateData)
       .eq("id", fee.id);
 
     if (updateError) {
@@ -239,25 +362,28 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
     setIsProcessing(false);
     setStep("success");
 
-    // Send email notification (fire-and-forget)
-    const paidDate = format(new Date(now), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR });
-    supabase.functions.invoke("send-payment-notification", {
-      body: {
-        referenceMonth: MONTH_NAMES_FULL[fee.reference_month] || fee.reference_month,
-        referenceYear: fee.reference_year,
-        amount: Number(fee.amount),
-        paymentMethod: getPaymentMethodLabel(selectedMethod),
-        paidAt: paidDate,
-        receiptId: fee.id,
-      },
-    }).catch((err) => console.error("Email notification error:", err));
+    // Send email notification (fire-and-forget) - only for non-bank-transfer
+    if (selectedMethod !== "bank_transfer") {
+      const paidDate = format(new Date(now), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR });
+      supabase.functions.invoke("send-payment-notification", {
+        body: {
+          referenceMonth: MONTH_NAMES_FULL[fee.reference_month] || fee.reference_month,
+          referenceYear: fee.reference_year,
+          amount: Number(fee.amount),
+          paymentMethod: getPaymentMethodLabel(selectedMethod),
+          paidAt: paidDate,
+          receiptId: fee.id,
+        },
+      }).catch((err) => console.error("Email notification error:", err));
+    }
 
-    toast({
-      title: "Pagamento processado!",
-      description: selectedMethod === "card"
+    const successMessage = selectedMethod === "bank_transfer"
+      ? "O comprovativo foi enviado com sucesso. A administração irá verificar e confirmar o seu pagamento."
+      : selectedMethod === "card"
         ? "O pagamento foi processado com sucesso. Receberá um email de confirmação."
-        : `Pagamento via ${selectedMethod === "mpesa" ? "M-Pesa" : "e-Mola"} processado. Receberá um email de confirmação.`,
-    });
+        : `Pagamento via ${selectedMethod === "mpesa" ? "M-Pesa" : "e-Mola"} processado. Receberá um email de confirmação.`;
+
+    toast({ title: selectedMethod === "bank_transfer" ? "Comprovativo enviado!" : "Pagamento processado!", description: successMessage });
 
     setTimeout(() => {
       onPaymentSuccess();
@@ -266,6 +392,7 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
   };
 
   const paymentMethods = [
+    { id: "bank_transfer" as const, name: "Transferência Bancária", description: "Transfira e envie o comprovativo", icon: Building2, color: "text-emerald-600", bgColor: "bg-emerald-50 dark:bg-emerald-950/20", borderColor: "border-emerald-300 dark:border-emerald-800" },
     { id: "mpesa" as const, name: "M-Pesa", description: "Pague com Vodacom M-Pesa", icon: Smartphone, color: "text-red-600", bgColor: "bg-red-50 dark:bg-red-950/20", borderColor: "border-red-300 dark:border-red-800" },
     { id: "emola" as const, name: "e-Mola", description: "Pague com Movitel e-Mola", icon: Phone, color: "text-orange-600", bgColor: "bg-orange-50 dark:bg-orange-950/20", borderColor: "border-orange-300 dark:border-orange-800" },
     { id: "card" as const, name: "Cartão Visa", description: "Pagamento com cartão Visa", icon: CreditCard, color: "text-blue-600", bgColor: "bg-blue-50 dark:bg-blue-950/20", borderColor: "border-blue-300 dark:border-blue-800" },
@@ -275,7 +402,7 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-primary/5 border-b border-border px-6 pt-6 pb-4">
           <DialogHeader>
@@ -297,11 +424,15 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
               <div className="w-20 h-20 bg-green-100 dark:bg-green-950/30 rounded-full flex items-center justify-center">
                 <CheckCircle className="w-12 h-12 text-green-600" />
               </div>
-              <h3 className="text-xl font-bold text-foreground">Pagamento Iniciado!</h3>
+              <h3 className="text-xl font-bold text-foreground">
+                {selectedMethod === "bank_transfer" ? "Comprovativo Enviado!" : "Pagamento Iniciado!"}
+              </h3>
               <p className="text-muted-foreground text-center text-sm max-w-xs">
-                {selectedMethod === "card"
-                  ? "O pagamento foi processado com sucesso. O comprovativo será enviado por email."
-                  : `Verifique o seu telefone e confirme o pagamento no ${selectedMethod === "mpesa" ? "M-Pesa" : "e-Mola"}. Após confirmação, o estado será atualizado automaticamente.`}
+                {selectedMethod === "bank_transfer"
+                  ? "O comprovativo foi enviado. A administração irá verificar e confirmar o pagamento em breve."
+                  : selectedMethod === "card"
+                    ? "O pagamento foi processado com sucesso. O comprovativo será enviado por email."
+                    : `Verifique o seu telefone e confirme o pagamento no ${selectedMethod === "mpesa" ? "M-Pesa" : "e-Mola"}. Após confirmação, o estado será atualizado automaticamente.`}
               </p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
                 <Clock className="w-3 h-3" />
@@ -314,11 +445,15 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
           {step === "processing" && (
             <div className="flex flex-col items-center justify-center py-10 gap-4">
               <Loader2 className="w-12 h-12 animate-spin text-primary" />
-              <p className="text-foreground font-medium">Processando pagamento...</p>
+              <p className="text-foreground font-medium">
+                {selectedMethod === "bank_transfer" ? "Enviando comprovativo..." : "Processando pagamento..."}
+              </p>
               <p className="text-muted-foreground text-sm text-center">
-                {selectedMethod === "card"
-                  ? "Aguarde enquanto processamos o seu cartão."
-                  : `Enviando pedido de pagamento via ${selectedMethod === "mpesa" ? "M-Pesa" : "e-Mola"}...`}
+                {selectedMethod === "bank_transfer"
+                  ? "Aguarde enquanto enviamos o seu comprovativo."
+                  : selectedMethod === "card"
+                    ? "Aguarde enquanto processamos o seu cartão."
+                    : `Enviando pedido de pagamento via ${selectedMethod === "mpesa" ? "M-Pesa" : "e-Mola"}...`}
               </p>
             </div>
           )}
@@ -328,42 +463,8 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
             <div className="space-y-4">
               <AmountSummary fee={fee} />
 
-              {/* Bank Details */}
-              <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 space-y-2">
-                <div className="flex items-center gap-2 mb-1">
-                  <CreditCard className="w-4 h-4 text-blue-600" />
-                  <p className="text-sm font-semibold text-foreground">Dados para Transferência Bancária</p>
-                </div>
-                <div className="grid grid-cols-1 gap-1.5 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Banco:</span>
-                    <span className="font-medium text-foreground">NEDBANK</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Titular:</span>
-                    <span className="font-medium text-foreground text-right text-xs">COM. DE MORAD. DO COND. VILA OLÍMPICA</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Nº Conta:</span>
-                    <span className="font-mono font-medium text-foreground">00036768907</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">NIB:</span>
-                    <span className="font-mono font-medium text-foreground text-xs">004300000003676890746</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">IBAN:</span>
-                    <span className="font-mono font-medium text-foreground text-xs">004300000003676890746</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">SWIFT:</span>
-                    <span className="font-mono font-medium text-foreground">UNICMZMX</span>
-                  </div>
-                </div>
-              </div>
-
               <div className="space-y-2.5">
-                <p className="text-sm font-medium text-foreground">Ou pague por via digital:</p>
+                <p className="text-sm font-medium text-foreground">Escolha o método de pagamento:</p>
                 {paymentMethods.map((method) => (
                   <PaymentMethodCard
                     key={method.id}
@@ -377,6 +478,86 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
                 <Shield className="w-3.5 h-3.5" />
                 <span>Pagamento seguro e encriptado</span>
               </div>
+            </div>
+          )}
+
+          {/* Bank Transfer Form */}
+          {step === "form" && selectedMethod === "bank_transfer" && (
+            <div className="space-y-4">
+              <button onClick={handleBack} className="flex items-center gap-1 text-sm text-primary hover:underline">
+                <ArrowLeft className="w-4 h-4" /> Alterar método
+              </button>
+
+              <AmountSummary fee={fee} />
+
+              <BankDetailsCard />
+
+              <div className="space-y-2">
+                <Label>Comprovativo de Transferência</Label>
+                <p className="text-xs text-muted-foreground">
+                  Após efectuar a transferência, anexe aqui o comprovativo (imagem ou PDF, máx. 10MB).
+                </p>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+
+                {!receiptFile ? (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center gap-3 hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Upload className="w-6 h-6 text-primary" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-foreground">Clique para anexar</p>
+                      <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP ou PDF</p>
+                    </div>
+                  </button>
+                ) : (
+                  <div className="border border-border rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <FileImage className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{receiptFile.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(receiptFile.size / 1024).toFixed(0)} KB
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={removeFile}
+                        className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {receiptPreview && (
+                      <div className="rounded-lg overflow-hidden border border-border">
+                        <img src={receiptPreview} alt="Comprovativo" className="w-full max-h-48 object-contain bg-muted/30" />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <Button
+                className="w-full h-12 text-base"
+                onClick={handlePayment}
+                disabled={isProcessing || !receiptFile}
+              >
+                Enviar Comprovativo
+              </Button>
             </div>
           )}
 

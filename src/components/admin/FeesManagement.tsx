@@ -44,6 +44,7 @@ interface CondominiumFee {
   status: string;
   paid_at: string | null;
   payment_method: string | null;
+  receipt_url: string | null;
   created_at: string;
 }
 
@@ -339,6 +340,7 @@ const FeesManagement = () => {
     switch (status) {
       case "paid": return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
       case "pending": return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
+      case "pending_verification": return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
       case "overdue": return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
       default: return "bg-muted text-muted-foreground";
     }
@@ -348,8 +350,24 @@ const FeesManagement = () => {
     switch (status) {
       case "paid": return "Pago";
       case "pending": return "Pendente";
+      case "pending_verification": return "Em Verificação";
       case "overdue": return "Atrasado";
       default: return status;
+    }
+  };
+
+  const handleViewReceipt = async (fee: CondominiumFee) => {
+    if (!fee.receipt_url) {
+      toast({ title: "Sem comprovativo", description: "Esta taxa não possui comprovativo anexado.", variant: "destructive" });
+      return;
+    }
+    const { data } = await supabase.storage
+      .from("payment-receipts")
+      .createSignedUrl(fee.receipt_url, 300);
+    if (data?.signedUrl) {
+      window.open(data.signedUrl, "_blank");
+    } else {
+      toast({ title: "Erro", description: "Não foi possível abrir o comprovativo.", variant: "destructive" });
     }
   };
 
@@ -618,6 +636,7 @@ const FeesManagement = () => {
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="pending">Pendentes</SelectItem>
+                <SelectItem value="pending_verification">Em Verificação</SelectItem>
                 <SelectItem value="paid">Pagos</SelectItem>
                 <SelectItem value="overdue">Atrasados</SelectItem>
               </SelectContent>
@@ -677,7 +696,16 @@ const FeesManagement = () => {
                             <p>{format(new Date(fee.paid_at), "dd/MM/yyyy")}</p>
                             {fee.payment_method && (
                               <p className="text-muted-foreground capitalize">
-                                {fee.payment_method}
+                                {fee.payment_method === "bank_transfer" ? "Transf. Bancária" : fee.payment_method}
+                              </p>
+                            )}
+                          </div>
+                        ) : fee.status === "pending_verification" ? (
+                          <div className="text-xs">
+                            <p className="text-blue-600 font-medium">Aguarda verificação</p>
+                            {fee.payment_method && (
+                              <p className="text-muted-foreground capitalize">
+                                {fee.payment_method === "bank_transfer" ? "Transf. Bancária" : fee.payment_method}
                               </p>
                             )}
                           </div>
@@ -687,15 +715,26 @@ const FeesManagement = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
+                          {fee.status === "pending_verification" && fee.receipt_url && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 text-xs"
+                              onClick={() => handleViewReceipt(fee)}
+                            >
+                              Ver Comprovativo
+                            </Button>
+                          )}
                           <Select
                             value={fee.status}
                             onValueChange={(value) => handleUpdateStatus(fee.id, value)}
                           >
-                            <SelectTrigger className="w-28 h-8">
+                            <SelectTrigger className="w-32 h-8">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="pending">Pendente</SelectItem>
+                              <SelectItem value="pending_verification">Em Verificação</SelectItem>
                               <SelectItem value="paid">Pago</SelectItem>
                               <SelectItem value="overdue">Atrasado</SelectItem>
                             </SelectContent>

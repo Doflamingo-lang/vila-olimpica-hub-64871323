@@ -94,6 +94,7 @@ export type Database = {
           id: string
           paid_at: string | null
           payment_method: string | null
+          receipt_url: string | null
           reference_month: string
           reference_year: number
           status: string
@@ -107,6 +108,7 @@ export type Database = {
           id?: string
           paid_at?: string | null
           payment_method?: string | null
+          receipt_url?: string | null
           reference_month: string
           reference_year: number
           status?: string
@@ -120,6 +122,7 @@ export type Database = {
           id?: string
           paid_at?: string | null
           payment_method?: string | null
+          receipt_url?: string | null
           reference_month?: string
           reference_year?: number
           status?: string
