@@ -30,7 +30,8 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Receipt, Loader2, Trash2, Edit2, Search, Users, User, Eye, FileText } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Receipt, Loader2, Trash2, Edit2, Search, Users, User, Eye, FileText, AlertTriangle, Image } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -391,8 +392,29 @@ const FeesManagement = () => {
     );
   }
 
+  const receipts = fees.filter((f) => f.receipt_url);
+  const defaulters = fees.filter((f) => f.status === "overdue" || (f.status === "pending" && new Date(f.due_date) < new Date()));
+
   return (
     <div className="space-y-6">
+      <Tabs defaultValue="fees" className="space-y-4">
+        <TabsList className="grid grid-cols-3 w-full max-w-lg">
+          <TabsTrigger value="fees">
+            <Receipt className="w-4 h-4 mr-2" />
+            Taxas
+          </TabsTrigger>
+          <TabsTrigger value="receipts">
+            <Image className="w-4 h-4 mr-2" />
+            Comprovativos
+          </TabsTrigger>
+          <TabsTrigger value="defaulters">
+            <AlertTriangle className="w-4 h-4 mr-2" />
+            Inadimplência
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ===== TAB: TAXAS ===== */}
+        <TabsContent value="fees">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -428,34 +450,18 @@ const FeesManagement = () => {
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
                 <div className="flex-1 overflow-y-auto pr-2 space-y-4 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-muted/30 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-primary/60" style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--primary) / 0.4) hsl(var(--muted) / 0.3)' }}>
-                  {/* Send to all toggle - only show when creating */}
                   {!editingFee && (
                     <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
                       <div className="flex items-center gap-2">
-                        {sendToAll ? (
-                          <Users className="w-5 h-5 text-primary" />
-                        ) : (
-                          <User className="w-5 h-5 text-primary" />
-                        )}
+                        {sendToAll ? <Users className="w-5 h-5 text-primary" /> : <User className="w-5 h-5 text-primary" />}
                         <div>
-                          <p className="text-sm font-medium">
-                            {sendToAll ? "Enviar para todos os moradores" : "Morador específico"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {sendToAll 
-                              ? `${residents.length} moradores cadastrados` 
-                              : "Selecione um morador abaixo"}
-                          </p>
+                          <p className="text-sm font-medium">{sendToAll ? "Enviar para todos os moradores" : "Morador específico"}</p>
+                          <p className="text-xs text-muted-foreground">{sendToAll ? `${residents.length} moradores cadastrados` : "Selecione um morador abaixo"}</p>
                         </div>
                       </div>
-                      <Switch
-                        checked={sendToAll}
-                        onCheckedChange={setSendToAll}
-                      />
+                      <Switch checked={sendToAll} onCheckedChange={setSendToAll} />
                     </div>
                   )}
-
-                  {/* Resident selector - show when not sending to all */}
                   {(!sendToAll || editingFee) && (
                     <div>
                       <Label htmlFor="user_id">Morador *</Label>
@@ -465,62 +471,33 @@ const FeesManagement = () => {
                           <span className="text-sm text-muted-foreground">Carregando moradores...</span>
                         </div>
                       ) : residents.length > 0 ? (
-                        <Select
-                          value={formData.user_id}
-                          onValueChange={(value) => setFormData({ ...formData, user_id: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um morador" />
-                          </SelectTrigger>
+                        <Select value={formData.user_id} onValueChange={(value) => setFormData({ ...formData, user_id: value })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione um morador" /></SelectTrigger>
                           <SelectContent>
                             {residents.map((resident) => (
-                              <SelectItem key={resident.id} value={resident.id}>
-                                {resident.email}
-                              </SelectItem>
+                              <SelectItem key={resident.id} value={resident.id}>{resident.email}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       ) : (
                         <div>
-                          <Input
-                            id="user_id"
-                            value={formData.user_id}
-                            onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
-                            placeholder="UUID do morador"
-                            required={!sendToAll}
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Nenhum morador encontrado. Insira o ID manualmente.
-                          </p>
+                          <Input id="user_id" value={formData.user_id} onChange={(e) => setFormData({ ...formData, user_id: e.target.value })} placeholder="UUID do morador" required={!sendToAll} />
+                          <p className="text-xs text-muted-foreground mt-1">Nenhum morador encontrado. Insira o ID manualmente.</p>
                         </div>
                       )}
                     </div>
                   )}
-
                   <div>
                     <Label>Ano *</Label>
-                    <Input
-                      type="number"
-                      value={formData.reference_year}
-                      onChange={(e) => setFormData({ ...formData, reference_year: parseInt(e.target.value) })}
-                      required
-                    />
+                    <Input type="number" value={formData.reference_year} onChange={(e) => setFormData({ ...formData, reference_year: parseInt(e.target.value) })} required />
                   </div>
-
                   <div>
                     <Label>{editingFee ? "Mês de Referência *" : "Meses de Referência * (selecione um ou mais)"}</Label>
                     {editingFee ? (
-                      <Select
-                        value={formData.reference_months[0] || ""}
-                        onValueChange={(value) => setFormData({ ...formData, reference_months: [value] })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
+                      <Select value={formData.reference_months[0] || ""} onValueChange={(value) => setFormData({ ...formData, reference_months: [value] })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>
-                          {months.map((month) => (
-                            <SelectItem key={month} value={month}>{month}</SelectItem>
-                          ))}
+                          {months.map((month) => (<SelectItem key={month} value={month}>{month}</SelectItem>))}
                         </SelectContent>
                       </Select>
                     ) : (
@@ -530,9 +507,7 @@ const FeesManagement = () => {
                             <Checkbox
                               checked={formData.reference_months.includes(month)}
                               onCheckedChange={(checked) => {
-                                const updated = checked
-                                  ? [...formData.reference_months, month]
-                                  : formData.reference_months.filter((m) => m !== month);
+                                const updated = checked ? [...formData.reference_months, month] : formData.reference_months.filter((m) => m !== month);
                                 setFormData({ ...formData, reference_months: updated });
                               }}
                             />
@@ -542,45 +517,21 @@ const FeesManagement = () => {
                       </div>
                     )}
                     {!editingFee && formData.reference_months.length > 0 && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {formData.reference_months.length} mês(es) selecionado(s)
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{formData.reference_months.length} mês(es) selecionado(s)</p>
                     )}
                   </div>
-
                   <div>
                     <Label htmlFor="amount">Valor (MZN) *</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      step="0.01"
-                      value={formData.amount}
-                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      placeholder="0.00"
-                      required
-                    />
+                    <Input id="amount" type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" required />
                   </div>
-
                   <div>
                     <Label htmlFor="due_date">Data de Vencimento *</Label>
-                    <Input
-                      id="due_date"
-                      type="date"
-                      value={formData.due_date}
-                      onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                      required
-                    />
+                    <Input id="due_date" type="date" value={formData.due_date} onChange={(e) => setFormData({ ...formData, due_date: e.target.value })} required />
                   </div>
-
                   <div>
                     <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value) => setFormData({ ...formData, status: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
+                    <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pending">Pendente</SelectItem>
                         <SelectItem value="paid">Pago</SelectItem>
@@ -588,16 +539,10 @@ const FeesManagement = () => {
                       </SelectContent>
                     </Select>
                   </div>
-
                   <div>
                     <Label htmlFor="payment_method">Método de Pagamento</Label>
-                    <Select
-                      value={formData.payment_method}
-                      onValueChange={(value) => setFormData({ ...formData, payment_method: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione (opcional)" />
-                      </SelectTrigger>
+                    <Select value={formData.payment_method} onValueChange={(value) => setFormData({ ...formData, payment_method: value })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione (opcional)" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="mpesa">M-Pesa</SelectItem>
                         <SelectItem value="emola">e-Mola</SelectItem>
@@ -606,19 +551,8 @@ const FeesManagement = () => {
                     </Select>
                   </div>
                   </div>
-
                   <div className="flex gap-2 pt-4 border-t mt-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => {
-                        setIsDialogOpen(false);
-                        resetForm();
-                      }}
-                    >
-                      Cancelar
-                    </Button>
+                    <Button type="button" variant="outline" className="flex-1" onClick={() => { setIsDialogOpen(false); resetForm(); }}>Cancelar</Button>
                     <Button type="submit" className="flex-1" disabled={isSubmitting}>
                       {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                       {editingFee ? "Atualizar" : sendToAll ? `Enviar para ${residents.length} moradores` : "Cadastrar"}
@@ -630,21 +564,13 @@ const FeesManagement = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por email ou ID do morador..."
-                value={searchUserId}
-                onChange={(e) => setSearchUserId(e.target.value)}
-                className="pl-10"
-              />
+              <Input placeholder="Buscar por email ou ID do morador..." value={searchUserId} onChange={(e) => setSearchUserId(e.target.value)} className="pl-10" />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Filtrar" />
-              </SelectTrigger>
+              <SelectTrigger className="w-40"><SelectValue placeholder="Filtrar" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="pending">Pendentes</SelectItem>
@@ -654,7 +580,6 @@ const FeesManagement = () => {
               </SelectContent>
             </Select>
           </div>
-
           {filteredFees.length === 0 ? (
             <div className="text-center py-12">
               <Receipt className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -677,28 +602,12 @@ const FeesManagement = () => {
                 <TableBody>
                   {filteredFees.map((fee) => (
                     <TableRow key={fee.id}>
-                      <TableCell className="font-medium">
-                        {fee.reference_month}/{fee.reference_year}
-                      </TableCell>
+                      <TableCell className="font-medium">{fee.reference_month}/{fee.reference_year}</TableCell>
+                      <TableCell><span className="text-xs">{getResidentEmail(fee.user_id)}</span></TableCell>
+                      <TableCell>{new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(fee.amount)}</TableCell>
+                      <TableCell>{format(new Date(fee.due_date), "dd/MM/yyyy")}</TableCell>
                       <TableCell>
-                        <span className="text-xs">
-                          {getResidentEmail(fee.user_id)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {new Intl.NumberFormat("pt-MZ", {
-                          style: "currency",
-                          currency: "MZN",
-                        }).format(fee.amount)}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(fee.due_date), "dd/MM/yyyy")}
-                      </TableCell>
-                      <TableCell>
-                        <span className={cn(
-                          "px-2 py-1 rounded-full text-xs font-medium",
-                          getStatusBadge(fee.status)
-                        )}>
+                        <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getStatusBadge(fee.status))}>
                           {getStatusLabel(fee.status)}
                         </span>
                       </TableCell>
@@ -706,20 +615,12 @@ const FeesManagement = () => {
                         {fee.paid_at ? (
                           <div className="text-xs">
                             <p>{format(new Date(fee.paid_at), "dd/MM/yyyy")}</p>
-                            {fee.payment_method && (
-                              <p className="text-muted-foreground capitalize">
-                                {fee.payment_method === "bank_transfer" ? "Transf. Bancária" : fee.payment_method}
-                              </p>
-                            )}
+                            {fee.payment_method && <p className="text-muted-foreground capitalize">{fee.payment_method === "bank_transfer" ? "Transf. Bancária" : fee.payment_method}</p>}
                           </div>
                         ) : fee.status === "pending_verification" ? (
                           <div className="text-xs">
                             <p className="text-blue-600 font-medium">Aguarda verificação</p>
-                            {fee.payment_method && (
-                              <p className="text-muted-foreground capitalize">
-                                {fee.payment_method === "bank_transfer" ? "Transf. Bancária" : fee.payment_method}
-                              </p>
-                            )}
+                            {fee.payment_method && <p className="text-muted-foreground capitalize">{fee.payment_method === "bank_transfer" ? "Transf. Bancária" : fee.payment_method}</p>}
                           </div>
                         ) : (
                           <span className="text-muted-foreground text-xs">-</span>
@@ -728,22 +629,10 @@ const FeesManagement = () => {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {fee.status === "pending_verification" && fee.receipt_url && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 text-xs"
-                              onClick={() => handleViewReceipt(fee)}
-                            >
-                              Ver Comprovativo
-                            </Button>
+                            <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => handleViewReceipt(fee)}>Ver Comprovativo</Button>
                           )}
-                          <Select
-                            value={fee.status}
-                            onValueChange={(value) => handleUpdateStatus(fee.id, value)}
-                          >
-                            <SelectTrigger className="w-32 h-8">
-                              <SelectValue />
-                            </SelectTrigger>
+                          <Select value={fee.status} onValueChange={(value) => handleUpdateStatus(fee.id, value)}>
+                            <SelectTrigger className="w-32 h-8"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="pending">Pendente</SelectItem>
                               <SelectItem value="pending_verification">Em Verificação</SelectItem>
@@ -751,22 +640,8 @@ const FeesManagement = () => {
                               <SelectItem value="overdue">Atrasado</SelectItem>
                             </SelectContent>
                           </Select>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleEdit(fee)}
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                            onClick={() => handleDelete(fee.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleEdit(fee)}><Edit2 className="w-4 h-4" /></Button>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive hover:text-destructive" onClick={() => handleDelete(fee.id)}><Trash2 className="w-4 h-4" /></Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -777,6 +652,156 @@ const FeesManagement = () => {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        {/* ===== TAB: COMPROVATIVOS ===== */}
+        <TabsContent value="receipts">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Image className="w-5 h-5" />
+                Comprovativos de Pagamento
+              </CardTitle>
+              <CardDescription>
+                Lista de todos os comprovativos enviados pelos moradores
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {receipts.length === 0 ? (
+                <div className="text-center py-12">
+                  <Image className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">Nenhum comprovativo enviado.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Referência</TableHead>
+                        <TableHead>Morador</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Método</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {receipts.map((fee) => (
+                        <TableRow key={fee.id}>
+                          <TableCell className="font-medium">{fee.reference_month}/{fee.reference_year}</TableCell>
+                          <TableCell><span className="text-xs">{getResidentEmail(fee.user_id)}</span></TableCell>
+                          <TableCell>{new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(fee.amount)}</TableCell>
+                          <TableCell className="text-xs capitalize">{fee.payment_method === "bank_transfer" ? "Transf. Bancária" : fee.payment_method || "—"}</TableCell>
+                          <TableCell>
+                            <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getStatusBadge(fee.status))}>
+                              {getStatusLabel(fee.status)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => handleViewReceipt(fee)}>
+                                <Eye className="w-4 h-4 mr-1" />
+                                Ver
+                              </Button>
+                              {fee.status === "pending_verification" && (
+                                <Button size="sm" className="h-8 text-xs" onClick={() => handleUpdateStatus(fee.id, "paid")}>
+                                  Aprovar
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ===== TAB: INADIMPLÊNCIA ===== */}
+        <TabsContent value="defaulters">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+                Lista de Inadimplência
+              </CardTitle>
+              <CardDescription>
+                Moradores com taxas pendentes ou vencidas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {defaulters.length === 0 ? (
+                <div className="text-center py-12">
+                  <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">Nenhuma inadimplência registada. Todos os moradores estão em dia!</p>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-4 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                    <p className="text-sm font-medium text-destructive">
+                      {defaulters.length} taxa(s) em atraso ou vencida(s) — Total: {new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(defaulters.reduce((sum, f) => sum + Number(f.amount), 0))}
+                    </p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Morador</TableHead>
+                          <TableHead>Referência</TableHead>
+                          <TableHead>Valor</TableHead>
+                          <TableHead>Vencimento</TableHead>
+                          <TableHead>Dias em Atraso</TableHead>
+                          <TableHead>Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {defaulters
+                          .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+                          .map((fee) => {
+                            const daysOverdue = Math.floor((new Date().getTime() - new Date(fee.due_date).getTime()) / (1000 * 60 * 60 * 24));
+                            return (
+                              <TableRow key={fee.id}>
+                                <TableCell><span className="text-xs font-medium">{getResidentEmail(fee.user_id)}</span></TableCell>
+                                <TableCell className="font-medium">{fee.reference_month}/{fee.reference_year}</TableCell>
+                                <TableCell>{new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(fee.amount)}</TableCell>
+                                <TableCell>{format(new Date(fee.due_date), "dd/MM/yyyy")}</TableCell>
+                                <TableCell>
+                                  <span className={cn(
+                                    "px-2 py-1 rounded-full text-xs font-medium",
+                                    daysOverdue > 60 ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" :
+                                    daysOverdue > 30 ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
+                                    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                  )}>
+                                    {daysOverdue} dias
+                                  </span>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Select value={fee.status} onValueChange={(value) => handleUpdateStatus(fee.id, value)}>
+                                      <SelectTrigger className="w-32 h-8"><SelectValue /></SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="pending">Pendente</SelectItem>
+                                        <SelectItem value="paid">Pago</SelectItem>
+                                        <SelectItem value="overdue">Atrasado</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Receipt Preview Dialog */}
       <Dialog open={receiptDialogOpen} onOpenChange={setReceiptDialogOpen}>
@@ -799,18 +824,10 @@ const FeesManagement = () => {
             ) : receiptUrl ? (
               <div className="w-full space-y-4">
                 {receiptIsPdf ? (
-                  <iframe
-                    src={receiptUrl}
-                    className="w-full h-[60vh] rounded-lg border border-border"
-                    title="Comprovativo PDF"
-                  />
+                  <iframe src={receiptUrl} className="w-full h-[60vh] rounded-lg border border-border" title="Comprovativo PDF" />
                 ) : (
                   <div className="flex justify-center">
-                    <img
-                      src={receiptUrl}
-                      alt="Comprovativo de pagamento"
-                      className="max-w-full max-h-[60vh] rounded-lg border border-border object-contain"
-                    />
+                    <img src={receiptUrl} alt="Comprovativo de pagamento" className="max-w-full max-h-[60vh] rounded-lg border border-border object-contain" />
                   </div>
                 )}
                 <div className="flex justify-end">
