@@ -943,6 +943,43 @@ const FeesManagement = () => {
                   </div>
                 </>
               )}
+
+              {/* Histórico de Notificações */}
+              {notificationLogs.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
+                    <History className="w-4 h-4" />
+                    Histórico de Notificações Enviadas
+                  </h3>
+                  <div className="overflow-x-auto border rounded-lg">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Morador</TableHead>
+                          <TableHead>Taxas</TableHead>
+                          <TableHead>Valor Total</TableHead>
+                          <TableHead>Data de Envio</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {notificationLogs.map((log) => (
+                          <TableRow key={log.id}>
+                            <TableCell><span className="text-xs">{log.email}</span></TableCell>
+                            <TableCell>{log.fees_count} taxa(s)</TableCell>
+                            <TableCell>{new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(log.total_amount)}</TableCell>
+                            <TableCell>
+                              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Clock className="w-3 h-3" />
+                                {format(new Date(log.created_at), "dd/MM/yyyy 'às' HH:mm")}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
