@@ -20,7 +20,7 @@ serve(async (req) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "Vila Olímpica <onboarding@resend.dev>",
+      from: "Vila Olímpica <noreply@vilaolimp.co.mz>",
       to: [to],
       subject,
       html,

@@ -189,7 +189,7 @@ Deno.serve(async (req) => {
         Authorization: `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
-        from: "Vila Olímpica <onboarding@resend.dev>",
+        from: "Vila Olímpica <noreply@vilaolimp.co.mz>",
         to: [accessRequest.email],
         subject: "Acesso Aprovado - Vila Olímpica",
         html: emailHtml,
