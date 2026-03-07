@@ -44,6 +44,7 @@ interface CondominiumFee {
   status: string;
   paid_at: string | null;
   payment_method: string | null;
+  receipt_url: string | null;
   created_at: string;
 }
 
