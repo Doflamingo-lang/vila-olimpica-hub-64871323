@@ -30,7 +30,8 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Receipt, Loader2, Trash2, Edit2, Search, Users, User, Eye, FileText } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Receipt, Loader2, Trash2, Edit2, Search, Users, User, Eye, FileText, AlertTriangle, Image } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
