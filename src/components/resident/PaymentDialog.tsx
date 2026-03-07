@@ -327,8 +327,43 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
           {step === "method" && (
             <div className="space-y-4">
               <AmountSummary fee={fee} />
+
+              {/* Bank Details */}
+              <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 space-y-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <CreditCard className="w-4 h-4 text-blue-600" />
+                  <p className="text-sm font-semibold text-foreground">Dados para Transferência Bancária</p>
+                </div>
+                <div className="grid grid-cols-1 gap-1.5 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Banco:</span>
+                    <span className="font-medium text-foreground">NEDBANK</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Titular:</span>
+                    <span className="font-medium text-foreground text-right text-xs">COM. DE MORAD. DO COND. VILA OLÍMPICA</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Nº Conta:</span>
+                    <span className="font-mono font-medium text-foreground">00036768907</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">NIB:</span>
+                    <span className="font-mono font-medium text-foreground text-xs">004300000003676890746</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">IBAN:</span>
+                    <span className="font-mono font-medium text-foreground text-xs">004300000003676890746</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">SWIFT:</span>
+                    <span className="font-mono font-medium text-foreground">UNICMZMX</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-2.5">
-                <p className="text-sm font-medium text-foreground">Escolha o método de pagamento:</p>
+                <p className="text-sm font-medium text-foreground">Ou pague por via digital:</p>
                 {paymentMethods.map((method) => (
                   <PaymentMethodCard
                     key={method.id}
