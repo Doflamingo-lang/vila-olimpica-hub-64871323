@@ -75,6 +75,7 @@ const FeesManagement = () => {
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [receiptLoading, setReceiptLoading] = useState(false);
   const [receiptIsPdf, setReceiptIsPdf] = useState(false);
+  const [isNotifying, setIsNotifying] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
