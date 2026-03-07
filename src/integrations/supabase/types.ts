@@ -325,6 +325,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_logs: {
+        Row: {
+          created_at: string
+          email: string
+          fees_count: number
+          id: string
+          notification_type: string
+          sent_by: string
+          total_amount: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          fees_count?: number
+          id?: string
+          notification_type?: string
+          sent_by: string
+          total_amount?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          fees_count?: number
+          id?: string
+          notification_type?: string
+          sent_by?: string
+          total_amount?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       properties: {
         Row: {
           address: string | null

@@ -31,7 +31,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Receipt, Loader2, Trash2, Edit2, Search, Users, User, Eye, FileText, AlertTriangle, Image, Download, Mail } from "lucide-react";
+import { Plus, Receipt, Loader2, Trash2, Edit2, Search, Users, User, Eye, FileText, AlertTriangle, Image, Download, Mail, History, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -76,6 +76,16 @@ const FeesManagement = () => {
   const [receiptLoading, setReceiptLoading] = useState(false);
   const [receiptIsPdf, setReceiptIsPdf] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
+  const [notificationLogs, setNotificationLogs] = useState<Array<{
+    id: string;
+    user_id: string;
+    email: string;
+    notification_type: string;
+    fees_count: number;
+    total_amount: number;
+    sent_by: string;
+    created_at: string;
+  }>>([]);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -91,7 +101,18 @@ const FeesManagement = () => {
   useEffect(() => {
     fetchFees();
     fetchResidents();
+    fetchNotificationLogs();
   }, []);
+
+  const fetchNotificationLogs = async () => {
+    const { data, error } = await supabase
+      .from("notification_logs")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!error && data) {
+      setNotificationLogs(data as typeof notificationLogs);
+    }
+  };
 
   const fetchResidents = async () => {
     setIsLoadingResidents(true);
@@ -464,6 +485,30 @@ const FeesManagement = () => {
         body: { overdueFees },
       });
       if (error) throw error;
+
+      // Log notifications per resident
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        const grouped: Record<string, typeof overdueFees> = {};
+        for (const fee of overdueFees) {
+          if (!grouped[fee.email]) grouped[fee.email] = [];
+          grouped[fee.email].push(fee);
+        }
+        const logs = Object.entries(grouped).map(([email, fees]) => {
+          const matchingFee = defaulters.find(d => getResidentEmail(d.user_id) === email);
+          return {
+            user_id: matchingFee?.user_id || currentUser.id,
+            email,
+            notification_type: "overdue",
+            fees_count: fees.length,
+            total_amount: fees.reduce((s, f) => s + f.amount, 0),
+            sent_by: currentUser.id,
+          };
+        });
+        await supabase.from("notification_logs").insert(logs);
+        fetchNotificationLogs();
+      }
+
       toast({
         title: "Notificações enviadas",
         description: `${data?.sent || 0} morador(es) notificado(s) com sucesso.`,
@@ -897,6 +942,43 @@ const FeesManagement = () => {
                     </Table>
                   </div>
                 </>
+              )}
+
+              {/* Histórico de Notificações */}
+              {notificationLogs.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
+                    <History className="w-4 h-4" />
+                    Histórico de Notificações Enviadas
+                  </h3>
+                  <div className="overflow-x-auto border rounded-lg">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Morador</TableHead>
+                          <TableHead>Taxas</TableHead>
+                          <TableHead>Valor Total</TableHead>
+                          <TableHead>Data de Envio</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {notificationLogs.map((log) => (
+                          <TableRow key={log.id}>
+                            <TableCell><span className="text-xs">{log.email}</span></TableCell>
+                            <TableCell>{log.fees_count} taxa(s)</TableCell>
+                            <TableCell>{new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(log.total_amount)}</TableCell>
+                            <TableCell>
+                              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Clock className="w-3 h-3" />
+                                {format(new Date(log.created_at), "dd/MM/yyyy 'às' HH:mm")}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
