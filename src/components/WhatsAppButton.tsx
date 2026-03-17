@@ -6,7 +6,7 @@ const WhatsAppButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   
   // Número de WhatsApp do condomínio (formato: 258 + número sem espaços)
-  const whatsappNumber = "258843001234"; // Substitua pelo número real
+  const whatsappNumber = "258842814557";
   
   const quickMessages = [
     { text: "Informações sobre pagamentos", emoji: "💳" },
