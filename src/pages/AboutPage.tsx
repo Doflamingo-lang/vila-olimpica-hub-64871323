@@ -114,8 +114,8 @@ const AboutPage = () => {
               </p>
               <p className="text-lg text-muted-foreground mb-4">
               Hoje, residem lá mais de <strong className="text-foreground">2.643 moradores</strong>, 
-                distribuídos por <strong className="text-foreground">1.024 apartamentos</strong> em 
-                <strong className="text-foreground">32 blocos</strong>, tornando este complexo uma referência em habitação planeada em Moçambique.
+                distribuídos por <strong className="text-foreground">1.088 apartamentos</strong> em 
+                <strong className="text-foreground">136 edifícios</strong> organizados em <strong className="text-foreground">32 blocos</strong>, tornando este complexo uma referência em habitação planeada em Moçambique.
               </p>
               <p className="text-lg text-muted-foreground mb-6">
               Este empreendimento representa um marco de modernidade na arquitetura habitacional de Maputo, 
