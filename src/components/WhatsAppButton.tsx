@@ -9,10 +9,11 @@ const WhatsAppButton = () => {
   const whatsappNumber = "258842814557";
   
   const quickMessages = [
-    { text: "Informações sobre pagamentos", emoji: "💳" },
-    { text: "Fazer uma reserva", emoji: "📅" },
-    { text: "Reportar problema", emoji: "🔧" },
-    { text: "Falar com administração", emoji: "💬" }
+    { text: "Informações sobre pagamentos", emoji: "💳", number: "258842814557" },
+    { text: "Fazer uma reserva", emoji: "📅", number: "258842814557" },
+    { text: "Reportar problema", emoji: "🔧", number: "258842814557" },
+    { text: "Falar com administração", emoji: "💬", number: "258842814557" },
+    { text: "Falar com segurança", emoji: "🛡️", number: "258856107137" }
   ];
 
   const sendWhatsAppMessage = (message: string) => {
