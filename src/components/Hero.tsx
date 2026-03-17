@@ -82,7 +82,8 @@ const Hero = () => {
           {/* Stats */}
           <div className="flex flex-wrap justify-center gap-6 md:gap-10 animate-fade-up opacity-0" style={{ animationDelay: "0.5s", animationFillMode: "forwards" }}>
             {[
-              { icon: Home, value: "1.024", label: "Apartamentos" },
+              { icon: Home, value: "1.088", label: "Apartamentos" },
+              { icon: Building2, value: "136", label: "Edifícios" },
               { icon: Building2, value: "32", label: "Blocos" },
               { icon: Users, value: "2.643+", label: "Moradores" },
             ].map((stat, index) => (

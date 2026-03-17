@@ -33,9 +33,11 @@ const Contact = () => {
             <div className="space-y-5 mb-8">
               {[
                 { icon: MapPin, title: "Endereço", content: ["Bairro do Zimpeto", "Maputo, Moçambique"] },
-                { icon: Phone, title: "Telefone", content: ["+258 21 123 4567", "+258 84 345 6789"] },
-                { icon: MessageCircle, title: "WhatsApp", content: ["+258 84 300 1234", "+258 84 345 6789"], links: ["https://wa.me/258843001234", "https://wa.me/258843456789"] },
-                { icon: Clock, title: "Horário", content: ["Segunda a Sexta: 9h00 - 18h00", "Sábado: 9h00 - 13h00"] },
+                { icon: Phone, title: "Administração - Telefone", content: ["+258 84 281 4557"] },
+                { icon: MessageCircle, title: "Administração - WhatsApp", content: ["+258 84 281 4557"], links: ["https://wa.me/258842814557"] },
+                { icon: Phone, title: "Segurança - Telefone", content: ["+258 85 610 7137"] },
+                { icon: MessageCircle, title: "Segurança - WhatsApp", content: ["+258 85 610 7137"], links: ["https://wa.me/258856107137"] },
+                { icon: Clock, title: "Horário", content: ["Segunda a Sexta: 7h30 - 15h30", "Sábado: 8h00 - 12h00"] },
               ].map((item, index) => (
                 <div key={index} className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border hover:border-primary/20 transition-colors">
                   <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
