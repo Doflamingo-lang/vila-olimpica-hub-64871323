@@ -17,7 +17,8 @@ const WhatsAppButton = () => {
 
   const sendWhatsAppMessage = (message: string) => {
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+    // Uses api.whatsapp.com which prioritizes WhatsApp Desktop app when installed
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
     setIsOpen(false);
   };
