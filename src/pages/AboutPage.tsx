@@ -36,7 +36,8 @@ const AboutPage = () => {
   const stats = [
     { value: "2011", label: "Ano de Fundação" },
     { value: "2.643+", label: "Moradores" },
-    { value: "1.024", label: "Apartamentos" },
+    { value: "1.088", label: "Apartamentos" },
+    { value: "136", label: "Edifícios" },
     { value: "32", label: "Blocos" },
   ];
 
@@ -88,7 +89,7 @@ const AboutPage = () => {
       {/* Stats Section */}
       <section className="py-8 bg-card border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
                 <p className="text-3xl md:text-4xl font-bold text-primary">{stat.value}</p>
@@ -113,8 +114,8 @@ const AboutPage = () => {
               </p>
               <p className="text-lg text-muted-foreground mb-4">
               Hoje, residem lá mais de <strong className="text-foreground">2.643 moradores</strong>, 
-                distribuídos por <strong className="text-foreground">1.024 apartamentos</strong> em 
-                <strong className="text-foreground">32 blocos</strong>, tornando este complexo uma referência em habitação planeada em Moçambique.
+                distribuídos por <strong className="text-foreground">1.088 apartamentos</strong> em 
+                <strong className="text-foreground">136 edifícios</strong> organizados em <strong className="text-foreground">32 blocos</strong>, tornando este complexo uma referência em habitação planeada em Moçambique.
               </p>
               <p className="text-lg text-muted-foreground mb-6">
               Este empreendimento representa um marco de modernidade na arquitetura habitacional de Maputo, 

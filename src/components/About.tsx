@@ -44,7 +44,8 @@ const About = () => {
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
             Nascido em 2011 como projecto estratégico do Fundo para o Fomento de Habitação (FFH) 
-            para os X Jogos Africanos. Hoje, uma comunidade vibrante onde residem milhares de 
+            para os X Jogos Africanos. Hoje, uma comunidade vibrante com mais de 1.088 apartamentos 
+            distribuídos por 136 edifícios em 32 blocos, onde residem milhares de 
             moradores em busca de um estilo de vida moderno e seguro.
           </p>
         </div>
