@@ -57,7 +57,7 @@ const WhatsAppButton = () => {
               {quickMessages.map((msg, index) => (
                 <button
                   key={index}
-                  onClick={() => sendWhatsAppMessage(msg.text)}
+                  onClick={() => sendWhatsAppMessage(msg.text, msg.number)}
                   className="w-full p-3 text-left bg-muted/50 hover:bg-muted rounded-lg transition-colors flex items-center gap-3 group"
                 >
                   <span className="text-2xl">{msg.emoji}</span>
