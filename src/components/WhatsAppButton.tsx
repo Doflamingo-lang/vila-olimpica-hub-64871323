@@ -9,16 +9,17 @@ const WhatsAppButton = () => {
   const whatsappNumber = "258842814557";
   
   const quickMessages = [
-    { text: "Informações sobre pagamentos", emoji: "💳" },
-    { text: "Fazer uma reserva", emoji: "📅" },
-    { text: "Reportar problema", emoji: "🔧" },
-    { text: "Falar com administração", emoji: "💬" }
+    { text: "Informações sobre pagamentos", emoji: "💳", number: "258842814557" },
+    { text: "Fazer uma reserva", emoji: "📅", number: "258842814557" },
+    { text: "Reportar problema", emoji: "🔧", number: "258842814557" },
+    { text: "Falar com administração", emoji: "💬", number: "258842814557" },
+    { text: "Falar com segurança", emoji: "🛡️", number: "258856107137" }
   ];
 
-  const sendWhatsAppMessage = (message: string) => {
+  const sendWhatsAppMessage = (message: string, number?: string) => {
+    const phoneNumber = number || whatsappNumber;
     const encodedMessage = encodeURIComponent(message);
-    // Uses api.whatsapp.com which prioritizes WhatsApp Desktop app when installed
-    const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodedMessage}`;
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
     setIsOpen(false);
   };
@@ -56,7 +57,7 @@ const WhatsAppButton = () => {
               {quickMessages.map((msg, index) => (
                 <button
                   key={index}
-                  onClick={() => sendWhatsAppMessage(msg.text)}
+                  onClick={() => sendWhatsAppMessage(msg.text, msg.number)}
                   className="w-full p-3 text-left bg-muted/50 hover:bg-muted rounded-lg transition-colors flex items-center gap-3 group"
                 >
                   <span className="text-2xl">{msg.emoji}</span>
