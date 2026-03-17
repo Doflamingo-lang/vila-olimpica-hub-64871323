@@ -16,10 +16,10 @@ const WhatsAppButton = () => {
     { text: "Falar com segurança", emoji: "🛡️", number: "258856107137" }
   ];
 
-  const sendWhatsAppMessage = (message: string) => {
+  const sendWhatsAppMessage = (message: string, number?: string) => {
+    const phoneNumber = number || whatsappNumber;
     const encodedMessage = encodeURIComponent(message);
-    // Uses api.whatsapp.com which prioritizes WhatsApp Desktop app when installed
-    const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodedMessage}`;
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
     setIsOpen(false);
   };
