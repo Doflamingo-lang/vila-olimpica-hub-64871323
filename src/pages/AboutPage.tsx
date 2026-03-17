@@ -36,7 +36,8 @@ const AboutPage = () => {
   const stats = [
     { value: "2011", label: "Ano de Fundação" },
     { value: "2.643+", label: "Moradores" },
-    { value: "1.024", label: "Apartamentos" },
+    { value: "1.088", label: "Apartamentos" },
+    { value: "136", label: "Edifícios" },
     { value: "32", label: "Blocos" },
   ];
 
