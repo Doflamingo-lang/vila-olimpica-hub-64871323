@@ -57,18 +57,17 @@ const AccessRequestPage = () => {
 
       if (error) throw error;
 
-      // Notify admin via email (fire and forget)
-      supabase.functions.invoke("notify-admin-access-request", {
-        body: {
-          full_name: data.full_name,
-          email: data.email,
-          phone: data.phone,
-          block: data.block,
-          building: data.building,
-          apartment: data.apartment,
-          resident_type: data.resident_type,
-        },
-      }).catch(console.error);
+      // Notify admin via WhatsApp
+      const tipoMorador = data.resident_type === "proprietario" ? "Proprietário" : "Inquilino";
+      const whatsappMessage = `🔔 *Novo Pedido de Acesso*\n\n` +
+        `*Nome:* ${data.full_name}\n` +
+        `*Email:* ${data.email}\n` +
+        `*Telefone:* ${data.phone}\n` +
+        `*Tipo:* ${tipoMorador}\n` +
+        `*Localização:* Bloco ${data.block} · Ed. ${data.building} · Apt. ${data.apartment}\n\n` +
+        `Aceda ao painel de administração para aprovar ou rejeitar este pedido.`;
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=258842814557&text=${encodeURIComponent(whatsappMessage)}`;
+      window.open(whatsappUrl, "_blank");
 
       setIsSubmitted(true);
       toast({
