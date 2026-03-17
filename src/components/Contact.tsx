@@ -31,32 +31,69 @@ const Contact = () => {
             </h3>
             
             <div className="space-y-5 mb-8">
-              {[
-                { icon: MapPin, title: "Endereço", content: ["Bairro do Zimpeto", "Maputo, Moçambique"] },
-                { icon: Phone, title: "Administração - Telefone", content: ["+258 84 281 4557"] },
-                { icon: MessageCircle, title: "Administração - WhatsApp", content: ["+258 84 281 4557"], links: ["https://wa.me/258842814557"] },
-                { icon: Phone, title: "Segurança - Telefone", content: ["+258 85 610 7137"] },
-                { icon: MessageCircle, title: "Segurança - WhatsApp", content: ["+258 85 610 7137"], links: ["https://wa.me/258856107137"] },
-                { icon: Clock, title: "Horário", content: ["Segunda a Sexta: 7h30 - 15h30", "Sábado: 8h00 - 12h00"] },
-              ].map((item, index) => (
-                <div key={index} className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border hover:border-primary/20 transition-colors">
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <item.icon className="w-5 h-5 text-primary" />
+              {/* Endereço */}
+              <div className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border hover:border-primary/20 transition-colors">
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <MapPin className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground mb-1">Endereço</h4>
+                  <p className="text-muted-foreground">Bairro do Zimpeto</p>
+                  <p className="text-muted-foreground">Maputo, Moçambique</p>
+                </div>
+              </div>
+
+              {/* Administração */}
+              <div className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border hover:border-primary/20 transition-colors">
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Phone className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground mb-1">Administração</h4>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>Telefone: +258 84 281 4557</span>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-1">{item.title}</h4>
-                    {item.content.map((line, i) => (
-                      item.links ? (
-                        <a key={i} href={item.links[i]} target="_blank" rel="noopener noreferrer" className="block text-muted-foreground hover:text-primary transition-colors">
-                          {line}
-                        </a>
-                      ) : (
-                        <p key={i} className="text-muted-foreground">{line}</p>
-                      )
-                    ))}
+                  <div className="flex items-center gap-2 mt-1">
+                    <MessageCircle className="w-3.5 h-3.5 text-muted-foreground" />
+                    <a href="https://wa.me/258842814557" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                      WhatsApp: +258 84 281 4557
+                    </a>
                   </div>
                 </div>
-              ))}
+              </div>
+
+              {/* Segurança */}
+              <div className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border hover:border-primary/20 transition-colors">
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Phone className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground mb-1">Segurança</h4>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>Telefone: +258 85 610 7137</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <MessageCircle className="w-3.5 h-3.5 text-muted-foreground" />
+                    <a href="https://wa.me/258856107137" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                      WhatsApp: +258 85 610 7137
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Horário */}
+              <div className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border hover:border-primary/20 transition-colors">
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground mb-1">Horário</h4>
+                  <p className="text-muted-foreground">Segunda a Sexta: 7h30 - 15h30</p>
+                  <p className="text-muted-foreground">Sábado: 8h00 - 12h00</p>
+                </div>
+              </div>
             </div>
 
             <div className="bg-primary rounded-2xl p-6 text-primary-foreground relative overflow-hidden">
