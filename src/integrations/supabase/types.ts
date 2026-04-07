@@ -267,6 +267,7 @@ export type Database = {
           category: string
           content: string
           created_at: string
+          gallery_urls: string[] | null
           id: string
           image_url: string | null
           summary: string
@@ -277,6 +278,7 @@ export type Database = {
           category: string
           content: string
           created_at?: string
+          gallery_urls?: string[] | null
           id?: string
           image_url?: string | null
           summary: string
@@ -287,6 +289,7 @@ export type Database = {
           category?: string
           content?: string
           created_at?: string
+          gallery_urls?: string[] | null
           id?: string
           image_url?: string | null
           summary?: string

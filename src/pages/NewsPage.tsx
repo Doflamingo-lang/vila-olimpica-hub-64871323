@@ -15,6 +15,7 @@ interface NewsItem {
   content: string;
   category: string;
   image_url: string | null;
+  gallery_urls?: string[] | null;
   created_at: string;
 }
 
