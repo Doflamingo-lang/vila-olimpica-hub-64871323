@@ -19,6 +19,7 @@ import {
   UserPlus,
   Shield
 } from "lucide-react";
+import { Image as ImageIcon } from "lucide-react";
 import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
 import NewsManagement from "@/components/admin/NewsManagement";
 import DocumentsManagement from "@/components/admin/DocumentsManagement";
