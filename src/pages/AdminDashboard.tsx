@@ -297,7 +297,7 @@ const AdminDashboard = () => {
     { icon: Download, label: "Estatísticas", section: "downloads" },
     { icon: Users, label: "Moradores", section: "residents" },
     { icon: UserPlus, label: "Pedidos Acesso", section: "access-requests" },
-    { icon: Image, label: "Galeria Sobre", section: "about-gallery" },
+    { icon: ImageIcon, label: "Galeria Sobre", section: "about-gallery" },
     { icon: Shield, label: "Administradores", section: "admins" },
   ];
 
