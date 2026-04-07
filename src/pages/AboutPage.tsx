@@ -1,13 +1,12 @@
 import { Building2, Shield, Users, Heart, MapPin, Award, Target, CheckCircle, Home, TrendingUp, Eye, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import aerialImage1 from "@/assets/vila-olimpica-aerial-1.jpg";
-import aerialImage2 from "@/assets/vila-olimpica-aerial-2.jpg";
-import aerialImage3 from "@/assets/vila-olimpica-aerial-3.jpg";
-import aerialImage4 from "@/assets/vila-olimpica-aerial-4.jpg";
 
 const AboutPage = () => {
   const highlights = [
