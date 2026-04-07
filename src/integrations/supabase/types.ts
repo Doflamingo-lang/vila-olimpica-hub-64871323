@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      about_gallery: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url: string
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          title?: string | null
+        }
+        Relationships: []
+      }
       access_requests: {
         Row: {
           apartment: string

@@ -1,15 +1,72 @@
 import { Building2, Shield, Users, Heart, MapPin, Award, Target, CheckCircle, Home, TrendingUp, Eye, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import aerialImage1 from "@/assets/vila-olimpica-aerial-1.jpg";
-import aerialImage2 from "@/assets/vila-olimpica-aerial-2.jpg";
-import aerialImage3 from "@/assets/vila-olimpica-aerial-3.jpg";
-import aerialImage4 from "@/assets/vila-olimpica-aerial-4.jpg";
+
+interface GalleryImage {
+  id: string;
+  image_url: string;
+  title: string | null;
+  display_order: number;
+}
 
 const AboutPage = () => {
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchGallery = async () => {
+      const { data } = await supabase
+        .from("about_gallery")
+        .select("*")
+        .order("display_order", { ascending: true });
+      if (data) setGalleryImages(data);
+    };
+    fetchGallery();
+  }, []);
+
+  // Auto-scroll effect
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || galleryImages.length === 0) return;
+
+    let animationId: number;
+    let scrollPos = 0;
+    const speed = 0.5;
+
+    const animate = () => {
+      scrollPos += speed;
+      if (scrollPos >= el.scrollWidth / 2) {
+        scrollPos = 0;
+      }
+      el.scrollLeft = scrollPos;
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animationId = requestAnimationFrame(animate);
+
+    const pause = () => cancelAnimationFrame(animationId);
+    const resume = () => { animationId = requestAnimationFrame(animate); };
+
+    el.addEventListener("mouseenter", pause);
+    el.addEventListener("mouseleave", resume);
+    el.addEventListener("touchstart", pause);
+    el.addEventListener("touchend", resume);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      el.removeEventListener("mouseenter", pause);
+      el.removeEventListener("mouseleave", resume);
+      el.removeEventListener("touchstart", pause);
+      el.removeEventListener("touchend", resume);
+    };
+  }, [galleryImages]);
+
   const highlights = [
     {
       icon: Calendar,
@@ -56,12 +113,6 @@ const AboutPage = () => {
     { year: "2024", event: "Consolidação como referência habitacional em Maputo" },
   ];
 
-  const galleryImages = [
-    { src: aerialImage1, alt: "Vista aérea da Vila Olímpica com Estádio Nacional" },
-    { src: aerialImage2, alt: "Vista panorâmica dos blocos residenciais" },
-    { src: aerialImage3, alt: "Avenida principal do condomínio" },
-    { src: aerialImage4, alt: "Vista geral do complexo habitacional" },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -147,29 +198,38 @@ const AboutPage = () => {
             </div>
           </div>
 
-          {/* Image Gallery */}
-          <div className="mb-20">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-12">Galeria de Imagens</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {galleryImages.map((image, index) => (
-                <div 
-                  key={index} 
-                  className="group relative overflow-hidden rounded-xl aspect-[4/3] cursor-pointer"
-                >
-                  <img 
-                    src={image.src} 
-                    alt={image.alt}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <p className="absolute bottom-4 left-4 right-4 text-white text-sm font-medium">
-                      {image.alt}
-                    </p>
+          {/* Image Gallery - Auto Scroll */}
+          {galleryImages.length > 0 && (
+            <div className="mb-20">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-12">Galeria de Imagens</h2>
+              <div
+                ref={scrollRef}
+                className="flex gap-4 overflow-x-hidden cursor-grab"
+                style={{ scrollBehavior: "auto" }}
+              >
+                {/* Duplicate images for infinite scroll effect */}
+                {[...galleryImages, ...galleryImages].map((image, index) => (
+                  <div
+                    key={index}
+                    className="group relative flex-shrink-0 w-72 md:w-96 aspect-[4/3] overflow-hidden rounded-xl"
+                  >
+                    <img
+                      src={image.image_url}
+                      alt={image.title || "Vila Olímpica"}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    {image.title && (
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <p className="absolute bottom-4 left-4 right-4 text-white text-sm font-medium">
+                          {image.title}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Highlights Grid */}
           <div className="mb-20">
