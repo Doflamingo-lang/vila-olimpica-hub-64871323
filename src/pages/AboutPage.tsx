@@ -113,12 +113,6 @@ const AboutPage = () => {
     { year: "2024", event: "Consolidação como referência habitacional em Maputo" },
   ];
 
-  const galleryImages = [
-    { src: aerialImage1, alt: "Vista aérea da Vila Olímpica com Estádio Nacional" },
-    { src: aerialImage2, alt: "Vista panorâmica dos blocos residenciais" },
-    { src: aerialImage3, alt: "Avenida principal do condomínio" },
-    { src: aerialImage4, alt: "Vista geral do complexo habitacional" },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -204,29 +198,38 @@ const AboutPage = () => {
             </div>
           </div>
 
-          {/* Image Gallery */}
-          <div className="mb-20">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-12">Galeria de Imagens</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {galleryImages.map((image, index) => (
-                <div 
-                  key={index} 
-                  className="group relative overflow-hidden rounded-xl aspect-[4/3] cursor-pointer"
-                >
-                  <img 
-                    src={image.src} 
-                    alt={image.alt}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <p className="absolute bottom-4 left-4 right-4 text-white text-sm font-medium">
-                      {image.alt}
-                    </p>
+          {/* Image Gallery - Auto Scroll */}
+          {galleryImages.length > 0 && (
+            <div className="mb-20">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-12">Galeria de Imagens</h2>
+              <div
+                ref={scrollRef}
+                className="flex gap-4 overflow-x-hidden cursor-grab"
+                style={{ scrollBehavior: "auto" }}
+              >
+                {/* Duplicate images for infinite scroll effect */}
+                {[...galleryImages, ...galleryImages].map((image, index) => (
+                  <div
+                    key={index}
+                    className="group relative flex-shrink-0 w-72 md:w-96 aspect-[4/3] overflow-hidden rounded-xl"
+                  >
+                    <img
+                      src={image.image_url}
+                      alt={image.title || "Vila Olímpica"}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    {image.title && (
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <p className="absolute bottom-4 left-4 right-4 text-white text-sm font-medium">
+                          {image.title}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Highlights Grid */}
           <div className="mb-20">
