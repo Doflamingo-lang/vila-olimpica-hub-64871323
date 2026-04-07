@@ -28,6 +28,7 @@ import NoticesManagement from "@/components/admin/NoticesManagement";
 import FeesManagement from "@/components/admin/FeesManagement";
 import AccessRequestsManagement from "@/components/admin/AccessRequestsManagement";
 import AdminsManagement from "@/components/admin/AdminsManagement";
+import AboutGalleryManagement from "@/components/admin/AboutGalleryManagement";
 import ReservationsManagement from "@/components/admin/ReservationsManagement";
 import ResidentsManagement from "@/components/admin/ResidentsManagement";
 import { Button } from "@/components/ui/button";
@@ -295,6 +296,7 @@ const AdminDashboard = () => {
     { icon: Download, label: "Estatísticas", section: "downloads" },
     { icon: Users, label: "Moradores", section: "residents" },
     { icon: UserPlus, label: "Pedidos Acesso", section: "access-requests" },
+    { icon: Image, label: "Galeria Sobre", section: "about-gallery" },
     { icon: Shield, label: "Administradores", section: "admins" },
   ];
 
@@ -686,6 +688,10 @@ const AdminDashboard = () => {
           {/* Access Requests Section */}
           {activeSection === "access-requests" && (
             <AccessRequestsManagement />
+          )}
+          {/* About Gallery Section */}
+          {activeSection === "about-gallery" && (
+            <AboutGalleryManagement />
           )}
           {/* Admins Section */}
           {activeSection === "admins" && (
