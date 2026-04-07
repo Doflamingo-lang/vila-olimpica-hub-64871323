@@ -8,7 +8,65 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import aerialImage1 from "@/assets/vila-olimpica-aerial-1.jpg";
 
+interface GalleryImage {
+  id: string;
+  image_url: string;
+  title: string | null;
+  display_order: number;
+}
+
 const AboutPage = () => {
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchGallery = async () => {
+      const { data } = await supabase
+        .from("about_gallery")
+        .select("*")
+        .order("display_order", { ascending: true });
+      if (data) setGalleryImages(data);
+    };
+    fetchGallery();
+  }, []);
+
+  // Auto-scroll effect
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || galleryImages.length === 0) return;
+
+    let animationId: number;
+    let scrollPos = 0;
+    const speed = 0.5;
+
+    const animate = () => {
+      scrollPos += speed;
+      if (scrollPos >= el.scrollWidth / 2) {
+        scrollPos = 0;
+      }
+      el.scrollLeft = scrollPos;
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animationId = requestAnimationFrame(animate);
+
+    const pause = () => cancelAnimationFrame(animationId);
+    const resume = () => { animationId = requestAnimationFrame(animate); };
+
+    el.addEventListener("mouseenter", pause);
+    el.addEventListener("mouseleave", resume);
+    el.addEventListener("touchstart", pause);
+    el.addEventListener("touchend", resume);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      el.removeEventListener("mouseenter", pause);
+      el.removeEventListener("mouseleave", resume);
+      el.removeEventListener("touchstart", pause);
+      el.removeEventListener("touchend", resume);
+    };
+  }, [galleryImages]);
+
   const highlights = [
     {
       icon: Calendar,
