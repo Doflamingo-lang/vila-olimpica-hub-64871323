@@ -122,8 +122,10 @@ export type Database = {
           reference_month: string
           reference_year: number
           status: string
+          unidade_id: string | null
           updated_at: string
           user_id: string
+          valor_pago: number
         }
         Insert: {
           amount?: number
@@ -136,8 +138,10 @@ export type Database = {
           reference_month: string
           reference_year: number
           status?: string
+          unidade_id?: string | null
           updated_at?: string
           user_id: string
+          valor_pago?: number
         }
         Update: {
           amount?: number
@@ -150,10 +154,20 @@ export type Database = {
           reference_month?: string
           reference_year?: number
           status?: string
+          unidade_id?: string | null
           updated_at?: string
           user_id?: string
+          valor_pago?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "condominium_fees_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       document_downloads: {
         Row: {
@@ -518,6 +532,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      unidades: {
+        Row: {
+          apartamento: number
+          bloco: number
+          contacto: string
+          created_at: string
+          edificio: number
+          id: string
+          nome: string
+          ord: number
+          updated_at: string
+          via: string
+        }
+        Insert: {
+          apartamento?: number
+          bloco?: number
+          contacto?: string
+          created_at?: string
+          edificio?: number
+          id?: string
+          nome: string
+          ord?: number
+          updated_at?: string
+          via?: string
+        }
+        Update: {
+          apartamento?: number
+          bloco?: number
+          contacto?: string
+          created_at?: string
+          edificio?: number
+          id?: string
+          nome?: string
+          ord?: number
+          updated_at?: string
+          via?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
