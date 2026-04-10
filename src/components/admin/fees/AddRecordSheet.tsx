@@ -3,17 +3,20 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { CategoriaUnidade, CATEGORIAS_LABELS, CATEGORIAS_LIST } from "./types";
 
 interface AddRecordSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (data: { nome: string; bloco: number; edificio: number; apartamento: number; contacto: string; via: string }) => Promise<void>;
+  onAdd: (data: { nome: string; bloco: number; edificio: number; apartamento: number; contacto: string; via: string; categoria: CategoriaUnidade }) => Promise<void>;
+  defaultCategoria: CategoriaUnidade;
 }
 
-const AddRecordSheet = ({ open, onOpenChange, onAdd }: AddRecordSheetProps) => {
+const AddRecordSheet = ({ open, onOpenChange, onAdd, defaultCategoria }: AddRecordSheetProps) => {
   const [form, setForm] = useState({
-    nome: "", bloco: "1", edificio: "1", apartamento: "1", contacto: "", via: ""
+    nome: "", bloco: "1", edificio: "1", apartamento: "1", contacto: "", via: "", categoria: defaultCategoria
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,8 +31,9 @@ const AddRecordSheet = ({ open, onOpenChange, onAdd }: AddRecordSheetProps) => {
       apartamento: parseInt(form.apartamento) || 1,
       contacto: form.contacto,
       via: form.via,
+      categoria: form.categoria,
     });
-    setForm({ nome: "", bloco: "1", edificio: "1", apartamento: "1", contacto: "", via: "" });
+    setForm({ nome: "", bloco: "1", edificio: "1", apartamento: "1", contacto: "", via: "", categoria: defaultCategoria });
     setIsSubmitting(false);
     onOpenChange(false);
   };
@@ -42,9 +46,20 @@ const AddRecordSheet = ({ open, onOpenChange, onAdd }: AddRecordSheetProps) => {
           <SheetDescription>Adicione uma unidade ao sistema de taxas</SheetDescription>
         </SheetHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-6">
-          <div className="col-span-2">
+          <div>
             <Label>Nome do Morador *</Label>
             <Input autoFocus required value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Nome completo" />
+          </div>
+          <div>
+            <Label>Categoria</Label>
+            <Select value={form.categoria} onValueChange={(v) => setForm({ ...form, categoria: v as CategoriaUnidade })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CATEGORIAS_LIST.map(cat => (
+                  <SelectItem key={cat} value={cat}>{CATEGORIAS_LABELS[cat]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
