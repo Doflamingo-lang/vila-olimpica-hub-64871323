@@ -1,5 +1,7 @@
 export type PaymentStatus = "em_dia" | "pendente" | "em_atraso" | "arquivado";
 
+export type CategoriaUnidade = "quitadas" | "1fase_cedsif" | "1fase_nedbank" | "2fase_nedbank";
+
 export interface Unidade {
   id: string;
   ord: number;
@@ -9,6 +11,7 @@ export interface Unidade {
   nome: string;
   contacto: string;
   via: string;
+  categoria: CategoriaUnidade;
 }
 
 export interface Taxa {
@@ -27,6 +30,20 @@ export interface Taxa {
 }
 
 export const VALOR_TAXA_MENSAL = 1000;
+
+export const CATEGORIAS_LABELS: Record<CategoriaUnidade, string> = {
+  quitadas: "Quitadas",
+  "1fase_cedsif": "1ª Fase via Cedsif",
+  "1fase_nedbank": "1ª Fase via Nedbank",
+  "2fase_nedbank": "2ª Fase via Nedbank",
+};
+
+export const CATEGORIAS_LIST: CategoriaUnidade[] = [
+  "quitadas",
+  "1fase_cedsif",
+  "1fase_nedbank",
+  "2fase_nedbank",
+];
 
 export const MESES_LABELS: Record<number, string> = {
   1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril",
