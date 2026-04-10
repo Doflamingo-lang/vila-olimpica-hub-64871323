@@ -537,6 +537,7 @@ export type Database = {
         Row: {
           apartamento: number
           bloco: number
+          categoria: string
           contacto: string
           created_at: string
           edificio: number
@@ -549,6 +550,7 @@ export type Database = {
         Insert: {
           apartamento?: number
           bloco?: number
+          categoria?: string
           contacto?: string
           created_at?: string
           edificio?: number
@@ -561,6 +563,7 @@ export type Database = {
         Update: {
           apartamento?: number
           bloco?: number
+          categoria?: string
           contacto?: string
           created_at?: string
           edificio?: number

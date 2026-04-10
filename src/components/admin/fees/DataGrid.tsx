@@ -1,22 +1,31 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TableProperties, BarChart3, Plus, Loader2, Eye } from "lucide-react";
-import { Unidade, Taxa, PaymentStatus, MESES_LABELS, formatCurrency, VALOR_TAXA_MENSAL } from "./types";
+import { Unidade, Taxa, PaymentStatus, CategoriaUnidade, MESES_LABELS, CATEGORIAS_LABELS, CATEGORIAS_LIST, formatCurrency, VALOR_TAXA_MENSAL } from "./types";
 import TaxasGrid from "./TaxasGrid";
 import ReportsView from "./ReportsView";
+import TotalColectadoView from "./TotalColectadoView";
 import GerarTaxasDialog from "./GerarTaxasDialog";
 import AddRecordSheet from "./AddRecordSheet";
 import { cn } from "@/lib/utils";
+
+type TabValue = CategoriaUnidade | "total_colectado";
+
+const TAB_LIST: { value: TabValue; label: string }[] = [
+  ...CATEGORIAS_LIST.map(c => ({ value: c as TabValue, label: CATEGORIAS_LABELS[c] })),
+  { value: "total_colectado", label: "Total Colectado" },
+];
 
 const DataGrid = () => {
   const [unidades, setUnidades] = useState<Unidade[]>([]);
   const [taxas, setTaxas] = useState<Taxa[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabValue>("quitadas");
   const [vista, setVista] = useState<"tabela" | "relatorios">("tabela");
   const [anoFiltro, setAnoFiltro] = useState<number>(new Date().getFullYear());
   const [mesFiltro, setMesFiltro] = useState<number | null>(null);
@@ -39,6 +48,7 @@ const DataGrid = () => {
       setUnidades(unidadesRes.data.map((u: any) => ({
         id: u.id, ord: u.ord, bloco: u.bloco, edificio: u.edificio,
         apartamento: u.apartamento, nome: u.nome, contacto: u.contacto, via: u.via,
+        categoria: u.categoria || "quitadas",
       })));
     }
 
@@ -80,7 +90,20 @@ const DataGrid = () => {
     return [...anos].sort((a, b) => b - a);
   }, [taxas]);
 
-  const taxasAnoAtual = useMemo(() => taxas.filter(t => t.ano_referencia === anoFiltro), [taxas, anoFiltro]);
+  // Filter unidades and taxas by active category
+  const filteredUnidades = useMemo(() => {
+    if (activeTab === "total_colectado") return unidades;
+    return unidades.filter(u => u.categoria === activeTab);
+  }, [unidades, activeTab]);
+
+  const filteredUnidadeIds = useMemo(() => new Set(filteredUnidades.map(u => u.id)), [filteredUnidades]);
+
+  const filteredTaxas = useMemo(() => {
+    if (activeTab === "total_colectado") return taxas;
+    return taxas.filter(t => filteredUnidadeIds.has(t.unidade_id));
+  }, [taxas, activeTab, filteredUnidadeIds]);
+
+  const taxasAnoAtual = useMemo(() => filteredTaxas.filter(t => t.ano_referencia === anoFiltro), [filteredTaxas, anoFiltro]);
 
   const stats = useMemo(() => {
     const arr = taxasAnoAtual;
@@ -94,7 +117,8 @@ const DataGrid = () => {
   }, [taxasAnoAtual]);
 
   const handleGerarTaxas = async (mes: number | null, ano: number, valor: number) => {
-    if (unidades.length === 0) {
+    const targetUnidades = activeTab !== "total_colectado" ? filteredUnidades : unidades;
+    if (targetUnidades.length === 0) {
       toast({ title: "Erro", description: "Adicione unidades primeiro.", variant: "destructive" });
       return;
     }
@@ -106,12 +130,12 @@ const DataGrid = () => {
 
     const toInsert: any[] = [];
     for (const m of meses) {
-      for (const u of unidades) {
+      for (const u of targetUnidades) {
         const key = `${u.id}-${m}`;
         if (!existingKeys.has(key)) {
           toInsert.push({
             unidade_id: u.id,
-            user_id: u.id, // placeholder
+            user_id: u.id,
             reference_month: String(m).padStart(2, "0"),
             reference_year: ano,
             amount: valor,
@@ -130,7 +154,6 @@ const DataGrid = () => {
 
     const { error } = await supabase.from("condominium_fees").insert(toInsert);
     if (error) {
-      console.error(error);
       toast({ title: "Erro", description: "Não foi possível gerar as taxas.", variant: "destructive" });
     } else {
       toast({ title: "Sucesso", description: `${toInsert.length} taxa(s) gerada(s).` });
@@ -138,7 +161,7 @@ const DataGrid = () => {
     }
   };
 
-  const handleAddUnidade = async (data: { nome: string; bloco: number; edificio: number; apartamento: number; contacto: string; via: string }) => {
+  const handleAddUnidade = async (data: { nome: string; bloco: number; edificio: number; apartamento: number; contacto: string; via: string; categoria: CategoriaUnidade }) => {
     const { error } = await supabase.from("unidades").insert(data);
     if (error) {
       toast({ title: "Erro", description: "Não foi possível adicionar a unidade.", variant: "destructive" });
@@ -163,7 +186,6 @@ const DataGrid = () => {
     setReceiptDialogOpen(true);
     setReceiptUrl(null);
     setReceiptIsPdf(url.toLowerCase().endsWith(".pdf"));
-
     const { data } = await supabase.storage.from("payment-receipts").createSignedUrl(url, 300);
     if (data?.signedUrl) {
       setReceiptUrl(data.signedUrl);
@@ -191,7 +213,6 @@ const DataGrid = () => {
           <p className="text-muted-foreground text-sm">Sistema de gestão de pagamentos FFH</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Vista Toggle */}
           <div className="flex items-center bg-muted rounded-lg p-0.5 border">
             <button
               onClick={() => setVista("tabela")}
@@ -215,6 +236,29 @@ const DataGrid = () => {
         </div>
       </div>
 
+      {/* Category Tabs */}
+      <div className="flex gap-1 overflow-x-auto pb-1 border-b">
+        {TAB_LIST.map(tab => (
+          <button
+            key={tab.value}
+            onClick={() => setActiveTab(tab.value)}
+            className={cn(
+              "px-4 py-2 text-sm font-medium whitespace-nowrap rounded-t-lg transition-colors border-b-2",
+              activeTab === tab.value
+                ? "border-primary text-primary bg-primary/5"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            )}
+          >
+            {tab.label}
+            {tab.value !== "total_colectado" && (
+              <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded-full tabular-nums">
+                {unidades.filter(u => u.categoria === tab.value).length}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
       {/* Filters & Actions */}
       <div className="flex flex-wrap gap-3 items-center">
         <Select value={String(anoFiltro)} onValueChange={(v) => setAnoFiltro(Number(v))}>
@@ -228,31 +272,37 @@ const DataGrid = () => {
           </SelectContent>
         </Select>
 
-        <Select value={mesFiltro === null ? "todos" : String(mesFiltro)} onValueChange={(v) => setMesFiltro(v === "todos" ? null : Number(v))}>
-          <SelectTrigger className="w-36 h-9">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os meses</SelectItem>
-            {Object.entries(MESES_LABELS).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {activeTab !== "total_colectado" && (
+          <Select value={mesFiltro === null ? "todos" : String(mesFiltro)} onValueChange={(v) => setMesFiltro(v === "todos" ? null : Number(v))}>
+            <SelectTrigger className="w-36 h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os meses</SelectItem>
+              {Object.entries(MESES_LABELS).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <div className="flex-1" />
 
-        <Button variant="outline" size="sm" onClick={() => setGerarOpen(true)}>
-          Gerar Taxas
-        </Button>
-        <Button size="sm" onClick={() => setAddOpen(true)}>
-          <Plus className="w-4 h-4 mr-1" />
-          Nova Unidade
-        </Button>
+        {activeTab !== "total_colectado" && (
+          <>
+            <Button variant="outline" size="sm" onClick={() => setGerarOpen(true)}>
+              Gerar Taxas
+            </Button>
+            <Button size="sm" onClick={() => setAddOpen(true)}>
+              <Plus className="w-4 h-4 mr-1" />
+              Nova Unidade
+            </Button>
+          </>
+        )}
       </div>
 
-      {/* Summary Cards (only on tabela view) */}
-      {vista === "tabela" && (
+      {/* Summary Cards (tabela view, not total_colectado) */}
+      {vista === "tabela" && activeTab !== "total_colectado" && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <Card className="border">
             <CardContent className="pt-4 pb-3 px-4">
@@ -288,10 +338,12 @@ const DataGrid = () => {
       )}
 
       {/* Main Content */}
-      {vista === "tabela" ? (
+      {activeTab === "total_colectado" ? (
+        <TotalColectadoView taxas={taxas} unidades={unidades} anoFiltro={anoFiltro} />
+      ) : vista === "tabela" ? (
         <TaxasGrid
-          taxas={taxas}
-          unidades={unidades}
+          taxas={filteredTaxas}
+          unidades={filteredUnidades}
           anoFiltro={anoFiltro}
           mesFiltro={mesFiltro}
           onRefresh={fetchData}
@@ -299,7 +351,7 @@ const DataGrid = () => {
           onViewReceipt={handleViewReceipt}
         />
       ) : (
-        <ReportsView taxas={taxas} unidades={unidades} />
+        <ReportsView taxas={filteredTaxas} unidades={filteredUnidades} />
       )}
 
       {/* Dialogs */}
@@ -313,6 +365,7 @@ const DataGrid = () => {
         open={addOpen}
         onOpenChange={setAddOpen}
         onAdd={handleAddUnidade}
+        defaultCategoria={activeTab !== "total_colectado" ? activeTab : "quitadas"}
       />
 
       {/* Receipt Preview Dialog */}
