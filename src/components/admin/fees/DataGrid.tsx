@@ -16,6 +16,51 @@ import { cn } from "@/lib/utils";
 
 type TabValue = CategoriaUnidade | "total_colectado";
 
+const FEE_PAGE_SIZE = 1000;
+const MONTH_NAMES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+const parseReferenceMonth = (referenceMonth: string) => {
+  const parsedMonth = parseInt(referenceMonth, 10);
+
+  if (!Number.isNaN(parsedMonth)) {
+    return parsedMonth;
+  }
+
+  return MONTH_NAMES.indexOf(referenceMonth) + 1;
+};
+
+const mapFeeStatus = (status: string, amount: number, valorPago: number): PaymentStatus => {
+  if (status === "em_dia" || status === "paid") return "em_dia";
+  if (status === "pendente" || status === "pending_verification") return "pendente";
+  if (status === "em_atraso" || status === "overdue") return "em_atraso";
+  if (status === "pending") return valorPago > 0 ? "pendente" : "em_atraso";
+
+  return calcStatus(amount, valorPago);
+};
+
+const fetchAllFees = async () => {
+  const fees: any[] = [];
+
+  for (let from = 0; ; from += FEE_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("condominium_fees")
+      .select("*")
+      .order("reference_year", { ascending: false })
+      .order("reference_month", { ascending: false })
+      .order("created_at", { ascending: false })
+      .range(from, from + FEE_PAGE_SIZE - 1);
+
+    if (error) throw error;
+    if (!data?.length) break;
+
+    fees.push(...data);
+
+    if (data.length < FEE_PAGE_SIZE) break;
+  }
+
+  return fees;
+};
+
 const TAB_LIST: { value: TabValue; label: string }[] = [
   ...CATEGORIAS_LIST.map(c => ({ value: c as TabValue, label: CATEGORIAS_LABELS[c] })),
   { value: "total_colectado", label: "Total Colectado" },
@@ -39,48 +84,54 @@ const DataGrid = () => {
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
-    const [unidadesRes, taxasRes] = await Promise.all([
-      supabase.from("unidades").select("*").order("ord"),
-      supabase.from("condominium_fees").select("*").order("reference_year", { ascending: false }),
-    ]);
+    try {
+      const [unidadesRes, taxasData] = await Promise.all([
+        supabase.from("unidades").select("*").order("ord"),
+        fetchAllFees(),
+      ]);
 
-    if (unidadesRes.data) {
-      setUnidades(unidadesRes.data.map((u: any) => ({
-        id: u.id, ord: u.ord, bloco: u.bloco, edificio: u.edificio,
-        apartamento: u.apartamento, nome: u.nome, contacto: u.contacto, via: u.via,
+      if (unidadesRes.error) {
+        throw unidadesRes.error;
+      }
+
+      setUnidades((unidadesRes.data || []).map((u: any) => ({
+        id: u.id,
+        ord: u.ord,
+        bloco: u.bloco,
+        edificio: u.edificio,
+        apartamento: u.apartamento,
+        nome: u.nome,
+        contacto: u.contacto,
+        via: u.via,
         categoria: u.categoria || "quitadas",
       })));
-    }
 
-    if (taxasRes.data) {
-      setTaxas(taxasRes.data.map((t: any) => {
-        const mesNum = parseInt(t.reference_month) || 
-          ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]
-            .indexOf(t.reference_month) + 1;
-        
-        let status: PaymentStatus = "em_atraso";
-        if (t.status === "paid") status = "em_dia";
-        else if (t.status === "pending" || t.status === "pending_verification") status = "pendente";
-        else if (t.status === "overdue") status = "em_atraso";
+      setTaxas(taxasData.map((t: any) => {
+        const valor = Number(t.amount);
+        const valorPago = Number(t.valor_pago || 0);
 
         return {
           id: t.id,
           unidade_id: t.unidade_id || "",
           user_id: t.user_id,
-          mes_referencia: mesNum || 1,
+          mes_referencia: parseReferenceMonth(t.reference_month) || 1,
           ano_referencia: t.reference_year,
-          valor: Number(t.amount),
-          valor_pago: Number(t.valor_pago || 0),
+          valor,
+          valor_pago: valorPago,
           data_pagamento: t.paid_at,
-          status,
+          status: mapFeeStatus(t.status, valor, valorPago),
           due_date: t.due_date,
           receipt_url: t.receipt_url,
           payment_method: t.payment_method,
         };
       }).filter((t: Taxa) => t.unidade_id));
+    } catch (error) {
+      console.error("Erro ao carregar taxas:", error);
+      toast({ title: "Erro", description: "Não foi possível carregar as taxas.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }, []);
+  }, [toast]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
