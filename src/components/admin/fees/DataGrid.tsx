@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TableProperties, BarChart3, Plus, Loader2, Eye } from "lucide-react";
-import { Unidade, Taxa, PaymentStatus, CategoriaUnidade, MESES_LABELS, CATEGORIAS_LABELS, CATEGORIAS_LIST, formatCurrency, VALOR_TAXA_MENSAL } from "./types";
+import { Unidade, Taxa, PaymentStatus, CategoriaUnidade, MESES_LABELS, CATEGORIAS_LABELS, CATEGORIAS_LIST, formatCurrency, calcStatus } from "./types";
 import TaxasGrid from "./TaxasGrid";
 import ReportsView from "./ReportsView";
 import TotalColectadoView from "./TotalColectadoView";
