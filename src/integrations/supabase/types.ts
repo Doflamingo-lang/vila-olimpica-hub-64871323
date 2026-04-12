@@ -246,6 +246,95 @@ export type Database = {
         }
         Relationships: []
       }
+      fpd_fees: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          paid_at: string | null
+          payment_method: string | null
+          receipt_url: string | null
+          reference_month: string
+          reference_year: number
+          status: string
+          unidade_id: string
+          updated_at: string
+          valor_pago: number
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          due_date: string
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          reference_month: string
+          reference_year: number
+          status?: string
+          unidade_id: string
+          updated_at?: string
+          valor_pago?: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          reference_month?: string
+          reference_year?: number
+          status?: string
+          unidade_id?: string
+          updated_at?: string
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fpd_fees_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "fpd_unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fpd_unidades: {
+        Row: {
+          apartamento: number
+          contacto: string
+          created_at: string
+          id: string
+          nome: string
+          ord: number
+          taxa: number
+          updated_at: string
+        }
+        Insert: {
+          apartamento?: number
+          contacto?: string
+          created_at?: string
+          id?: string
+          nome: string
+          ord?: number
+          taxa?: number
+          updated_at?: string
+        }
+        Update: {
+          apartamento?: number
+          contacto?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          ord?: number
+          taxa?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketplace_services: {
         Row: {
           business_name: string
