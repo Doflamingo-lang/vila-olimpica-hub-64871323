@@ -197,7 +197,14 @@ Deno.serve(async (req) => {
     });
 
     return new Response(
-      JSON.stringify({ success: true, message: "User created and email sent" }),
+      JSON.stringify({
+        success: true,
+        message: "User created and email sent",
+        email: accessRequest.email,
+        password: tempPassword,
+        full_name: accessRequest.full_name,
+        whatsapp: accessRequest.whatsapp || accessRequest.phone,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {

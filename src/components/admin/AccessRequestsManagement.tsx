@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Check, X, UserPlus, Loader2 } from "lucide-react";
+import { Check, X, UserPlus, Loader2, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,10 +30,20 @@ interface AccessRequest {
   apartment: string;
   resident_type: string;
   phone: string;
+  whatsapp: string;
   email: string;
   status: string;
   created_at: string;
 }
+
+const sanitizePhone = (phone: string) => phone.replace(/\D/g, "");
+
+const buildWhatsAppLink = (phone: string, message: string) => {
+  let n = sanitizePhone(phone);
+  // Se não começar com código país, assumir Moçambique (258)
+  if (!n.startsWith("258") && n.length <= 9) n = "258" + n;
+  return `https://api.whatsapp.com/send?phone=${n}&text=${encodeURIComponent(message)}`;
+};
 
 const AccessRequestsManagement = () => {
   const [requests, setRequests] = useState<AccessRequest[]>([]);
@@ -69,6 +79,7 @@ const AccessRequestsManagement = () => {
 
   const handleUpdateStatus = async (id: string, newStatus: string) => {
     if (newStatus === "approved") {
+      const request = requests.find((r) => r.id === id);
       setProcessingId(id);
       try {
         const { data, error } = await supabase.functions.invoke("approve-access-request", {
@@ -78,9 +89,28 @@ const AccessRequestsManagement = () => {
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
+        // Abrir WhatsApp com credenciais para o morador
+        if (data?.password && request) {
+          const loginUrl = `${window.location.origin}/auth`;
+          const msg =
+            `🏠 *Vila Olímpica - Acesso Aprovado*\n\n` +
+            `Olá *${data.full_name || request.full_name}*,\n\n` +
+            `O seu pedido de acesso à Área do Morador foi *aprovado*.\n\n` +
+            `🔐 *Credenciais de acesso:*\n` +
+            `• Username (email): ${data.email}\n` +
+            `• Palavra-passe: ${data.password}\n\n` +
+            `🔗 Aceda em: ${loginUrl}\n\n` +
+            `⚠️ Por segurança, será obrigado a alterar a palavra-passe no primeiro acesso.\n\n` +
+            `Administração Vila Olímpica`;
+
+          const phoneToUse = data.whatsapp || request.whatsapp || request.phone;
+          const url = buildWhatsAppLink(phoneToUse, msg);
+          window.open(url, "_blank");
+        }
+
         toast({
-          title: "Sucesso",
-          description: "Conta criada e credenciais enviadas por email!",
+          title: "Aprovado e enviado",
+          description: "Conta criada. WhatsApp aberto para envio das credenciais ao morador.",
         });
         fetchRequests();
       } catch (err: any) {
@@ -227,15 +257,18 @@ const AccessRequestsManagement = () => {
                          <>
                            <Button
                              size="sm"
-                             variant="outline"
-                             className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                             className="h-8 bg-green-600 hover:bg-green-700 text-white gap-1"
                              onClick={() => handleUpdateStatus(request.id, "approved")}
                              disabled={processingId === request.id}
+                             title="Aprovar e enviar credenciais via WhatsApp"
                            >
                              {processingId === request.id ? (
                                <Loader2 className="w-4 h-4 animate-spin" />
                              ) : (
-                               <Check className="w-4 h-4" />
+                               <>
+                                 <MessageCircle className="w-4 h-4" />
+                                 <span className="hidden md:inline text-xs">Aprovar e Enviar</span>
+                               </>
                              )}
                            </Button>
                            <Button
@@ -244,6 +277,7 @@ const AccessRequestsManagement = () => {
                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                              onClick={() => handleUpdateStatus(request.id, "rejected")}
                              disabled={processingId === request.id}
+                             title="Rejeitar pedido"
                            >
                              <X className="w-4 h-4" />
                            </Button>
