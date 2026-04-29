@@ -145,6 +145,15 @@ const AccessRequestsManagement = () => {
   };
 
   const handleDelete = async (id: string) => {
+    const target = requests.find((r) => r.id === id);
+    if (target?.status === "approved") {
+      toast({
+        title: "Operação bloqueada",
+        description: "Pedidos aprovados não podem ser eliminados — a conta do morador está activa.",
+        variant: "destructive",
+      });
+      return;
+    }
     const { error } = await supabase
       .from("access_requests")
       .delete()
