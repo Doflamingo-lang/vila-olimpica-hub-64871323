@@ -318,7 +318,7 @@ const AdminDashboard = () => {
       {/* Sidebar */}
       <aside 
         className={cn(
-          "bg-card border-r border-border flex flex-col transition-all duration-300",
+          "bg-card border-r border-border flex flex-col transition-all duration-300 sticky top-0 h-screen flex-shrink-0 z-40",
           sidebarCollapsed ? "w-16" : "w-64"
         )}
       >
@@ -401,9 +401,9 @@ const AdminDashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 min-w-0">
         {/* Header */}
-        <header className="bg-card border-b border-border px-6 py-4">
+        <header className="bg-card border-b border-border px-6 py-4 sticky top-0 z-30">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-foreground">Painel Administrativo</h1>
