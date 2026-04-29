@@ -1,11 +1,10 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { AnimatePresence, motion } from "framer-motion";
 import { Search, MoreVertical, Loader2, Receipt, Eye } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import { Taxa, Unidade, PaymentStatus, MESES_SHORT, formatCurrency, calcStatus } from "./types";
@@ -19,16 +18,80 @@ interface TaxasGridProps {
   anoFiltro: number;
   mesFiltro: number | null;
   onRefresh: () => void;
+  onUpdateTaxaLocal?: (taxaId: string, patch: Partial<Taxa>) => void;
   onDeleteUnidade: (id: string) => void;
   onViewReceipt: (receiptUrl: string) => void;
 }
 
-const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onDeleteUnidade, onViewReceipt }: TaxasGridProps) => {
+const PAGE_INCREMENT = 200;
+
+const STATUS_MAP: Record<PaymentStatus, string> = {
+  em_dia: "paid",
+  pendente: "pending",
+  em_atraso: "overdue",
+  arquivado: "pending",
+};
+
+interface RowProps {
+  taxa: Taxa;
+  unidade: Unidade;
+  onStatusChange: (id: string, status: PaymentStatus) => void;
+  onOpenPayment: (taxa: Taxa, divida: number) => void;
+  onViewReceipt: (url: string) => void;
+  onDeleteUnidade: (id: string) => void;
+}
+
+const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewReceipt, onDeleteUnidade }: RowProps) => {
+  const divida = Math.max(0, taxa.valor - taxa.valor_pago);
+  return (
+    <TableRow className="group hover:bg-accent/50">
+      <TableCell className="text-xs text-muted-foreground tabular-nums">{unidade.ord}</TableCell>
+      <TableCell className="font-medium text-xs">{MESES_SHORT[taxa.mes_referencia]}</TableCell>
+      <TableCell className="tabular-nums text-xs">{unidade.bloco}</TableCell>
+      <TableCell className="tabular-nums text-xs">{unidade.edificio}/{unidade.apartamento}</TableCell>
+      <TableCell className="max-w-[150px] truncate text-sm font-medium">{unidade.nome}</TableCell>
+      <TableCell className="text-xs text-muted-foreground">{unidade.contacto || "—"}</TableCell>
+      <TableCell className="text-right tabular-nums text-sm">{formatCurrency(taxa.valor)}</TableCell>
+      <TableCell className="text-right tabular-nums text-sm text-emerald-600 font-medium">{formatCurrency(taxa.valor_pago)}</TableCell>
+      <TableCell className={cn("text-right tabular-nums text-sm font-medium", divida > 0 ? "text-red-600" : "")}>
+        {divida > 0 ? formatCurrency(divida) : "—"}
+      </TableCell>
+      <TableCell>
+        <StatusBadge status={taxa.status} onStatusChange={(s) => onStatusChange(taxa.id, s)} />
+      </TableCell>
+      <TableCell>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              <MoreVertical className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onOpenPayment(taxa, divida)}>Registar Pagamento</DropdownMenuItem>
+            {taxa.receipt_url && (
+              <DropdownMenuItem onClick={() => onViewReceipt(taxa.receipt_url!)}>
+                <Eye className="w-4 h-4 mr-2" />
+                Ver Comprovativo
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem className="text-destructive" onClick={() => onDeleteUnidade(unidade.id)}>
+              Remover Unidade
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    </TableRow>
+  );
+});
+TaxaRow.displayName = "TaxaRow";
+
+const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateTaxaLocal, onDeleteUnidade, onViewReceipt }: TaxasGridProps) => {
   const [statusFiltro, setStatusFiltro] = useState<PaymentStatus | "todos">("todos");
   const [search, setSearch] = useState("");
   const [paymentDialog, setPaymentDialog] = useState<Taxa | null>(null);
   const [paymentValue, setPaymentValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_INCREMENT);
   const { toast } = useToast();
 
   const unidadeMap = useMemo(() => {
@@ -38,6 +101,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onDeleteU
   }, [unidades]);
 
   const filtered = useMemo(() => {
+    const searchLower = search.toLowerCase();
     return taxas
       .filter(t => {
         if (t.ano_referencia !== anoFiltro) return false;
@@ -47,7 +111,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onDeleteU
           const u = unidadeMap[t.unidade_id];
           if (!u) return false;
           const text = `${u.nome} ${u.contacto}`.toLowerCase();
-          if (!text.includes(search.toLowerCase())) return false;
+          if (!text.includes(searchLower)) return false;
         }
         return true;
       })
@@ -59,48 +123,54 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onDeleteU
       });
   }, [taxas, anoFiltro, mesFiltro, statusFiltro, search, unidadeMap]);
 
+  // Reset pagination when filters change
+  const visibleSlice = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+
   const handleStatusChange = useCallback(async (taxaId: string, newStatus: PaymentStatus) => {
-    const statusMap: Record<PaymentStatus, string> = {
-      em_dia: "paid",
-      pendente: "pending",
-      em_atraso: "overdue",
-      arquivado: "pending",
-    };
+    // Optimistic update
+    onUpdateTaxaLocal?.(taxaId, { status: newStatus });
     const { error } = await supabase
       .from("condominium_fees")
-      .update({ status: statusMap[newStatus] })
+      .update({ status: STATUS_MAP[newStatus] })
       .eq("id", taxaId);
     if (error) {
       toast({ title: "Erro", description: "Não foi possível atualizar o status.", variant: "destructive" });
-    } else {
       onRefresh();
     }
-  }, [onRefresh, toast]);
+  }, [onUpdateTaxaLocal, onRefresh, toast]);
+
+  const handleOpenPayment = useCallback((taxa: Taxa, divida: number) => {
+    setPaymentDialog(taxa);
+    setPaymentValue(String(divida));
+  }, []);
 
   const handlePayment = async () => {
     if (!paymentDialog || !paymentValue) return;
     setIsSubmitting(true);
     const novoValorPago = paymentDialog.valor_pago + parseFloat(paymentValue);
     const novoStatus = calcStatus(paymentDialog.valor, novoValorPago);
-    const statusMap: Record<PaymentStatus, string> = {
-      em_dia: "paid", pendente: "pending", em_atraso: "overdue", arquivado: "pending"
-    };
+    const paidAt = novoStatus === "em_dia" ? new Date().toISOString() : null;
 
     const { error } = await supabase
       .from("condominium_fees")
       .update({
         valor_pago: novoValorPago,
-        status: statusMap[novoStatus],
-        paid_at: novoStatus === "em_dia" ? new Date().toISOString() : null,
+        status: STATUS_MAP[novoStatus],
+        paid_at: paidAt,
       })
       .eq("id", paymentDialog.id);
 
     if (error) {
       toast({ title: "Erro", description: "Não foi possível registar o pagamento.", variant: "destructive" });
     } else {
+      // Optimistic patch instead of full refetch
+      onUpdateTaxaLocal?.(paymentDialog.id, {
+        valor_pago: novoValorPago,
+        status: novoStatus,
+        data_pagamento: paidAt,
+      });
       toast({ title: "Sucesso", description: "Pagamento registado." });
       setPaymentDialog(null);
-      onRefresh();
     }
     setIsSubmitting(false);
   };
@@ -120,7 +190,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onDeleteU
           {statusChips.map(chip => (
             <button
               key={chip.value}
-              onClick={() => setStatusFiltro(chip.value)}
+              onClick={() => { setStatusFiltro(chip.value); setVisibleCount(PAGE_INCREMENT); }}
               className={cn(
                 "px-3 py-1.5 rounded-full text-xs font-medium transition-colors border",
                 statusFiltro === chip.value
@@ -137,7 +207,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onDeleteU
           <Input
             placeholder="Pesquisar nome ou contacto..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setVisibleCount(PAGE_INCREMENT); }}
             className="pl-10 h-9"
           />
         </div>
@@ -150,91 +220,52 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onDeleteU
           <p className="text-muted-foreground">Nenhuma taxa encontrada.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">#</TableHead>
-                <TableHead>Mês</TableHead>
-                <TableHead>Bloco</TableHead>
-                <TableHead>Ed/Apt</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Contacto</TableHead>
-                <TableHead className="text-right">Valor</TableHead>
-                <TableHead className="text-right">Pago</TableHead>
-                <TableHead className="text-right">Dívida</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-10"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <AnimatePresence>
-                {filtered.map((taxa, i) => {
+        <>
+          <div className="overflow-x-auto border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10">#</TableHead>
+                  <TableHead>Mês</TableHead>
+                  <TableHead>Bloco</TableHead>
+                  <TableHead>Ed/Apt</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Contacto</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-right">Pago</TableHead>
+                  <TableHead className="text-right">Dívida</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-10"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visibleSlice.map((taxa) => {
                   const u = unidadeMap[taxa.unidade_id];
                   if (!u) return null;
-                  const divida = Math.max(0, taxa.valor - taxa.valor_pago);
                   return (
-                    <motion.tr
+                    <TaxaRow
                       key={taxa.id}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.15, delay: i * 0.01 }}
-                      className="border-b group hover:bg-accent/50 transition-colors"
-                    >
-                      <TableCell className="text-xs text-muted-foreground tabular-nums">{u.ord}</TableCell>
-                      <TableCell className="font-medium text-xs">{MESES_SHORT[taxa.mes_referencia]}</TableCell>
-                      <TableCell className="tabular-nums text-xs">{u.bloco}</TableCell>
-                      <TableCell className="tabular-nums text-xs">{u.edificio}/{u.apartamento}</TableCell>
-                      <TableCell className="max-w-[150px] truncate text-sm font-medium">{u.nome}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{u.contacto || "—"}</TableCell>
-                      <TableCell className="text-right tabular-nums text-sm">{formatCurrency(taxa.valor)}</TableCell>
-                      <TableCell className="text-right tabular-nums text-sm text-emerald-600 font-medium">{formatCurrency(taxa.valor_pago)}</TableCell>
-                      <TableCell className={cn("text-right tabular-nums text-sm font-medium", divida > 0 ? "text-red-600" : "")}>
-                        {divida > 0 ? formatCurrency(divida) : "—"}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge
-                          status={taxa.status}
-                          onStatusChange={(s) => handleStatusChange(taxa.id, s)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => {
-                              setPaymentDialog(taxa);
-                              setPaymentValue(String(divida));
-                            }}>
-                              Registar Pagamento
-                            </DropdownMenuItem>
-                            {taxa.receipt_url && (
-                              <DropdownMenuItem onClick={() => onViewReceipt(taxa.receipt_url!)}>
-                                <Eye className="w-4 h-4 mr-2" />
-                                Ver Comprovativo
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => onDeleteUnidade(u.id)}
-                            >
-                              Remover Unidade
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </motion.tr>
+                      taxa={taxa}
+                      unidade={u}
+                      onStatusChange={handleStatusChange}
+                      onOpenPayment={handleOpenPayment}
+                      onViewReceipt={onViewReceipt}
+                      onDeleteUnidade={onDeleteUnidade}
+                    />
                   );
                 })}
-              </AnimatePresence>
-            </TableBody>
-          </Table>
-        </div>
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+            <span>A mostrar {Math.min(visibleCount, filtered.length)} de {filtered.length}</span>
+            {visibleCount < filtered.length && (
+              <Button variant="outline" size="sm" onClick={() => setVisibleCount(c => c + PAGE_INCREMENT)}>
+                Carregar mais
+              </Button>
+            )}
+          </div>
+        </>
       )}
 
       {/* Payment Dialog */}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Plus, Loader2, Eye, Search, MoreVertical, Receipt } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
 import StatusBadge from "./StatusBadge";
 import { PaymentStatus, MESES_SHORT, MESES_LABELS, formatCurrency, calcStatus } from "./types";
 import { cn } from "@/lib/utils";
@@ -38,6 +37,12 @@ interface FpdTaxa {
 }
 
 const FEE_PAGE_SIZE = 1000;
+const PAGE_INCREMENT = 200;
+const FEE_COLUMNS = "id,unidade_id,reference_month,reference_year,amount,valor_pago,paid_at,status,due_date,receipt_url,payment_method";
+
+const STATUS_MAP: Record<PaymentStatus, string> = {
+  em_dia: "paid", pendente: "pending", em_atraso: "overdue", arquivado: "pending",
+};
 
 const mapFeeStatus = (status: string, amount: number, valorPago: number): PaymentStatus => {
   if (status === "paid" || status === "em_dia") return "em_dia";
@@ -47,14 +52,13 @@ const mapFeeStatus = (status: string, amount: number, valorPago: number): Paymen
   return calcStatus(amount, valorPago);
 };
 
-const fetchAllFpdFees = async () => {
+const fetchFpdFeesByYear = async (year: number) => {
   const fees: any[] = [];
   for (let from = 0; ; from += FEE_PAGE_SIZE) {
     const { data, error } = await supabase
       .from("fpd_fees")
-      .select("*")
-      .order("reference_year", { ascending: false })
-      .order("reference_month", { ascending: false })
+      .select(FEE_COLUMNS)
+      .eq("reference_year", year)
       .range(from, from + FEE_PAGE_SIZE - 1);
     if (error) throw error;
     if (!data?.length) break;
@@ -62,6 +66,18 @@ const fetchAllFpdFees = async () => {
     if (data.length < FEE_PAGE_SIZE) break;
   }
   return fees;
+};
+
+const fetchFpdAvailableYears = async (): Promise<number[]> => {
+  const { data, error } = await supabase
+    .from("fpd_fees")
+    .select("reference_year")
+    .order("reference_year", { ascending: false })
+    .limit(1000);
+  if (error) return [];
+  const set = new Set<number>(data?.map((r: any) => r.reference_year) || []);
+  set.add(new Date().getFullYear());
+  return [...set].sort((a, b) => b - a);
 };
 
 const FpdDataGrid = () => {
@@ -82,16 +98,21 @@ const FpdDataGrid = () => {
   const [gerarOpen, setGerarOpen] = useState(false);
   const [gerarAno, setGerarAno] = useState(String(new Date().getFullYear()));
   const [gerarValor, setGerarValor] = useState("1000");
+  const [availableYears, setAvailableYears] = useState<number[]>([new Date().getFullYear()]);
+  const [visibleCount, setVisibleCount] = useState(PAGE_INCREMENT);
   const { toast } = useToast();
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [unidadesRes, feesData] = await Promise.all([
+      const [unidadesRes, feesData, years] = await Promise.all([
         supabase.from("fpd_unidades").select("*").order("ord"),
-        fetchAllFpdFees(),
+        fetchFpdFeesByYear(anoFiltro),
+        fetchFpdAvailableYears(),
       ]);
       if (unidadesRes.error) throw unidadesRes.error;
+
+      setAvailableYears(years);
 
       setUnidades((unidadesRes.data || []).map((u: any) => ({
         id: u.id, ord: u.ord, apartamento: u.apartamento,
@@ -118,15 +139,20 @@ const FpdDataGrid = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, anoFiltro]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Optimistic local update — avoids full refetch on row edits
+  const updateTaxaLocal = useCallback((taxaId: string, patch: Partial<FpdTaxa>) => {
+    setTaxas(prev => prev.map(t => t.id === taxaId ? { ...t, ...patch } : t));
+  }, []);
+
   const anosDisponiveis = useMemo(() => {
-    const anos = new Set(taxas.map(t => t.ano_referencia));
-    anos.add(new Date().getFullYear());
-    return [...anos].sort((a, b) => b - a);
-  }, [taxas]);
+    const set = new Set<number>(availableYears);
+    set.add(new Date().getFullYear());
+    return [...set].sort((a, b) => b - a);
+  }, [availableYears]);
 
   const unidadeMap = useMemo(() => {
     const map: Record<string, FpdUnidade> = {};
@@ -134,9 +160,10 @@ const FpdDataGrid = () => {
     return map;
   }, [unidades]);
 
-  const taxasAno = useMemo(() => taxas.filter(t => t.ano_referencia === anoFiltro), [taxas, anoFiltro]);
+  const taxasAno = taxas; // already filtered by year on the server
 
   const filtered = useMemo(() => {
+    const searchLower = search.toLowerCase();
     return taxasAno
       .filter(t => {
         if (mesFiltro !== null && t.mes_referencia !== mesFiltro) return false;
@@ -145,7 +172,7 @@ const FpdDataGrid = () => {
           const u = unidadeMap[t.unidade_id];
           if (!u) return false;
           const text = `${u.nome} ${u.contacto} ${u.apartamento}`.toLowerCase();
-          if (!text.includes(search.toLowerCase())) return false;
+          if (!text.includes(searchLower)) return false;
         }
         return true;
       })
@@ -156,6 +183,8 @@ const FpdDataGrid = () => {
         return (uA?.ord || 0) - (uB?.ord || 0);
       });
   }, [taxasAno, mesFiltro, statusFiltro, search, unidadeMap]);
+
+  const visibleSlice = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
 
   const stats = useMemo(() => {
     const arr = taxasAno;
@@ -169,42 +198,36 @@ const FpdDataGrid = () => {
   }, [taxasAno]);
 
   const handleStatusChange = useCallback(async (taxaId: string, newStatus: PaymentStatus) => {
-    const statusMap: Record<PaymentStatus, string> = {
-      em_dia: "paid", pendente: "pending", em_atraso: "overdue", arquivado: "pending",
-    };
+    updateTaxaLocal(taxaId, { status: newStatus });
     const { error } = await supabase
       .from("fpd_fees")
-      .update({ status: statusMap[newStatus] })
+      .update({ status: STATUS_MAP[newStatus] })
       .eq("id", taxaId);
     if (error) {
       toast({ title: "Erro", description: "Não foi possível atualizar o status.", variant: "destructive" });
-    } else {
       fetchData();
     }
-  }, [fetchData, toast]);
+  }, [updateTaxaLocal, fetchData, toast]);
 
   const handlePayment = async () => {
     if (!paymentDialog || !paymentValue) return;
     setIsSubmitting(true);
     const novoValorPago = paymentDialog.valor_pago + parseFloat(paymentValue);
     const novoStatus = calcStatus(paymentDialog.valor, novoValorPago);
-    const statusMap: Record<PaymentStatus, string> = {
-      em_dia: "paid", pendente: "pending", em_atraso: "overdue", arquivado: "pending"
-    };
     const { error } = await supabase
       .from("fpd_fees")
       .update({
         valor_pago: novoValorPago,
-        status: statusMap[novoStatus],
+        status: STATUS_MAP[novoStatus],
         paid_at: novoStatus === "em_dia" ? new Date().toISOString() : null,
       })
       .eq("id", paymentDialog.id);
     if (error) {
       toast({ title: "Erro", description: "Não foi possível registar o pagamento.", variant: "destructive" });
     } else {
+      updateTaxaLocal(paymentDialog.id, { valor_pago: novoValorPago, status: novoStatus });
       toast({ title: "Sucesso", description: "Pagamento registado." });
       setPaymentDialog(null);
-      fetchData();
     }
     setIsSubmitting(false);
   };
@@ -313,7 +336,7 @@ const FpdDataGrid = () => {
         {anosDisponiveis.map(ano => (
           <button
             key={ano}
-            onClick={() => setAnoFiltro(ano)}
+            onClick={() => { setAnoFiltro(ano); setVisibleCount(PAGE_INCREMENT); }}
             className={cn(
               "px-4 py-2 text-sm font-medium whitespace-nowrap rounded-t-lg transition-colors border-b-2",
               anoFiltro === ano
@@ -322,9 +345,6 @@ const FpdDataGrid = () => {
             )}
           >
             FDP {ano === 2025 ? "Maio-Dez 2025" : `Jan-Dez ${ano}`}
-            <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded-full tabular-nums">
-              {taxas.filter(t => t.ano_referencia === ano).length}
-            </span>
           </button>
         ))}
       </div>
@@ -365,7 +385,7 @@ const FpdDataGrid = () => {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
-        <Select value={mesFiltro === null ? "todos" : String(mesFiltro)} onValueChange={(v) => setMesFiltro(v === "todos" ? null : Number(v))}>
+        <Select value={mesFiltro === null ? "todos" : String(mesFiltro)} onValueChange={(v) => { setMesFiltro(v === "todos" ? null : Number(v)); setVisibleCount(PAGE_INCREMENT); }}>
           <SelectTrigger className="w-36 h-9">
             <SelectValue />
           </SelectTrigger>
@@ -384,7 +404,7 @@ const FpdDataGrid = () => {
           {statusChips.map(chip => (
             <button
               key={chip.value}
-              onClick={() => setStatusFiltro(chip.value)}
+              onClick={() => { setStatusFiltro(chip.value); setVisibleCount(PAGE_INCREMENT); }}
               className={cn(
                 "px-3 py-1.5 rounded-full text-xs font-medium transition-colors border",
                 statusFiltro === chip.value
@@ -401,7 +421,7 @@ const FpdDataGrid = () => {
           <Input
             placeholder="Pesquisar nome, contacto ou apartamento..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setVisibleCount(PAGE_INCREMENT); }}
             className="pl-10 h-9"
           />
         </div>
@@ -414,37 +434,30 @@ const FpdDataGrid = () => {
           <p className="text-muted-foreground">Nenhuma taxa encontrada.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">#</TableHead>
-                <TableHead>Mês</TableHead>
-                <TableHead>Apt</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Contacto</TableHead>
-                <TableHead className="text-right">Valor</TableHead>
-                <TableHead className="text-right">Pago</TableHead>
-                <TableHead className="text-right">Dívida</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-10"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <AnimatePresence>
-                {filtered.map((taxa, i) => {
+        <>
+          <div className="overflow-x-auto border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10">#</TableHead>
+                  <TableHead>Mês</TableHead>
+                  <TableHead>Apt</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Contacto</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-right">Pago</TableHead>
+                  <TableHead className="text-right">Dívida</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-10"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visibleSlice.map((taxa) => {
                   const u = unidadeMap[taxa.unidade_id];
                   if (!u) return null;
                   const divida = Math.max(0, taxa.valor - taxa.valor_pago);
                   return (
-                    <motion.tr
-                      key={taxa.id}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.15, delay: Math.min(i * 0.005, 0.5) }}
-                      className="border-b group hover:bg-accent/50 transition-colors"
-                    >
+                    <TableRow key={taxa.id} className="group hover:bg-accent/50">
                       <TableCell className="text-xs text-muted-foreground tabular-nums">{u.ord}</TableCell>
                       <TableCell className="font-medium text-xs">{MESES_SHORT[taxa.mes_referencia]}</TableCell>
                       <TableCell className="tabular-nums text-xs">{u.apartamento}</TableCell>
@@ -466,10 +479,7 @@ const FpdDataGrid = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => {
-                              setPaymentDialog(taxa);
-                              setPaymentValue(String(divida));
-                            }}>
+                            <DropdownMenuItem onClick={() => { setPaymentDialog(taxa); setPaymentValue(String(divida)); }}>
                               Registar Pagamento
                             </DropdownMenuItem>
                             {taxa.receipt_url && (
@@ -484,13 +494,21 @@ const FpdDataGrid = () => {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
-                    </motion.tr>
+                    </TableRow>
                   );
                 })}
-              </AnimatePresence>
-            </TableBody>
-          </Table>
-        </div>
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+            <span>A mostrar {Math.min(visibleCount, filtered.length)} de {filtered.length}</span>
+            {visibleCount < filtered.length && (
+              <Button variant="outline" size="sm" onClick={() => setVisibleCount(c => c + PAGE_INCREMENT)}>
+                Carregar mais
+              </Button>
+            )}
+          </div>
+        </>
       )}
 
       {/* Payment Dialog */}
