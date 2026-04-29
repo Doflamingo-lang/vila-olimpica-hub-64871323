@@ -230,6 +230,23 @@ const AccessRequestPage = () => {
 
                 <FormField
                   control={form.control}
+                  name="whatsapp"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de WhatsApp *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+258 84 000 0000" type="tel" {...field} />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        ⚠️ Importante: indique um número de WhatsApp activo. Será o canal usado pela administração para comunicações oficiais (avisos, taxas e notificações). Pode ser o mesmo número do contacto acima.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
