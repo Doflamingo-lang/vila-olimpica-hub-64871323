@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Plus, Loader2, Eye, Search, MoreVertical, Receipt } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
 import StatusBadge from "./StatusBadge";
 import { PaymentStatus, MESES_SHORT, MESES_LABELS, formatCurrency, calcStatus } from "./types";
 import { cn } from "@/lib/utils";
