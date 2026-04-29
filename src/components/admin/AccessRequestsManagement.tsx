@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Check, X, UserPlus, Loader2 } from "lucide-react";
+import { Check, X, UserPlus, Loader2, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,10 +30,20 @@ interface AccessRequest {
   apartment: string;
   resident_type: string;
   phone: string;
+  whatsapp: string;
   email: string;
   status: string;
   created_at: string;
 }
+
+const sanitizePhone = (phone: string) => phone.replace(/\D/g, "");
+
+const buildWhatsAppLink = (phone: string, message: string) => {
+  let n = sanitizePhone(phone);
+  // Se não começar com código país, assumir Moçambique (258)
+  if (!n.startsWith("258") && n.length <= 9) n = "258" + n;
+  return `https://api.whatsapp.com/send?phone=${n}&text=${encodeURIComponent(message)}`;
+};
 
 const AccessRequestsManagement = () => {
   const [requests, setRequests] = useState<AccessRequest[]>([]);
