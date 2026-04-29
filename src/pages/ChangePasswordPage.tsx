@@ -95,11 +95,14 @@ const ChangePasswordPage = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={async () => {
+                await supabase.auth.signOut();
+                navigate("/area-morador", { replace: true });
+              }}
               className="mb-4 -ml-2"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
+              Voltar ao login
             </Button>
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
