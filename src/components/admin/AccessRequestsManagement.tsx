@@ -38,12 +38,19 @@ interface AccessRequest {
 
 const sanitizePhone = (phone: string) => phone.replace(/\D/g, "");
 
-const buildWhatsAppLink = (phone: string, message: string) => {
+const normalizePhone = (phone: string) => {
   let n = sanitizePhone(phone);
-  // Se não começar com código país, assumir Moçambique (258)
   if (!n.startsWith("258") && n.length <= 9) n = "258" + n;
-  return `https://api.whatsapp.com/send?phone=${n}&text=${encodeURIComponent(message)}`;
+  return n;
 };
+
+// wa.me funciona tanto no WhatsApp Web como no app desktop/mobile (deep-link)
+const buildWaMeLink = (phone: string, message: string) =>
+  `https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent(message)}`;
+
+// whatsapp:// abre directamente o WhatsApp Desktop ou App nativa, sem passar pelo browser
+const buildWaDesktopLink = (phone: string, message: string) =>
+  `whatsapp://send?phone=${normalizePhone(phone)}&text=${encodeURIComponent(message)}`;
 
 const AccessRequestsManagement = () => {
   const [requests, setRequests] = useState<AccessRequest[]>([]);
