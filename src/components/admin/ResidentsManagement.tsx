@@ -3,9 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Users, Search, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Users, Search, Loader2, UserX, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 interface ApprovedResident {
   id: string;
@@ -24,6 +27,8 @@ const ResidentsManagement = () => {
   const [residents, setResidents] = useState<ApprovedResident[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [confirmTarget, setConfirmTarget] = useState<{ resident: ApprovedResident; action: "deactivate" | "reactivate" } | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchResidents();
@@ -34,7 +39,7 @@ const ResidentsManagement = () => {
     const { data, error } = await supabase
       .from("access_requests")
       .select("*")
-      .eq("status", "approved")
+      .in("status", ["approved", "deactivated"])
       .order("full_name", { ascending: true });
 
     if (error) {
@@ -56,6 +61,25 @@ const ResidentsManagement = () => {
     );
   });
 
+  const handleConfirm = async () => {
+    if (!confirmTarget) return;
+    const { resident, action } = confirmTarget;
+    setProcessingId(resident.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("toggle-resident-status", {
+        body: { request_id: resident.id, action },
+      });
+      if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
+      toast.success(action === "deactivate" ? "Morador desativado com sucesso" : "Morador reativado com sucesso");
+      setConfirmTarget(null);
+      await fetchResidents();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao processar pedido");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -64,77 +88,146 @@ const ResidentsManagement = () => {
     );
   }
 
+  const activeCount = residents.filter((r) => r.status === "approved").length;
+  const inactiveCount = residents.filter((r) => r.status === "deactivated").length;
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              Moradores ({residents.length})
-            </CardTitle>
-            <CardDescription>Lista de todos os moradores aprovados com os seus dados</CardDescription>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                Moradores ({residents.length})
+              </CardTitle>
+              <CardDescription>
+                {activeCount} ativos · {inactiveCount} desativados
+              </CardDescription>
+            </div>
+            <div className="relative w-full max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Pesquisar morador..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
           </div>
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Pesquisar morador..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">
-              {searchTerm ? "Nenhum morador encontrado para esta pesquisa." : "Nenhum morador aprovado ainda."}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome Completo</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>Bloco</TableHead>
-                  <TableHead>Edifício</TableHead>
-                  <TableHead>Apartamento</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Data de Registo</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((resident) => (
-                  <TableRow key={resident.id}>
-                    <TableCell className="font-medium">{resident.full_name}</TableCell>
-                    <TableCell>{resident.email}</TableCell>
-                    <TableCell>{resident.phone}</TableCell>
-                    <TableCell>{resident.block}</TableCell>
-                    <TableCell>{resident.building}</TableCell>
-                    <TableCell>{resident.apartment}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {resident.resident_type === "owner" ? "Proprietário" :
-                         resident.resident_type === "tenant" ? "Inquilino" : resident.resident_type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {format(new Date(resident.created_at), "dd/MM/yyyy")}
-                    </TableCell>
+        </CardHeader>
+        <CardContent>
+          {filtered.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                {searchTerm ? "Nenhum morador encontrado para esta pesquisa." : "Nenhum morador aprovado ainda."}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome Completo</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Telefone</TableHead>
+                    <TableHead>Bloco</TableHead>
+                    <TableHead>Edifício</TableHead>
+                    <TableHead>Apartamento</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Data de Registo</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((resident) => {
+                    const isInactive = resident.status === "deactivated";
+                    return (
+                      <TableRow key={resident.id} className={isInactive ? "opacity-60" : ""}>
+                        <TableCell className="font-medium">{resident.full_name}</TableCell>
+                        <TableCell>{resident.email}</TableCell>
+                        <TableCell>{resident.phone}</TableCell>
+                        <TableCell>{resident.block}</TableCell>
+                        <TableCell>{resident.building}</TableCell>
+                        <TableCell>{resident.apartment}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {resident.resident_type === "owner" ? "Proprietário" :
+                             resident.resident_type === "tenant" ? "Inquilino" : resident.resident_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {isInactive ? (
+                            <Badge variant="destructive">Desativado</Badge>
+                          ) : (
+                            <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/30">Ativo</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {format(new Date(resident.created_at), "dd/MM/yyyy")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isInactive ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={processingId === resident.id}
+                              onClick={() => setConfirmTarget({ resident, action: "reactivate" })}
+                            >
+                              <UserCheck className="w-4 h-4 mr-1" />
+                              Reativar
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={processingId === resident.id}
+                              onClick={() => setConfirmTarget({ resident, action: "deactivate" })}
+                            >
+                              <UserX className="w-4 h-4 mr-1" />
+                              Desativar
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={!!confirmTarget} onOpenChange={(o) => !o && setConfirmTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmTarget?.action === "deactivate" ? "Desativar morador?" : "Reativar morador?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmTarget?.action === "deactivate" ? (
+                <>
+                  Tem certeza que deseja desativar <strong>{confirmTarget?.resident.full_name}</strong>? O morador deixará de poder iniciar sessão no sistema. Os dados são preservados e poderá reativar a qualquer momento.
+                </>
+              ) : (
+                <>
+                  Reativar <strong>{confirmTarget?.resident.full_name}</strong>? O morador voltará a poder aceder ao sistema com as credenciais existentes.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!processingId}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm} disabled={!!processingId}>
+              {processingId ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirmar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
