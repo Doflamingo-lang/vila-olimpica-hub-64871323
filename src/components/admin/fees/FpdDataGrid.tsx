@@ -37,6 +37,12 @@ interface FpdTaxa {
 }
 
 const FEE_PAGE_SIZE = 1000;
+const PAGE_INCREMENT = 200;
+const FEE_COLUMNS = "id,unidade_id,reference_month,reference_year,amount,valor_pago,paid_at,status,due_date,receipt_url,payment_method";
+
+const STATUS_MAP: Record<PaymentStatus, string> = {
+  em_dia: "paid", pendente: "pending", em_atraso: "overdue", arquivado: "pending",
+};
 
 const mapFeeStatus = (status: string, amount: number, valorPago: number): PaymentStatus => {
   if (status === "paid" || status === "em_dia") return "em_dia";
@@ -46,14 +52,13 @@ const mapFeeStatus = (status: string, amount: number, valorPago: number): Paymen
   return calcStatus(amount, valorPago);
 };
 
-const fetchAllFpdFees = async () => {
+const fetchFpdFeesByYear = async (year: number) => {
   const fees: any[] = [];
   for (let from = 0; ; from += FEE_PAGE_SIZE) {
     const { data, error } = await supabase
       .from("fpd_fees")
-      .select("*")
-      .order("reference_year", { ascending: false })
-      .order("reference_month", { ascending: false })
+      .select(FEE_COLUMNS)
+      .eq("reference_year", year)
       .range(from, from + FEE_PAGE_SIZE - 1);
     if (error) throw error;
     if (!data?.length) break;
@@ -61,6 +66,18 @@ const fetchAllFpdFees = async () => {
     if (data.length < FEE_PAGE_SIZE) break;
   }
   return fees;
+};
+
+const fetchFpdAvailableYears = async (): Promise<number[]> => {
+  const { data, error } = await supabase
+    .from("fpd_fees")
+    .select("reference_year")
+    .order("reference_year", { ascending: false })
+    .limit(1000);
+  if (error) return [];
+  const set = new Set<number>(data?.map((r: any) => r.reference_year) || []);
+  set.add(new Date().getFullYear());
+  return [...set].sort((a, b) => b - a);
 };
 
 const FpdDataGrid = () => {
