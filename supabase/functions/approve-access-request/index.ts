@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
+    // Email sending removed: credentials delivered exclusively via WhatsApp by the admin UI.
 
     // Verify caller is admin
     const callerClient = createClient(supabaseUrl, anonKey, {
@@ -164,37 +164,10 @@ Deno.serve(async (req) => {
       .update({ status: "approved" })
       .eq("id", request_id);
 
-    // Send email with credentials
-    const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #1a5d1a;">Bem-vindo à Vila Olímpica! 🏠</h2>
-        <p>Olá <strong>${accessRequest.full_name}</strong>,</p>
-        <p>O seu pedido de acesso à Área do Morador foi <strong>aprovado</strong>!</p>
-        <p>Aqui estão as suas credenciais de acesso:</p>
-        <div style="background: #f4f4f4; border-radius: 8px; padding: 16px; margin: 16px 0;">
-          <p style="margin: 4px 0;"><strong>Email:</strong> ${accessRequest.email}</p>
-          <p style="margin: 4px 0;"><strong>Senha temporária:</strong> ${tempPassword}</p>
-        </div>
-        <p style="color: #c0392b;"><strong>Importante:</strong> Será obrigatório alterar a sua senha no primeiro acesso.</p>
-        <p>Localização: Bloco ${accessRequest.block} · Ed. ${accessRequest.building} · Apt. ${accessRequest.apartment}</p>
-        <br/>
-        <p>Atenciosamente,<br/>Administração Vila Olímpica</p>
-      </div>
-    `;
-
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${resendApiKey}`,
-      },
-      body: JSON.stringify({
-        from: "Vila Olímpica <noreply@vilaolimp.co.mz>",
-        to: [accessRequest.email],
-        subject: "Acesso Aprovado - Vila Olímpica",
-        html: emailHtml,
-      }),
-    });
+    // NOTA: Envio de credenciais por email foi REMOVIDO por requisito.
+    // As credenciais são entregues exclusivamente via WhatsApp pelo painel admin
+    // (a partir do número oficial +258 84 281 4557), usando a password gerada
+    // automaticamente nesta resposta. O administrador NUNCA recebe a password.
 
     return new Response(
       JSON.stringify({

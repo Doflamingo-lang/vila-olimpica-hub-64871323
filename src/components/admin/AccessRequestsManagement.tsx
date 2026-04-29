@@ -2,10 +2,13 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Check, X, UserPlus, Loader2, MessageCircle } from "lucide-react";
+import { Check, X, UserPlus, Loader2, MessageCircle, Copy, Smartphone, Globe } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -38,12 +41,19 @@ interface AccessRequest {
 
 const sanitizePhone = (phone: string) => phone.replace(/\D/g, "");
 
-const buildWhatsAppLink = (phone: string, message: string) => {
+const normalizePhone = (phone: string) => {
   let n = sanitizePhone(phone);
-  // Se não começar com código país, assumir Moçambique (258)
   if (!n.startsWith("258") && n.length <= 9) n = "258" + n;
-  return `https://api.whatsapp.com/send?phone=${n}&text=${encodeURIComponent(message)}`;
+  return n;
 };
+
+// wa.me funciona tanto no WhatsApp Web como no app desktop/mobile (deep-link)
+const buildWaMeLink = (phone: string, message: string) =>
+  `https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent(message)}`;
+
+// whatsapp:// abre directamente o WhatsApp Desktop ou App nativa, sem passar pelo browser
+const buildWaDesktopLink = (phone: string, message: string) =>
+  `whatsapp://send?phone=${normalizePhone(phone)}&text=${encodeURIComponent(message)}`;
 
 const AccessRequestsManagement = () => {
   const [requests, setRequests] = useState<AccessRequest[]>([]);
@@ -76,6 +86,12 @@ const AccessRequestsManagement = () => {
   };
 
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [sendDialog, setSendDialog] = useState<{
+    open: boolean;
+    phone: string;
+    message: string;
+    fullName: string;
+  }>({ open: false, phone: "", message: "", fullName: "" });
 
   const handleUpdateStatus = async (id: string, newStatus: string) => {
     if (newStatus === "approved") {
@@ -89,7 +105,7 @@ const AccessRequestsManagement = () => {
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
-        // Abrir WhatsApp com credenciais para o morador
+        // Abrir diálogo para envio das credenciais via WhatsApp ao morador
         if (data?.password && request) {
           const loginUrl = `${window.location.origin}/auth`;
           const msg =
@@ -104,13 +120,17 @@ const AccessRequestsManagement = () => {
             `Administração Vila Olímpica`;
 
           const phoneToUse = data.whatsapp || request.whatsapp || request.phone;
-          const url = buildWhatsAppLink(phoneToUse, msg);
-          window.open(url, "_blank");
+          setSendDialog({
+            open: true,
+            phone: phoneToUse,
+            message: msg,
+            fullName: data.full_name || request.full_name,
+          });
         }
 
         toast({
-          title: "Aprovado e enviado",
-          description: "Conta criada. WhatsApp aberto para envio das credenciais ao morador.",
+          title: "Pedido aprovado",
+          description: "Conta criada. Escolha como enviar as credenciais via WhatsApp ao morador.",
         });
         fetchRequests();
       } catch (err: any) {
@@ -184,6 +204,7 @@ const AccessRequestsManagement = () => {
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
@@ -309,6 +330,59 @@ const AccessRequestsManagement = () => {
         )}
       </CardContent>
     </Card>
+
+    <Dialog open={sendDialog.open} onOpenChange={(o) => setSendDialog((s) => ({ ...s, open: o }))}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <MessageCircle className="w-5 h-5 text-primary" />
+            Enviar credenciais via WhatsApp
+          </DialogTitle>
+          <DialogDescription>
+            Para <strong>{sendDialog.fullName}</strong> · {sendDialog.phone}
+            <br />
+            <span className="text-xs">As credenciais serão entregues exclusivamente ao morador. Nenhuma cópia é guardada após este envio.</span>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-2">
+          <div className="rounded-md border bg-muted/40 p-3 text-xs whitespace-pre-wrap font-mono max-h-48 overflow-auto">
+            {sendDialog.message}
+          </div>
+        </div>
+
+        <DialogFooter className="flex-col sm:flex-col gap-2 sm:gap-2">
+          <Button
+            className="w-full justify-start gap-2"
+            onClick={() => {
+              window.open(buildWaMeLink(sendDialog.phone, sendDialog.message), "_blank", "noopener,noreferrer");
+            }}
+          >
+            <Globe className="w-4 h-4" /> Abrir no WhatsApp Web
+          </Button>
+          <Button
+            variant="secondary"
+            className="w-full justify-start gap-2"
+            onClick={() => {
+              window.location.href = buildWaDesktopLink(sendDialog.phone, sendDialog.message);
+            }}
+          >
+            <Smartphone className="w-4 h-4" /> Abrir no WhatsApp Desktop / App
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full justify-start gap-2"
+            onClick={async () => {
+              await navigator.clipboard.writeText(sendDialog.message);
+              toast({ title: "Mensagem copiada", description: "Cole no WhatsApp do morador." });
+            }}
+          >
+            <Copy className="w-4 h-4" /> Copiar mensagem
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
