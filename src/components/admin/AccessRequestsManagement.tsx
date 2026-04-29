@@ -79,6 +79,7 @@ const AccessRequestsManagement = () => {
 
   const handleUpdateStatus = async (id: string, newStatus: string) => {
     if (newStatus === "approved") {
+      const request = requests.find((r) => r.id === id);
       setProcessingId(id);
       try {
         const { data, error } = await supabase.functions.invoke("approve-access-request", {
@@ -88,9 +89,28 @@ const AccessRequestsManagement = () => {
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
+        // Abrir WhatsApp com credenciais para o morador
+        if (data?.password && request) {
+          const loginUrl = `${window.location.origin}/auth`;
+          const msg =
+            `🏠 *Vila Olímpica - Acesso Aprovado*\n\n` +
+            `Olá *${data.full_name || request.full_name}*,\n\n` +
+            `O seu pedido de acesso à Área do Morador foi *aprovado*.\n\n` +
+            `🔐 *Credenciais de acesso:*\n` +
+            `• Username (email): ${data.email}\n` +
+            `• Palavra-passe: ${data.password}\n\n` +
+            `🔗 Aceda em: ${loginUrl}\n\n` +
+            `⚠️ Por segurança, será obrigado a alterar a palavra-passe no primeiro acesso.\n\n` +
+            `Administração Vila Olímpica`;
+
+          const phoneToUse = data.whatsapp || request.whatsapp || request.phone;
+          const url = buildWhatsAppLink(phoneToUse, msg);
+          window.open(url, "_blank");
+        }
+
         toast({
-          title: "Sucesso",
-          description: "Conta criada e credenciais enviadas por email!",
+          title: "Aprovado e enviado",
+          description: "Conta criada. WhatsApp aberto para envio das credenciais ao morador.",
         });
         fetchRequests();
       } catch (err: any) {
