@@ -336,7 +336,7 @@ const FpdDataGrid = () => {
         {anosDisponiveis.map(ano => (
           <button
             key={ano}
-            onClick={() => setAnoFiltro(ano)}
+            onClick={() => { setAnoFiltro(ano); setVisibleCount(PAGE_INCREMENT); }}
             className={cn(
               "px-4 py-2 text-sm font-medium whitespace-nowrap rounded-t-lg transition-colors border-b-2",
               anoFiltro === ano
@@ -345,9 +345,6 @@ const FpdDataGrid = () => {
             )}
           >
             FDP {ano === 2025 ? "Maio-Dez 2025" : `Jan-Dez ${ano}`}
-            <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded-full tabular-nums">
-              {taxas.filter(t => t.ano_referencia === ano).length}
-            </span>
           </button>
         ))}
       </div>
