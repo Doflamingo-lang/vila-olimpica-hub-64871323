@@ -39,6 +39,7 @@ const AccessRequestPage = () => {
       building: "",
       apartment: "",
       phone: "",
+      whatsapp: "",
       email: "",
     },
   });
