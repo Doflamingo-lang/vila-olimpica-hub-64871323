@@ -437,37 +437,30 @@ const FpdDataGrid = () => {
           <p className="text-muted-foreground">Nenhuma taxa encontrada.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">#</TableHead>
-                <TableHead>Mês</TableHead>
-                <TableHead>Apt</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Contacto</TableHead>
-                <TableHead className="text-right">Valor</TableHead>
-                <TableHead className="text-right">Pago</TableHead>
-                <TableHead className="text-right">Dívida</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-10"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <AnimatePresence>
-                {filtered.map((taxa, i) => {
+        <>
+          <div className="overflow-x-auto border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10">#</TableHead>
+                  <TableHead>Mês</TableHead>
+                  <TableHead>Apt</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Contacto</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-right">Pago</TableHead>
+                  <TableHead className="text-right">Dívida</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-10"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visibleSlice.map((taxa) => {
                   const u = unidadeMap[taxa.unidade_id];
                   if (!u) return null;
                   const divida = Math.max(0, taxa.valor - taxa.valor_pago);
                   return (
-                    <motion.tr
-                      key={taxa.id}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.15, delay: Math.min(i * 0.005, 0.5) }}
-                      className="border-b group hover:bg-accent/50 transition-colors"
-                    >
+                    <TableRow key={taxa.id} className="group hover:bg-accent/50">
                       <TableCell className="text-xs text-muted-foreground tabular-nums">{u.ord}</TableCell>
                       <TableCell className="font-medium text-xs">{MESES_SHORT[taxa.mes_referencia]}</TableCell>
                       <TableCell className="tabular-nums text-xs">{u.apartamento}</TableCell>
@@ -489,10 +482,7 @@ const FpdDataGrid = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => {
-                              setPaymentDialog(taxa);
-                              setPaymentValue(String(divida));
-                            }}>
+                            <DropdownMenuItem onClick={() => { setPaymentDialog(taxa); setPaymentValue(String(divida)); }}>
                               Registar Pagamento
                             </DropdownMenuItem>
                             {taxa.receipt_url && (
@@ -507,13 +497,21 @@ const FpdDataGrid = () => {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
-                    </motion.tr>
+                    </TableRow>
                   );
                 })}
-              </AnimatePresence>
-            </TableBody>
-          </Table>
-        </div>
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+            <span>A mostrar {Math.min(visibleCount, filtered.length)} de {filtered.length}</span>
+            {visibleCount < filtered.length && (
+              <Button variant="outline" size="sm" onClick={() => setVisibleCount(c => c + PAGE_INCREMENT)}>
+                Carregar mais
+              </Button>
+            )}
+          </div>
+        </>
       )}
 
       {/* Payment Dialog */}
