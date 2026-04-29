@@ -66,7 +66,31 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      // Clear local state immediately
+      setSession(null);
+      setUser(null);
+      setIsAdmin(false);
+
+      // Sign out from Supabase (global scope = invalidate all sessions)
+      await supabase.auth.signOut({ scope: "global" });
+    } catch (error) {
+      console.error("Error during signOut:", error);
+    } finally {
+      // Force-clear any persisted Supabase auth tokens from storage
+      try {
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith("sb-") || k.includes("supabase.auth"))
+          .forEach((k) => localStorage.removeItem(k));
+        Object.keys(sessionStorage)
+          .filter((k) => k.startsWith("sb-") || k.includes("supabase.auth"))
+          .forEach((k) => sessionStorage.removeItem(k));
+      } catch (e) {
+        console.warn("Storage cleanup failed:", e);
+      }
+      // Hard reload to /auth to guarantee a fresh, unauthenticated app state
+      window.location.replace("/auth");
+    }
   };
 
   return {
