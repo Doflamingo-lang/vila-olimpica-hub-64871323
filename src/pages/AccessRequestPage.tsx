@@ -47,6 +47,32 @@ const AccessRequestPage = () => {
   const onSubmit = async (data: AccessRequestForm) => {
     setIsSubmitting(true);
     try {
+      // Verificar se já existe pedido com este email
+      const { data: existing, error: checkError } = await supabase
+        .from("access_requests")
+        .select("id, status")
+        .ilike("email", data.email.trim())
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existing) {
+        const statusMsg =
+          existing.status === "approved"
+            ? "Este email já tem uma conta activa no sistema. Faça login ou recupere a sua palavra-passe."
+            : existing.status === "pending"
+            ? "Já existe um pedido pendente com este email. Aguarde a aprovação da administração."
+            : "Já existe um pedido registado com este email. Contacte a administração para mais informações.";
+
+        toast({
+          title: "Pedido negado: email já registado",
+          description: statusMsg,
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const { error } = await supabase.from("access_requests").insert({
         full_name: data.full_name,
         block: data.block,
@@ -54,10 +80,23 @@ const AccessRequestPage = () => {
         apartment: data.apartment,
         resident_type: data.resident_type,
         phone: data.phone,
+        whatsapp: data.whatsapp,
         email: data.email,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Tratamento defensivo do índice único caso ocorra corrida
+        if ((error as any).code === "23505") {
+          toast({
+            title: "Pedido negado: email já registado",
+            description: "Este email já foi usado num pedido anterior. Cada morador só pode submeter um pedido.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        throw error;
+      }
 
       // Notify admin via WhatsApp
       const tipoMorador = data.resident_type === "proprietario" ? "Proprietário" : "Inquilino";
