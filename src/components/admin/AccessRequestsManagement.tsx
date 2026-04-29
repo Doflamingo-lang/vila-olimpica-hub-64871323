@@ -329,6 +329,59 @@ const AccessRequestsManagement = () => {
         )}
       </CardContent>
     </Card>
+
+    <Dialog open={sendDialog.open} onOpenChange={(o) => setSendDialog((s) => ({ ...s, open: o }))}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <MessageCircle className="w-5 h-5 text-primary" />
+            Enviar credenciais via WhatsApp
+          </DialogTitle>
+          <DialogDescription>
+            Para <strong>{sendDialog.fullName}</strong> · {sendDialog.phone}
+            <br />
+            <span className="text-xs">As credenciais serão entregues exclusivamente ao morador. Nenhuma cópia é guardada após este envio.</span>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-2">
+          <div className="rounded-md border bg-muted/40 p-3 text-xs whitespace-pre-wrap font-mono max-h-48 overflow-auto">
+            {sendDialog.message}
+          </div>
+        </div>
+
+        <DialogFooter className="flex-col sm:flex-col gap-2 sm:gap-2">
+          <Button
+            className="w-full justify-start gap-2"
+            onClick={() => {
+              window.open(buildWaMeLink(sendDialog.phone, sendDialog.message), "_blank", "noopener,noreferrer");
+            }}
+          >
+            <Globe className="w-4 h-4" /> Abrir no WhatsApp Web
+          </Button>
+          <Button
+            variant="secondary"
+            className="w-full justify-start gap-2"
+            onClick={() => {
+              window.location.href = buildWaDesktopLink(sendDialog.phone, sendDialog.message);
+            }}
+          >
+            <Smartphone className="w-4 h-4" /> Abrir no WhatsApp Desktop / App
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full justify-start gap-2"
+            onClick={async () => {
+              await navigator.clipboard.writeText(sendDialog.message);
+              toast({ title: "Mensagem copiada", description: "Cole no WhatsApp do morador." });
+            }}
+          >
+            <Copy className="w-4 h-4" /> Copiar mensagem
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
