@@ -62,7 +62,7 @@ const AccessRequestPage = () => {
             ? "Este email já tem uma conta activa no sistema. Faça login ou recupere a sua palavra-passe."
             : existing.status === "pending"
             ? "Já existe um pedido pendente com este email. Aguarde a aprovação da administração."
-            : "Já existe um pedido registado com este email. Contacte a administração para mais informações.";
+            : "Este email já foi usado num pedido anterior que foi rejeitado. Contacte a administração (+258 84 281 4557) para reabrir a sua solicitação.";
 
         toast({
           title: "Pedido negado: email já registado",
