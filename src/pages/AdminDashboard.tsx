@@ -318,7 +318,7 @@ const AdminDashboard = () => {
       {/* Sidebar */}
       <aside 
         className={cn(
-          "bg-card border-r border-border flex flex-col transition-all duration-300",
+          "bg-card border-r border-border flex flex-col transition-all duration-300 sticky top-0 h-screen flex-shrink-0 z-40",
           sidebarCollapsed ? "w-16" : "w-64"
         )}
       >
