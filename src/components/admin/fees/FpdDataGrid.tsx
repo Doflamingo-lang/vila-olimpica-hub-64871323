@@ -385,7 +385,7 @@ const FpdDataGrid = () => {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
-        <Select value={mesFiltro === null ? "todos" : String(mesFiltro)} onValueChange={(v) => setMesFiltro(v === "todos" ? null : Number(v))}>
+        <Select value={mesFiltro === null ? "todos" : String(mesFiltro)} onValueChange={(v) => { setMesFiltro(v === "todos" ? null : Number(v)); setVisibleCount(PAGE_INCREMENT); }}>
           <SelectTrigger className="w-36 h-9">
             <SelectValue />
           </SelectTrigger>
@@ -404,7 +404,7 @@ const FpdDataGrid = () => {
           {statusChips.map(chip => (
             <button
               key={chip.value}
-              onClick={() => setStatusFiltro(chip.value)}
+              onClick={() => { setStatusFiltro(chip.value); setVisibleCount(PAGE_INCREMENT); }}
               className={cn(
                 "px-3 py-1.5 rounded-full text-xs font-medium transition-colors border",
                 statusFiltro === chip.value
@@ -421,7 +421,7 @@ const FpdDataGrid = () => {
           <Input
             placeholder="Pesquisar nome, contacto ou apartamento..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setVisibleCount(PAGE_INCREMENT); }}
             className="pl-10 h-9"
           />
         </div>
