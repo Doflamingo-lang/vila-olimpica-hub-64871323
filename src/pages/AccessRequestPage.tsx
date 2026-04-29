@@ -20,6 +20,7 @@ const accessRequestSchema = z.object({
   apartment: z.string().trim().min(1, "Apartamento é obrigatório").max(10),
   resident_type: z.enum(["proprietario", "inquilino"], { required_error: "Selecione o tipo de morador" }),
   phone: z.string().trim().min(8, "Contacto deve ter pelo menos 8 dígitos").max(20),
+  whatsapp: z.string().trim().min(8, "Número de WhatsApp é obrigatório").max(20),
   email: z.string().trim().email("Email inválido").max(255),
 });
 
@@ -38,6 +39,7 @@ const AccessRequestPage = () => {
       building: "",
       apartment: "",
       phone: "",
+      whatsapp: "",
       email: "",
     },
   });
@@ -63,6 +65,7 @@ const AccessRequestPage = () => {
         `*Nome:* ${data.full_name}\n` +
         `*Email:* ${data.email}\n` +
         `*Telefone:* ${data.phone}\n` +
+        `*WhatsApp:* ${data.whatsapp}\n` +
         `*Tipo:* ${tipoMorador}\n` +
         `*Localização:* Bloco ${data.block} · Ed. ${data.building} · Apt. ${data.apartment}\n\n` +
         `Aceda ao painel de administração para aprovar ou rejeitar este pedido.`;
@@ -220,6 +223,23 @@ const AccessRequestPage = () => {
                       <FormControl>
                         <Input placeholder="+258 84 000 0000" type="tel" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="whatsapp"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de WhatsApp *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+258 84 000 0000" type="tel" {...field} />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        ⚠️ Importante: indique um número de WhatsApp activo. Será o canal usado pela administração para comunicações oficiais (avisos, taxas e notificações). Pode ser o mesmo número do contacto acima.
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}
