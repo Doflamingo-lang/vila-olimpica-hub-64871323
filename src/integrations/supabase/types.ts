@@ -51,6 +51,7 @@ export type Database = {
           resident_type: string
           status: string
           updated_at: string
+          whatsapp: string
         }
         Insert: {
           apartment: string
@@ -64,6 +65,7 @@ export type Database = {
           resident_type: string
           status?: string
           updated_at?: string
+          whatsapp?: string
         }
         Update: {
           apartment?: string
@@ -77,6 +79,7 @@ export type Database = {
           resident_type?: string
           status?: string
           updated_at?: string
+          whatsapp?: string
         }
         Relationships: []
       }
