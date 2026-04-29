@@ -65,6 +65,7 @@ const AccessRequestPage = () => {
         `*Nome:* ${data.full_name}\n` +
         `*Email:* ${data.email}\n` +
         `*Telefone:* ${data.phone}\n` +
+        `*WhatsApp:* ${data.whatsapp}\n` +
         `*Tipo:* ${tipoMorador}\n` +
         `*Localização:* Bloco ${data.block} · Ed. ${data.building} · Apt. ${data.apartment}\n\n` +
         `Aceda ao painel de administração para aprovar ou rejeitar este pedido.`;
