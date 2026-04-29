@@ -98,16 +98,21 @@ const FpdDataGrid = () => {
   const [gerarOpen, setGerarOpen] = useState(false);
   const [gerarAno, setGerarAno] = useState(String(new Date().getFullYear()));
   const [gerarValor, setGerarValor] = useState("1000");
+  const [availableYears, setAvailableYears] = useState<number[]>([new Date().getFullYear()]);
+  const [visibleCount, setVisibleCount] = useState(PAGE_INCREMENT);
   const { toast } = useToast();
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [unidadesRes, feesData] = await Promise.all([
+      const [unidadesRes, feesData, years] = await Promise.all([
         supabase.from("fpd_unidades").select("*").order("ord"),
-        fetchAllFpdFees(),
+        fetchFpdFeesByYear(anoFiltro),
+        fetchFpdAvailableYears(),
       ]);
       if (unidadesRes.error) throw unidadesRes.error;
+
+      setAvailableYears(years);
 
       setUnidades((unidadesRes.data || []).map((u: any) => ({
         id: u.id, ord: u.ord, apartamento: u.apartamento,
@@ -134,15 +139,20 @@ const FpdDataGrid = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, anoFiltro]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Optimistic local update — avoids full refetch on row edits
+  const updateTaxaLocal = useCallback((taxaId: string, patch: Partial<FpdTaxa>) => {
+    setTaxas(prev => prev.map(t => t.id === taxaId ? { ...t, ...patch } : t));
+  }, []);
+
   const anosDisponiveis = useMemo(() => {
-    const anos = new Set(taxas.map(t => t.ano_referencia));
-    anos.add(new Date().getFullYear());
-    return [...anos].sort((a, b) => b - a);
-  }, [taxas]);
+    const set = new Set<number>(availableYears);
+    set.add(new Date().getFullYear());
+    return [...set].sort((a, b) => b - a);
+  }, [availableYears]);
 
   const unidadeMap = useMemo(() => {
     const map: Record<string, FpdUnidade> = {};
@@ -150,9 +160,10 @@ const FpdDataGrid = () => {
     return map;
   }, [unidades]);
 
-  const taxasAno = useMemo(() => taxas.filter(t => t.ano_referencia === anoFiltro), [taxas, anoFiltro]);
+  const taxasAno = taxas; // already filtered by year on the server
 
   const filtered = useMemo(() => {
+    const searchLower = search.toLowerCase();
     return taxasAno
       .filter(t => {
         if (mesFiltro !== null && t.mes_referencia !== mesFiltro) return false;
@@ -161,7 +172,7 @@ const FpdDataGrid = () => {
           const u = unidadeMap[t.unidade_id];
           if (!u) return false;
           const text = `${u.nome} ${u.contacto} ${u.apartamento}`.toLowerCase();
-          if (!text.includes(search.toLowerCase())) return false;
+          if (!text.includes(searchLower)) return false;
         }
         return true;
       })
@@ -172,6 +183,8 @@ const FpdDataGrid = () => {
         return (uA?.ord || 0) - (uB?.ord || 0);
       });
   }, [taxasAno, mesFiltro, statusFiltro, search, unidadeMap]);
+
+  const visibleSlice = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
 
   const stats = useMemo(() => {
     const arr = taxasAno;
@@ -185,42 +198,36 @@ const FpdDataGrid = () => {
   }, [taxasAno]);
 
   const handleStatusChange = useCallback(async (taxaId: string, newStatus: PaymentStatus) => {
-    const statusMap: Record<PaymentStatus, string> = {
-      em_dia: "paid", pendente: "pending", em_atraso: "overdue", arquivado: "pending",
-    };
+    updateTaxaLocal(taxaId, { status: newStatus });
     const { error } = await supabase
       .from("fpd_fees")
-      .update({ status: statusMap[newStatus] })
+      .update({ status: STATUS_MAP[newStatus] })
       .eq("id", taxaId);
     if (error) {
       toast({ title: "Erro", description: "Não foi possível atualizar o status.", variant: "destructive" });
-    } else {
       fetchData();
     }
-  }, [fetchData, toast]);
+  }, [updateTaxaLocal, fetchData, toast]);
 
   const handlePayment = async () => {
     if (!paymentDialog || !paymentValue) return;
     setIsSubmitting(true);
     const novoValorPago = paymentDialog.valor_pago + parseFloat(paymentValue);
     const novoStatus = calcStatus(paymentDialog.valor, novoValorPago);
-    const statusMap: Record<PaymentStatus, string> = {
-      em_dia: "paid", pendente: "pending", em_atraso: "overdue", arquivado: "pending"
-    };
     const { error } = await supabase
       .from("fpd_fees")
       .update({
         valor_pago: novoValorPago,
-        status: statusMap[novoStatus],
+        status: STATUS_MAP[novoStatus],
         paid_at: novoStatus === "em_dia" ? new Date().toISOString() : null,
       })
       .eq("id", paymentDialog.id);
     if (error) {
       toast({ title: "Erro", description: "Não foi possível registar o pagamento.", variant: "destructive" });
     } else {
+      updateTaxaLocal(paymentDialog.id, { valor_pago: novoValorPago, status: novoStatus });
       toast({ title: "Sucesso", description: "Pagamento registado." });
       setPaymentDialog(null);
-      fetchData();
     }
     setIsSubmitting(false);
   };
