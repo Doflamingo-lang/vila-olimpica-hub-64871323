@@ -6,8 +6,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-function generatePassword(length = 12): string {
-  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%";
+// Gera password sem caracteres ambíguos (0/O, 1/l/I) e SEM símbolos.
+// Símbolos como #, @, $, % causam problemas em WhatsApp (formatação, links, copiar/colar)
+// e levam o morador a digitar uma password ligeiramente diferente, resultando em "Invalid login credentials".
+function generatePassword(length = 14): string {
+  const chars = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const array = new Uint8Array(length);
   crypto.getRandomValues(array);
   return Array.from(array, (b) => chars[b % chars.length]).join("");
