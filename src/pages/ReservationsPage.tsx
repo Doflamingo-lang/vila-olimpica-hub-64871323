@@ -141,8 +141,17 @@ const ReservationsPage = () => {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
+    try {
+      await supabase.auth.signOut({ scope: "global" });
+    } catch (e) {
+      console.error("signOut error:", e);
+    }
+    try {
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith("sb-") || k.includes("supabase.auth"))
+        .forEach((k) => localStorage.removeItem(k));
+    } catch {}
+    window.location.replace("/auth");
   };
 
   const isTimeSlotAvailable = (date: Date, time: string) => {
