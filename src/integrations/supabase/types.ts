@@ -338,6 +338,113 @@ export type Database = {
         }
         Relationships: []
       }
+      institution_fees: {
+        Row: {
+          created_at: string
+          descricao: string
+          id: string
+          institution: string
+          n_apartamentos: number
+          notes: string | null
+          paid_at: string | null
+          payment_method: string | null
+          period_label: string
+          receipt_url: string | null
+          reference_month: number
+          reference_year: number
+          status: string
+          taxa: number
+          updated_at: string
+          valor: number
+          valor_pago: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          institution: string
+          n_apartamentos?: number
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          period_label: string
+          receipt_url?: string | null
+          reference_month: number
+          reference_year: number
+          status?: string
+          taxa?: number
+          updated_at?: string
+          valor?: number
+          valor_pago?: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          institution?: string
+          n_apartamentos?: number
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          period_label?: string
+          receipt_url?: string | null
+          reference_month?: number
+          reference_year?: number
+          status?: string
+          taxa?: number
+          updated_at?: string
+          valor?: number
+          valor_pago?: number
+        }
+        Relationships: []
+      }
+      institution_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          fee_id: string
+          id: string
+          institution: string
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          reference: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          fee_id: string
+          id?: string
+          institution: string
+          notes?: string | null
+          payment_date?: string
+          payment_method: string
+          reference?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          fee_id?: string
+          id?: string
+          institution?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_payments_fee_id_fkey"
+            columns: ["fee_id"]
+            isOneToOne: false
+            referencedRelation: "institution_fees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_services: {
         Row: {
           business_name: string
