@@ -108,13 +108,15 @@ const AccessRequestsManagement = () => {
         // Abrir diálogo para envio das credenciais via WhatsApp ao morador
         if (data?.password && request) {
           const loginUrl = `${window.location.origin}/auth`;
+          // Envolvemos email e password em ``` (monoespaçado WhatsApp) para evitar auto-formatação
+          // e garantir que o morador copia exactamente os caracteres gerados.
           const msg =
             `🏠 *Vila Olímpica - Acesso Aprovado*\n\n` +
             `Olá *${data.full_name || request.full_name}*,\n\n` +
             `O seu pedido de acesso à Área do Morador foi *aprovado*.\n\n` +
-            `🔐 *Credenciais de acesso:*\n` +
-            `• Username (email): ${data.email}\n` +
-            `• Palavra-passe: ${data.password}\n\n` +
+            `🔐 *Credenciais de acesso* (toque para copiar):\n\n` +
+            `Email:\n\`\`\`${data.email}\`\`\`\n\n` +
+            `Palavra-passe:\n\`\`\`${data.password}\`\`\`\n\n` +
             `🔗 Aceda em: ${loginUrl}\n\n` +
             `⚠️ Por segurança, será obrigado a alterar a palavra-passe no primeiro acesso.\n\n` +
             `Administração Vila Olímpica`;
