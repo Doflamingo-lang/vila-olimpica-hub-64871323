@@ -408,6 +408,7 @@ const DataGrid = () => {
           anoFiltro={anoFiltro}
           mesFiltro={mesFiltro}
           onRefresh={fetchData}
+          onUpdateTaxaLocal={updateTaxaLocal}
           onDeleteUnidade={handleDeleteUnidade}
           onViewReceipt={handleViewReceipt}
         />
