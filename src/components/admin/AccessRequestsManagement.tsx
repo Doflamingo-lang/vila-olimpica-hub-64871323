@@ -257,15 +257,18 @@ const AccessRequestsManagement = () => {
                          <>
                            <Button
                              size="sm"
-                             variant="outline"
-                             className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                             className="h-8 bg-green-600 hover:bg-green-700 text-white gap-1"
                              onClick={() => handleUpdateStatus(request.id, "approved")}
                              disabled={processingId === request.id}
+                             title="Aprovar e enviar credenciais via WhatsApp"
                            >
                              {processingId === request.id ? (
                                <Loader2 className="w-4 h-4 animate-spin" />
                              ) : (
-                               <Check className="w-4 h-4" />
+                               <>
+                                 <MessageCircle className="w-4 h-4" />
+                                 <span className="hidden md:inline text-xs">Aprovar e Enviar</span>
+                               </>
                              )}
                            </Button>
                            <Button
@@ -274,6 +277,7 @@ const AccessRequestsManagement = () => {
                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                              onClick={() => handleUpdateStatus(request.id, "rejected")}
                              disabled={processingId === request.id}
+                             title="Rejeitar pedido"
                            >
                              <X className="w-4 h-4" />
                            </Button>
