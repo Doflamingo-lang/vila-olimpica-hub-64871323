@@ -86,6 +86,12 @@ const AccessRequestsManagement = () => {
   };
 
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [sendDialog, setSendDialog] = useState<{
+    open: boolean;
+    phone: string;
+    message: string;
+    fullName: string;
+  }>({ open: false, phone: "", message: "", fullName: "" });
 
   const handleUpdateStatus = async (id: string, newStatus: string) => {
     if (newStatus === "approved") {
