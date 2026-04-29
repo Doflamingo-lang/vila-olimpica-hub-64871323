@@ -20,6 +20,7 @@ const accessRequestSchema = z.object({
   apartment: z.string().trim().min(1, "Apartamento é obrigatório").max(10),
   resident_type: z.enum(["proprietario", "inquilino"], { required_error: "Selecione o tipo de morador" }),
   phone: z.string().trim().min(8, "Contacto deve ter pelo menos 8 dígitos").max(20),
+  whatsapp: z.string().trim().min(8, "Número de WhatsApp é obrigatório").max(20),
   email: z.string().trim().email("Email inválido").max(255),
 });
 
