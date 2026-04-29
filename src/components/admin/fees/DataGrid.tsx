@@ -85,17 +85,20 @@ const DataGrid = () => {
   const [receiptIsPdf, setReceiptIsPdf] = useState(false);
   const { toast } = useToast();
 
+  const [availableYears, setAvailableYearsState] = useState<number[]>([new Date().getFullYear()]);
+
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [unidadesRes, taxasData] = await Promise.all([
+      const [unidadesRes, taxasData, years] = await Promise.all([
         supabase.from("unidades").select("*").order("ord"),
-        fetchAllFees(),
+        fetchFeesByYear(anoFiltro),
+        fetchAvailableYears(),
       ]);
 
-      if (unidadesRes.error) {
-        throw unidadesRes.error;
-      }
+      if (unidadesRes.error) throw unidadesRes.error;
+
+      setAvailableYearsState(years);
 
       setUnidades((unidadesRes.data || []).map((u: any) => ({
         id: u.id,
@@ -112,7 +115,6 @@ const DataGrid = () => {
       setTaxas(taxasData.map((t: any) => {
         const valor = Number(t.amount);
         const valorPago = Number(t.valor_pago || 0);
-
         return {
           id: t.id,
           unidade_id: t.unidade_id || "",
@@ -134,15 +136,20 @@ const DataGrid = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, anoFiltro]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Optimistic local update — avoids full refetch on row edits
+  const updateTaxaLocal = useCallback((taxaId: string, patch: Partial<Taxa>) => {
+    setTaxas(prev => prev.map(t => t.id === taxaId ? { ...t, ...patch } : t));
+  }, []);
+
   const anosDisponiveis = useMemo(() => {
-    const anos = new Set(taxas.map(t => t.ano_referencia));
-    anos.add(new Date().getFullYear());
-    return [...anos].sort((a, b) => b - a);
-  }, [taxas]);
+    const set = new Set<number>(availableYears);
+    set.add(new Date().getFullYear());
+    return [...set].sort((a, b) => b - a);
+  }, [availableYears]);
 
   // Filter unidades and taxas by active category
   const filteredUnidades = useMemo(() => {
