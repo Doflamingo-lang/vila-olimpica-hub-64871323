@@ -92,6 +92,15 @@ const ChangePasswordPage = () => {
       <main className="flex-1 flex items-center justify-center pt-24 pb-12 px-4">
         <div className="w-full max-w-md">
           <div className="bg-card rounded-2xl border border-border p-8 shadow-elegant">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="mb-4 -ml-2"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertTriangle className="w-8 h-8 text-amber-600" />
