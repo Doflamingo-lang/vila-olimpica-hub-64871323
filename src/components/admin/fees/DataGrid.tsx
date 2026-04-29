@@ -17,15 +17,12 @@ import { cn } from "@/lib/utils";
 type TabValue = CategoriaUnidade | "total_colectado";
 
 const FEE_PAGE_SIZE = 1000;
+const FEE_COLUMNS = "id,unidade_id,user_id,reference_month,reference_year,amount,valor_pago,paid_at,status,due_date,receipt_url,payment_method";
 const MONTH_NAMES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
 const parseReferenceMonth = (referenceMonth: string) => {
   const parsedMonth = parseInt(referenceMonth, 10);
-
-  if (!Number.isNaN(parsedMonth)) {
-    return parsedMonth;
-  }
-
+  if (!Number.isNaN(parsedMonth)) return parsedMonth;
   return MONTH_NAMES.indexOf(referenceMonth) + 1;
 };
 
@@ -34,31 +31,37 @@ const mapFeeStatus = (status: string, amount: number, valorPago: number): Paymen
   if (status === "pendente" || status === "pending_verification") return "pendente";
   if (status === "em_atraso" || status === "overdue") return "em_atraso";
   if (status === "pending") return valorPago > 0 ? "pendente" : "em_atraso";
-
   return calcStatus(amount, valorPago);
 };
 
-const fetchAllFees = async () => {
+// Loads only fees for a specific year — drastically reduces payload
+const fetchFeesByYear = async (year: number) => {
   const fees: any[] = [];
-
   for (let from = 0; ; from += FEE_PAGE_SIZE) {
     const { data, error } = await supabase
       .from("condominium_fees")
-      .select("*")
-      .order("reference_year", { ascending: false })
-      .order("reference_month", { ascending: false })
-      .order("created_at", { ascending: false })
+      .select(FEE_COLUMNS)
+      .eq("reference_year", year)
       .range(from, from + FEE_PAGE_SIZE - 1);
-
     if (error) throw error;
     if (!data?.length) break;
-
     fees.push(...data);
-
     if (data.length < FEE_PAGE_SIZE) break;
   }
-
   return fees;
+};
+
+// Lightweight: only fetches distinct years, used to populate the year selector
+const fetchAvailableYears = async (): Promise<number[]> => {
+  const { data, error } = await supabase
+    .from("condominium_fees")
+    .select("reference_year")
+    .order("reference_year", { ascending: false })
+    .limit(1000);
+  if (error) return [];
+  const set = new Set<number>(data?.map((r: any) => r.reference_year) || []);
+  set.add(new Date().getFullYear());
+  return [...set].sort((a, b) => b - a);
 };
 
 const TAB_LIST: { value: TabValue; label: string }[] = [
