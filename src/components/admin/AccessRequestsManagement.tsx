@@ -105,7 +105,7 @@ const AccessRequestsManagement = () => {
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
-        // Abrir WhatsApp com credenciais para o morador
+        // Abrir diálogo para envio das credenciais via WhatsApp ao morador
         if (data?.password && request) {
           const loginUrl = `${window.location.origin}/auth`;
           const msg =
@@ -120,13 +120,17 @@ const AccessRequestsManagement = () => {
             `Administração Vila Olímpica`;
 
           const phoneToUse = data.whatsapp || request.whatsapp || request.phone;
-          const url = buildWhatsAppLink(phoneToUse, msg);
-          window.open(url, "_blank");
+          setSendDialog({
+            open: true,
+            phone: phoneToUse,
+            message: msg,
+            fullName: data.full_name || request.full_name,
+          });
         }
 
         toast({
-          title: "Aprovado e enviado",
-          description: "Conta criada. WhatsApp aberto para envio das credenciais ao morador.",
+          title: "Pedido aprovado",
+          description: "Conta criada. Escolha como enviar as credenciais via WhatsApp ao morador.",
         });
         fetchRequests();
       } catch (err: any) {
