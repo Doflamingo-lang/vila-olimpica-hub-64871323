@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Plus, Loader2, Eye, Search, MoreVertical, Receipt } from "lucide-react";
 import StatusBadge from "./StatusBadge";
+import FeesPaymentDialog from "./PaymentDialog";
 import { PaymentStatus, MESES_SHORT, MESES_LABELS, formatCurrency, calcStatus } from "./types";
 import { cn } from "@/lib/utils";
 
@@ -89,7 +90,7 @@ const FpdDataGrid = () => {
   const [statusFiltro, setStatusFiltro] = useState<PaymentStatus | "todos">("todos");
   const [search, setSearch] = useState("");
   const [paymentDialog, setPaymentDialog] = useState<FpdTaxa | null>(null);
-  const [paymentValue, setPaymentValue] = useState("");
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
@@ -209,28 +210,13 @@ const FpdDataGrid = () => {
     }
   }, [updateTaxaLocal, fetchData, toast]);
 
-  const handlePayment = async () => {
-    if (!paymentDialog || !paymentValue) return;
-    setIsSubmitting(true);
-    const novoValorPago = paymentDialog.valor_pago + parseFloat(paymentValue);
-    const novoStatus = calcStatus(paymentDialog.valor, novoValorPago);
-    const { error } = await supabase
-      .from("fpd_fees")
-      .update({
-        valor_pago: novoValorPago,
-        status: STATUS_MAP[novoStatus],
-        paid_at: novoStatus === "em_dia" ? new Date().toISOString() : null,
-      })
-      .eq("id", paymentDialog.id);
-    if (error) {
-      toast({ title: "Erro", description: "Não foi possível registar o pagamento.", variant: "destructive" });
-    } else {
-      updateTaxaLocal(paymentDialog.id, { valor_pago: novoValorPago, status: novoStatus });
-      toast({ title: "Sucesso", description: "Pagamento registado." });
-      setPaymentDialog(null);
-    }
-    setIsSubmitting(false);
-  };
+  const handlePaymentSuccess = useCallback((taxaId: string, patch: any) => {
+    updateTaxaLocal(taxaId, {
+      valor_pago: patch.valor_pago,
+      status: patch.status,
+      payment_method: patch.payment_method,
+    });
+  }, [updateTaxaLocal]);
 
   const handleGerarTaxas = async () => {
     const ano = parseInt(gerarAno);
@@ -479,7 +465,7 @@ const FpdDataGrid = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => { setPaymentDialog(taxa); setPaymentValue(String(divida)); }}>
+                            <DropdownMenuItem onClick={() => { setPaymentDialog(taxa); setPaymentDialogOpen(true); }}>
                               Registar Pagamento
                             </DropdownMenuItem>
                             {taxa.receipt_url && (
@@ -511,37 +497,25 @@ const FpdDataGrid = () => {
         </>
       )}
 
-      {/* Payment Dialog */}
-      <Dialog open={!!paymentDialog} onOpenChange={(o) => !o && setPaymentDialog(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Registar Pagamento</DialogTitle>
-            <DialogDescription>
-              {paymentDialog && unidadeMap[paymentDialog.unidade_id] && (
-                <>
-                  {unidadeMap[paymentDialog.unidade_id].nome} — {MESES_SHORT[paymentDialog.mes_referencia]}/{paymentDialog.ano_referencia}
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          {paymentDialog && (
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Dívida actual:</span>
-                <span className="font-semibold text-red-600">{formatCurrency(Math.max(0, paymentDialog.valor - paymentDialog.valor_pago))}</span>
-              </div>
-              <div>
-                <Label>Valor do Pagamento (MT)</Label>
-                <Input type="number" step="0.01" value={paymentValue} onChange={(e) => setPaymentValue(e.target.value)} autoFocus />
-              </div>
-              <Button className="w-full" onClick={handlePayment} disabled={isSubmitting || !paymentValue}>
-                {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Confirmar Pagamento
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Payment Dialog (com via + histórico) */}
+      <FeesPaymentDialog
+        open={paymentDialogOpen}
+        onOpenChange={(o) => { setPaymentDialogOpen(o); if (!o) setPaymentDialog(null); }}
+        taxa={paymentDialog}
+        inquilinoNome={paymentDialog ? unidadeMap[paymentDialog.unidade_id]?.nome : undefined}
+        inquilinoSubtitulo={
+          paymentDialog && unidadeMap[paymentDialog.unidade_id]
+            ? `Apt ${unidadeMap[paymentDialog.unidade_id].apartamento}`
+            : undefined
+        }
+        taxasInquilino={
+          paymentDialog
+            ? taxas.filter((t) => t.unidade_id === paymentDialog.unidade_id)
+            : []
+        }
+        table="fpd_fees"
+        onSuccess={handlePaymentSuccess}
+      />
 
       {/* Generate Fees Dialog */}
       <Dialog open={gerarOpen} onOpenChange={setGerarOpen}>

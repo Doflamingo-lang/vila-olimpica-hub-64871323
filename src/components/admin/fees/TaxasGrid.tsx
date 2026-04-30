@@ -2,12 +2,11 @@ import { useState, useMemo, useCallback, memo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
-import { Search, MoreVertical, Loader2, Receipt, Eye } from "lucide-react";
+import { Search, MoreVertical, Receipt, Eye } from "lucide-react";
 import StatusBadge from "./StatusBadge";
-import { Taxa, Unidade, PaymentStatus, MESES_SHORT, formatCurrency, calcStatus } from "./types";
+import FeesPaymentDialog from "./PaymentDialog";
+import { Taxa, Unidade, PaymentStatus, MESES_SHORT, formatCurrency } from "./types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -89,8 +88,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
   const [statusFiltro, setStatusFiltro] = useState<PaymentStatus | "todos">("todos");
   const [search, setSearch] = useState("");
   const [paymentDialog, setPaymentDialog] = useState<Taxa | null>(null);
-  const [paymentValue, setPaymentValue] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_INCREMENT);
   const { toast } = useToast();
 
@@ -139,41 +137,19 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
     }
   }, [onUpdateTaxaLocal, onRefresh, toast]);
 
-  const handleOpenPayment = useCallback((taxa: Taxa, divida: number) => {
+  const handleOpenPayment = useCallback((taxa: Taxa, _divida: number) => {
     setPaymentDialog(taxa);
-    setPaymentValue(String(divida));
+    setPaymentDialogOpen(true);
   }, []);
 
-  const handlePayment = async () => {
-    if (!paymentDialog || !paymentValue) return;
-    setIsSubmitting(true);
-    const novoValorPago = paymentDialog.valor_pago + parseFloat(paymentValue);
-    const novoStatus = calcStatus(paymentDialog.valor, novoValorPago);
-    const paidAt = novoStatus === "em_dia" ? new Date().toISOString() : null;
-
-    const { error } = await supabase
-      .from("condominium_fees")
-      .update({
-        valor_pago: novoValorPago,
-        status: STATUS_MAP[novoStatus],
-        paid_at: paidAt,
-      })
-      .eq("id", paymentDialog.id);
-
-    if (error) {
-      toast({ title: "Erro", description: "Não foi possível registar o pagamento.", variant: "destructive" });
-    } else {
-      // Optimistic patch instead of full refetch
-      onUpdateTaxaLocal?.(paymentDialog.id, {
-        valor_pago: novoValorPago,
-        status: novoStatus,
-        data_pagamento: paidAt,
-      });
-      toast({ title: "Sucesso", description: "Pagamento registado." });
-      setPaymentDialog(null);
-    }
-    setIsSubmitting(false);
-  };
+  const handlePaymentSuccess = useCallback((taxaId: string, patch: any) => {
+    onUpdateTaxaLocal?.(taxaId, {
+      valor_pago: patch.valor_pago,
+      status: patch.status,
+      data_pagamento: patch.data_pagamento,
+      payment_method: patch.payment_method,
+    });
+  }, [onUpdateTaxaLocal]);
 
   const statusChips: { value: PaymentStatus | "todos"; label: string }[] = [
     { value: "todos", label: "Todos" },
@@ -268,43 +244,25 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
         </>
       )}
 
-      {/* Payment Dialog */}
-      <Dialog open={!!paymentDialog} onOpenChange={(o) => !o && setPaymentDialog(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Registar Pagamento</DialogTitle>
-            <DialogDescription>
-              {paymentDialog && unidadeMap[paymentDialog.unidade_id] && (
-                <>
-                  {unidadeMap[paymentDialog.unidade_id].nome} — {MESES_SHORT[paymentDialog.mes_referencia]}/{paymentDialog.ano_referencia}
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          {paymentDialog && (
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Dívida actual:</span>
-                <span className="font-semibold text-red-600">{formatCurrency(Math.max(0, paymentDialog.valor - paymentDialog.valor_pago))}</span>
-              </div>
-              <div>
-                <Label>Valor do Pagamento (MT)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={paymentValue}
-                  onChange={(e) => setPaymentValue(e.target.value)}
-                  autoFocus
-                />
-              </div>
-              <Button className="w-full" onClick={handlePayment} disabled={isSubmitting || !paymentValue}>
-                {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Confirmar Pagamento
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Payment Dialog (com via + histórico) */}
+      <FeesPaymentDialog
+        open={paymentDialogOpen}
+        onOpenChange={(o) => { setPaymentDialogOpen(o); if (!o) setPaymentDialog(null); }}
+        taxa={paymentDialog}
+        inquilinoNome={paymentDialog ? unidadeMap[paymentDialog.unidade_id]?.nome : undefined}
+        inquilinoSubtitulo={
+          paymentDialog && unidadeMap[paymentDialog.unidade_id]
+            ? `Bloco ${unidadeMap[paymentDialog.unidade_id].bloco} · Ed ${unidadeMap[paymentDialog.unidade_id].edificio} / Apt ${unidadeMap[paymentDialog.unidade_id].apartamento}`
+            : undefined
+        }
+        taxasInquilino={
+          paymentDialog
+            ? taxas.filter((t) => t.unidade_id === paymentDialog.unidade_id)
+            : []
+        }
+        table="condominium_fees"
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 };
