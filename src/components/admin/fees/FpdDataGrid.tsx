@@ -90,7 +90,7 @@ const FpdDataGrid = () => {
   const [statusFiltro, setStatusFiltro] = useState<PaymentStatus | "todos">("todos");
   const [search, setSearch] = useState("");
   const [paymentDialog, setPaymentDialog] = useState<FpdTaxa | null>(null);
-  const [paymentValue, setPaymentValue] = useState("");
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
