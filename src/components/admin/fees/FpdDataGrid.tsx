@@ -210,28 +210,13 @@ const FpdDataGrid = () => {
     }
   }, [updateTaxaLocal, fetchData, toast]);
 
-  const handlePayment = async () => {
-    if (!paymentDialog || !paymentValue) return;
-    setIsSubmitting(true);
-    const novoValorPago = paymentDialog.valor_pago + parseFloat(paymentValue);
-    const novoStatus = calcStatus(paymentDialog.valor, novoValorPago);
-    const { error } = await supabase
-      .from("fpd_fees")
-      .update({
-        valor_pago: novoValorPago,
-        status: STATUS_MAP[novoStatus],
-        paid_at: novoStatus === "em_dia" ? new Date().toISOString() : null,
-      })
-      .eq("id", paymentDialog.id);
-    if (error) {
-      toast({ title: "Erro", description: "Não foi possível registar o pagamento.", variant: "destructive" });
-    } else {
-      updateTaxaLocal(paymentDialog.id, { valor_pago: novoValorPago, status: novoStatus });
-      toast({ title: "Sucesso", description: "Pagamento registado." });
-      setPaymentDialog(null);
-    }
-    setIsSubmitting(false);
-  };
+  const handlePaymentSuccess = useCallback((taxaId: string, patch: any) => {
+    updateTaxaLocal(taxaId, {
+      valor_pago: patch.valor_pago,
+      status: patch.status,
+      payment_method: patch.payment_method,
+    });
+  }, [updateTaxaLocal]);
 
   const handleGerarTaxas = async () => {
     const ano = parseInt(gerarAno);
