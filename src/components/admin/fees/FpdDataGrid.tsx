@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Plus, Loader2, Eye, Search, MoreVertical, Receipt } from "lucide-react";
 import StatusBadge from "./StatusBadge";
+import FeesPaymentDialog from "./PaymentDialog";
 import { PaymentStatus, MESES_SHORT, MESES_LABELS, formatCurrency, calcStatus } from "./types";
 import { cn } from "@/lib/utils";
 
