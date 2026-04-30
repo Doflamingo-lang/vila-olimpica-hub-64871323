@@ -88,8 +88,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
   const [statusFiltro, setStatusFiltro] = useState<PaymentStatus | "todos">("todos");
   const [search, setSearch] = useState("");
   const [paymentDialog, setPaymentDialog] = useState<Taxa | null>(null);
-  const [paymentValue, setPaymentValue] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_INCREMENT);
   const { toast } = useToast();
 
