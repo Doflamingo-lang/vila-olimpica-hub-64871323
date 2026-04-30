@@ -32,6 +32,7 @@ import AdminsManagement from "@/components/admin/AdminsManagement";
 import AboutGalleryManagement from "@/components/admin/AboutGalleryManagement";
 import ReservationsManagement from "@/components/admin/ReservationsManagement";
 import ResidentsManagement from "@/components/admin/ResidentsManagement";
+import NotificationBell from "@/components/admin/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
