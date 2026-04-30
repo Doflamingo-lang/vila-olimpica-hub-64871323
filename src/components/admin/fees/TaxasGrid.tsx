@@ -244,43 +244,25 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
         </>
       )}
 
-      {/* Payment Dialog */}
-      <Dialog open={!!paymentDialog} onOpenChange={(o) => !o && setPaymentDialog(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Registar Pagamento</DialogTitle>
-            <DialogDescription>
-              {paymentDialog && unidadeMap[paymentDialog.unidade_id] && (
-                <>
-                  {unidadeMap[paymentDialog.unidade_id].nome} — {MESES_SHORT[paymentDialog.mes_referencia]}/{paymentDialog.ano_referencia}
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          {paymentDialog && (
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Dívida actual:</span>
-                <span className="font-semibold text-red-600">{formatCurrency(Math.max(0, paymentDialog.valor - paymentDialog.valor_pago))}</span>
-              </div>
-              <div>
-                <Label>Valor do Pagamento (MT)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={paymentValue}
-                  onChange={(e) => setPaymentValue(e.target.value)}
-                  autoFocus
-                />
-              </div>
-              <Button className="w-full" onClick={handlePayment} disabled={isSubmitting || !paymentValue}>
-                {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Confirmar Pagamento
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Payment Dialog (com via + histórico) */}
+      <FeesPaymentDialog
+        open={paymentDialogOpen}
+        onOpenChange={(o) => { setPaymentDialogOpen(o); if (!o) setPaymentDialog(null); }}
+        taxa={paymentDialog}
+        inquilinoNome={paymentDialog ? unidadeMap[paymentDialog.unidade_id]?.nome : undefined}
+        inquilinoSubtitulo={
+          paymentDialog && unidadeMap[paymentDialog.unidade_id]
+            ? `Bloco ${unidadeMap[paymentDialog.unidade_id].bloco} · Ed ${unidadeMap[paymentDialog.unidade_id].edificio} / Apt ${unidadeMap[paymentDialog.unidade_id].apartamento}`
+            : undefined
+        }
+        taxasInquilino={
+          paymentDialog
+            ? taxas.filter((t) => t.unidade_id === paymentDialog.unidade_id)
+            : []
+        }
+        table="condominium_fees"
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 };
