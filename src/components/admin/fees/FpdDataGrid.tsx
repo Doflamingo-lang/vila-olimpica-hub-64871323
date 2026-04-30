@@ -465,7 +465,7 @@ const FpdDataGrid = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => { setPaymentDialog(taxa); setPaymentValue(String(divida)); }}>
+                            <DropdownMenuItem onClick={() => { setPaymentDialog(taxa); setPaymentDialogOpen(true); }}>
                               Registar Pagamento
                             </DropdownMenuItem>
                             {taxa.receipt_url && (
