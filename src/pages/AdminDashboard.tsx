@@ -410,12 +410,15 @@ const AdminDashboard = () => {
               <h1 className="text-2xl font-bold text-foreground">Painel Administrativo</h1>
               <p className="text-muted-foreground">Gerencie o condomínio Vila Olímpica</p>
             </div>
-            <Link to="/">
-              <Button variant="outline" size="sm">
-                <Home className="w-4 h-4 mr-2" />
-                Ver Site
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <NotificationBell onNavigate={setActiveSection} />
+              <Link to="/">
+                <Button variant="outline" size="sm">
+                  <Home className="w-4 h-4 mr-2" />
+                  Ver Site
+                </Button>
+              </Link>
+            </div>
           </div>
         </header>
 
