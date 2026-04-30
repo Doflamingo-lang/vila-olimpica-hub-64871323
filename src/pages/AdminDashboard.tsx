@@ -32,6 +32,7 @@ import AdminsManagement from "@/components/admin/AdminsManagement";
 import AboutGalleryManagement from "@/components/admin/AboutGalleryManagement";
 import ReservationsManagement from "@/components/admin/ReservationsManagement";
 import ResidentsManagement from "@/components/admin/ResidentsManagement";
+import NotificationBell from "@/components/admin/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
@@ -409,12 +410,15 @@ const AdminDashboard = () => {
               <h1 className="text-2xl font-bold text-foreground">Painel Administrativo</h1>
               <p className="text-muted-foreground">Gerencie o condomínio Vila Olímpica</p>
             </div>
-            <Link to="/">
-              <Button variant="outline" size="sm">
-                <Home className="w-4 h-4 mr-2" />
-                Ver Site
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <NotificationBell onNavigate={setActiveSection} />
+              <Link to="/">
+                <Button variant="outline" size="sm">
+                  <Home className="w-4 h-4 mr-2" />
+                  Ver Site
+                </Button>
+              </Link>
+            </div>
           </div>
         </header>
 
