@@ -137,41 +137,19 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
     }
   }, [onUpdateTaxaLocal, onRefresh, toast]);
 
-  const handleOpenPayment = useCallback((taxa: Taxa, divida: number) => {
+  const handleOpenPayment = useCallback((taxa: Taxa, _divida: number) => {
     setPaymentDialog(taxa);
-    setPaymentValue(String(divida));
+    setPaymentDialogOpen(true);
   }, []);
 
-  const handlePayment = async () => {
-    if (!paymentDialog || !paymentValue) return;
-    setIsSubmitting(true);
-    const novoValorPago = paymentDialog.valor_pago + parseFloat(paymentValue);
-    const novoStatus = calcStatus(paymentDialog.valor, novoValorPago);
-    const paidAt = novoStatus === "em_dia" ? new Date().toISOString() : null;
-
-    const { error } = await supabase
-      .from("condominium_fees")
-      .update({
-        valor_pago: novoValorPago,
-        status: STATUS_MAP[novoStatus],
-        paid_at: paidAt,
-      })
-      .eq("id", paymentDialog.id);
-
-    if (error) {
-      toast({ title: "Erro", description: "Não foi possível registar o pagamento.", variant: "destructive" });
-    } else {
-      // Optimistic patch instead of full refetch
-      onUpdateTaxaLocal?.(paymentDialog.id, {
-        valor_pago: novoValorPago,
-        status: novoStatus,
-        data_pagamento: paidAt,
-      });
-      toast({ title: "Sucesso", description: "Pagamento registado." });
-      setPaymentDialog(null);
-    }
-    setIsSubmitting(false);
-  };
+  const handlePaymentSuccess = useCallback((taxaId: string, patch: any) => {
+    onUpdateTaxaLocal?.(taxaId, {
+      valor_pago: patch.valor_pago,
+      status: patch.status,
+      data_pagamento: patch.data_pagamento,
+      payment_method: patch.payment_method,
+    });
+  }, [onUpdateTaxaLocal]);
 
   const statusChips: { value: PaymentStatus | "todos"; label: string }[] = [
     { value: "todos", label: "Todos" },
