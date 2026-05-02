@@ -255,6 +255,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
             ? `Bloco ${unidadeMap[paymentDialog.unidade_id].bloco} · Ed ${unidadeMap[paymentDialog.unidade_id].edificio} / Apt ${unidadeMap[paymentDialog.unidade_id].apartamento}`
             : undefined
         }
+        dividaInicial={paymentDialog ? unidadeMap[paymentDialog.unidade_id]?.divida_inicial ?? 0 : 0}
         taxasInquilino={
           paymentDialog
             ? taxas.filter((t) => t.unidade_id === paymentDialog.unidade_id)
