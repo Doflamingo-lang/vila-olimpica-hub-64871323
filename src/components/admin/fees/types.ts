@@ -12,6 +12,8 @@ export interface Unidade {
   contacto: string;
   via: string;
   categoria: CategoriaUnidade;
+  /** Dívida histórica acumulada anterior ao sistema (importada do Excel) */
+  divida_inicial?: number;
 }
 
 export interface Taxa {
