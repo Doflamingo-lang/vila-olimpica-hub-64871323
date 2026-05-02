@@ -310,6 +310,7 @@ export type Database = {
           apartamento: number
           contacto: string
           created_at: string
+          divida_inicial: number
           id: string
           nome: string
           ord: number
@@ -320,6 +321,7 @@ export type Database = {
           apartamento?: number
           contacto?: string
           created_at?: string
+          divida_inicial?: number
           id?: string
           nome: string
           ord?: number
@@ -330,6 +332,7 @@ export type Database = {
           apartamento?: number
           contacto?: string
           created_at?: string
+          divida_inicial?: number
           id?: string
           nome?: string
           ord?: number
@@ -739,6 +742,7 @@ export type Database = {
           categoria: string
           contacto: string
           created_at: string
+          divida_inicial: number
           edificio: number
           id: string
           nome: string
@@ -752,6 +756,7 @@ export type Database = {
           categoria?: string
           contacto?: string
           created_at?: string
+          divida_inicial?: number
           edificio?: number
           id?: string
           nome: string
@@ -765,6 +770,7 @@ export type Database = {
           categoria?: string
           contacto?: string
           created_at?: string
+          divida_inicial?: number
           edificio?: number
           id?: string
           nome?: string
