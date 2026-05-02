@@ -51,6 +51,8 @@ interface FeesPaymentDialogProps {
   inquilinoNome?: string;
   /** Identificador adicional (ex: "Bloco X / Apt Y") */
   inquilinoSubtitulo?: string;
+  /** Dívida histórica acumulada anterior ao sistema (importada do Excel) */
+  dividaInicial?: number;
   /** Todas as taxas do inquilino — usadas para mostrar o histórico */
   taxasInquilino: PaymentTaxa[];
   /** Tabela do Supabase a actualizar: "condominium_fees" ou "fpd_fees" */
@@ -79,6 +81,7 @@ const FeesPaymentDialog = ({
   taxa,
   inquilinoNome,
   inquilinoSubtitulo,
+  dividaInicial = 0,
   taxasInquilino,
   table,
   onSuccess,
@@ -105,11 +108,20 @@ const FeesPaymentDialog = ({
   }, [taxasInquilino]);
 
   const totais = useMemo(() => {
-    const totalDevido = taxasInquilino.reduce((s, t) => s + t.valor, 0);
-    const totalPago = taxasInquilino.reduce((s, t) => s + t.valor_pago, 0);
-    const totalDivida = taxasInquilino.reduce((s, t) => s + Math.max(0, t.valor - t.valor_pago), 0);
-    return { totalDevido, totalPago, totalDivida };
-  }, [taxasInquilino]);
+    // Apenas considerar taxas vencidas até hoje (mês corrente inclusive)
+    const hoje = new Date();
+    const anoHoje = hoje.getFullYear();
+    const mesHoje = hoje.getMonth() + 1;
+    const vencidas = taxasInquilino.filter(
+      (t) => t.ano_referencia < anoHoje || (t.ano_referencia === anoHoje && t.mes_referencia <= mesHoje)
+    );
+    const totalDevidoSistema = vencidas.reduce((s, t) => s + t.valor, 0);
+    const totalPago = vencidas.reduce((s, t) => s + t.valor_pago, 0);
+    const dividaSistema = vencidas.reduce((s, t) => s + Math.max(0, t.valor - t.valor_pago), 0);
+    const dividaTotal = dividaInicial + dividaSistema;
+    return { totalDevidoSistema, totalPago, dividaSistema, dividaTotal };
+  }, [taxasInquilino, dividaInicial]);
+
 
   const handlePayment = async () => {
     if (!taxa || !paymentValue) return;
@@ -232,20 +244,28 @@ const FeesPaymentDialog = ({
           {/* Coluna 2: Histórico do inquilino */}
           <div className="space-y-3">
             <div>
-              <h4 className="text-sm font-semibold mb-2">Resumo do Inquilino</h4>
+              <h4 className="text-sm font-semibold mb-2">Resumo do Inquilino · até hoje</h4>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-lg border p-2">
-                  <p className="text-[10px] uppercase text-muted-foreground">Devido</p>
-                  <p className="text-xs font-bold tabular-nums mt-1">{formatCurrency(totais.totalDevido)}</p>
+                  <p className="text-[10px] uppercase text-muted-foreground">Devido (sistema)</p>
+                  <p className="text-xs font-bold tabular-nums mt-1">{formatCurrency(totais.totalDevidoSistema)}</p>
                 </div>
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-2">
                   <p className="text-[10px] uppercase text-emerald-700">Pago</p>
                   <p className="text-xs font-bold tabular-nums mt-1 text-emerald-700">{formatCurrency(totais.totalPago)}</p>
                 </div>
-                <div className="rounded-lg border border-red-200 bg-red-50/50 p-2">
-                  <p className="text-[10px] uppercase text-red-700">Dívida</p>
-                  <p className="text-xs font-bold tabular-nums mt-1 text-red-700">{formatCurrency(totais.totalDivida)}</p>
+                <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-2">
+                  <p className="text-[10px] uppercase text-amber-700">Dívida histórica</p>
+                  <p className="text-xs font-bold tabular-nums mt-1 text-amber-700">{formatCurrency(dividaInicial)}</p>
                 </div>
+              </div>
+
+              <div className="mt-2 rounded-lg border-2 border-red-300 bg-red-50 p-3 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] uppercase text-red-700 font-semibold tracking-wide">Dívida total acumulada</p>
+                  <p className="text-[10px] text-red-600/80">Histórica + meses vencidos no sistema</p>
+                </div>
+                <p className="text-xl font-bold tabular-nums text-red-700">{formatCurrency(totais.dividaTotal)}</p>
               </div>
             </div>
 

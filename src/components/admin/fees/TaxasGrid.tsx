@@ -38,9 +38,10 @@ interface RowProps {
   onOpenPayment: (taxa: Taxa, divida: number) => void;
   onViewReceipt: (url: string) => void;
   onDeleteUnidade: (id: string) => void;
+  dividaTotalUnidade: number;
 }
 
-const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewReceipt, onDeleteUnidade }: RowProps) => {
+const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewReceipt, onDeleteUnidade, dividaTotalUnidade }: RowProps) => {
   const divida = Math.max(0, taxa.valor - taxa.valor_pago);
   return (
     <TableRow className="group hover:bg-accent/50">
@@ -54,6 +55,15 @@ const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewRece
       <TableCell className="text-right tabular-nums text-sm text-emerald-600 font-medium">{formatCurrency(taxa.valor_pago)}</TableCell>
       <TableCell className={cn("text-right tabular-nums text-sm font-medium", divida > 0 ? "text-red-600" : "")}>
         {divida > 0 ? formatCurrency(divida) : "—"}
+      </TableCell>
+      <TableCell
+        className={cn(
+          "text-right tabular-nums text-sm font-bold",
+          dividaTotalUnidade > 0 ? "text-red-700" : "text-muted-foreground"
+        )}
+        title="Dívida total acumulada do inquilino até hoje (histórica + meses vencidos)"
+      >
+        {dividaTotalUnidade > 0 ? formatCurrency(dividaTotalUnidade) : "—"}
       </TableCell>
       <TableCell>
         <StatusBadge status={taxa.status} onStatusChange={(s) => onStatusChange(taxa.id, s)} />
@@ -97,6 +107,23 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
     unidades.forEach(u => { map[u.id] = u; });
     return map;
   }, [unidades]);
+
+  /** Dívida total acumulada por unidade (até hoje): divida_inicial + Σ meses vencidos não pagos */
+  const dividaTotalPorUnidade = useMemo(() => {
+    const hoje = new Date();
+    const anoHoje = hoje.getFullYear();
+    const mesHoje = hoje.getMonth() + 1;
+    const map: Record<string, number> = {};
+    // Inicializar com dívida histórica
+    unidades.forEach(u => { map[u.id] = Number(u.divida_inicial ?? 0); });
+    taxas.forEach(t => {
+      if (t.ano_referencia > anoHoje) return;
+      if (t.ano_referencia === anoHoje && t.mes_referencia > mesHoje) return;
+      const d = Math.max(0, t.valor - t.valor_pago);
+      if (d > 0) map[t.unidade_id] = (map[t.unidade_id] ?? 0) + d;
+    });
+    return map;
+  }, [unidades, taxas]);
 
   const filtered = useMemo(() => {
     const searchLower = search.toLowerCase();
@@ -209,7 +236,8 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
                   <TableHead>Contacto</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="text-right">Pago</TableHead>
-                  <TableHead className="text-right">Dívida</TableHead>
+                  <TableHead className="text-right">Dívida (mês)</TableHead>
+                  <TableHead className="text-right" title="Dívida total acumulada do inquilino até hoje (histórica + meses vencidos)">Dívida total</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-10"></TableHead>
                 </TableRow>
@@ -227,6 +255,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
                       onOpenPayment={handleOpenPayment}
                       onViewReceipt={onViewReceipt}
                       onDeleteUnidade={onDeleteUnidade}
+                      dividaTotalUnidade={dividaTotalPorUnidade[u.id] ?? 0}
                     />
                   );
                 })}
@@ -255,6 +284,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
             ? `Bloco ${unidadeMap[paymentDialog.unidade_id].bloco} · Ed ${unidadeMap[paymentDialog.unidade_id].edificio} / Apt ${unidadeMap[paymentDialog.unidade_id].apartamento}`
             : undefined
         }
+        dividaInicial={paymentDialog ? unidadeMap[paymentDialog.unidade_id]?.divida_inicial ?? 0 : 0}
         taxasInquilino={
           paymentDialog
             ? taxas.filter((t) => t.unidade_id === paymentDialog.unidade_id)
