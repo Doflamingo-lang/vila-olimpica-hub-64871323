@@ -51,6 +51,8 @@ interface FeesPaymentDialogProps {
   inquilinoNome?: string;
   /** Identificador adicional (ex: "Bloco X / Apt Y") */
   inquilinoSubtitulo?: string;
+  /** Dívida histórica acumulada anterior ao sistema (importada do Excel) */
+  dividaInicial?: number;
   /** Todas as taxas do inquilino — usadas para mostrar o histórico */
   taxasInquilino: PaymentTaxa[];
   /** Tabela do Supabase a actualizar: "condominium_fees" ou "fpd_fees" */
@@ -79,6 +81,7 @@ const FeesPaymentDialog = ({
   taxa,
   inquilinoNome,
   inquilinoSubtitulo,
+  dividaInicial = 0,
   taxasInquilino,
   table,
   onSuccess,
@@ -105,11 +108,20 @@ const FeesPaymentDialog = ({
   }, [taxasInquilino]);
 
   const totais = useMemo(() => {
-    const totalDevido = taxasInquilino.reduce((s, t) => s + t.valor, 0);
-    const totalPago = taxasInquilino.reduce((s, t) => s + t.valor_pago, 0);
-    const totalDivida = taxasInquilino.reduce((s, t) => s + Math.max(0, t.valor - t.valor_pago), 0);
-    return { totalDevido, totalPago, totalDivida };
-  }, [taxasInquilino]);
+    // Apenas considerar taxas vencidas até hoje (mês corrente inclusive)
+    const hoje = new Date();
+    const anoHoje = hoje.getFullYear();
+    const mesHoje = hoje.getMonth() + 1;
+    const vencidas = taxasInquilino.filter(
+      (t) => t.ano_referencia < anoHoje || (t.ano_referencia === anoHoje && t.mes_referencia <= mesHoje)
+    );
+    const totalDevidoSistema = vencidas.reduce((s, t) => s + t.valor, 0);
+    const totalPago = vencidas.reduce((s, t) => s + t.valor_pago, 0);
+    const dividaSistema = vencidas.reduce((s, t) => s + Math.max(0, t.valor - t.valor_pago), 0);
+    const dividaTotal = dividaInicial + dividaSistema;
+    return { totalDevidoSistema, totalPago, dividaSistema, dividaTotal };
+  }, [taxasInquilino, dividaInicial]);
+
 
   const handlePayment = async () => {
     if (!taxa || !paymentValue) return;
