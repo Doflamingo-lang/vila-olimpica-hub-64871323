@@ -108,6 +108,23 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
     return map;
   }, [unidades]);
 
+  /** Dívida total acumulada por unidade (até hoje): divida_inicial + Σ meses vencidos não pagos */
+  const dividaTotalPorUnidade = useMemo(() => {
+    const hoje = new Date();
+    const anoHoje = hoje.getFullYear();
+    const mesHoje = hoje.getMonth() + 1;
+    const map: Record<string, number> = {};
+    // Inicializar com dívida histórica
+    unidades.forEach(u => { map[u.id] = Number(u.divida_inicial ?? 0); });
+    taxas.forEach(t => {
+      if (t.ano_referencia > anoHoje) return;
+      if (t.ano_referencia === anoHoje && t.mes_referencia > mesHoje) return;
+      const d = Math.max(0, t.valor - t.valor_pago);
+      if (d > 0) map[t.unidade_id] = (map[t.unidade_id] ?? 0) + d;
+    });
+    return map;
+  }, [unidades, taxas]);
+
   const filtered = useMemo(() => {
     const searchLower = search.toLowerCase();
     return taxas
