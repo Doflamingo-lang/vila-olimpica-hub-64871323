@@ -246,6 +246,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="text-right">Pago</TableHead>
                   <TableHead className="text-right">Dívida (mês)</TableHead>
+                  <TableHead className="text-right" title="Dívida histórica anterior ao sistema (importada do Excel)">Dív. Acum.</TableHead>
                   <TableHead className="text-right" title="Dívida total acumulada do inquilino até hoje (histórica + meses vencidos)">Dívida total</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-10"></TableHead>
@@ -264,6 +265,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
                       onOpenPayment={handleOpenPayment}
                       onViewReceipt={onViewReceipt}
                       onDeleteUnidade={onDeleteUnidade}
+                      dividaHistoricaUnidade={dividaHistoricaPorUnidade[u.id] ?? 0}
                       dividaTotalUnidade={dividaTotalPorUnidade[u.id] ?? 0}
                     />
                   );
