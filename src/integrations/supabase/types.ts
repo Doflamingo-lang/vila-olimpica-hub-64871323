@@ -310,10 +310,12 @@ export type Database = {
           apartamento: number
           contacto: string
           created_at: string
+          divida_anterior: number
           divida_inicial: number
           id: string
           nome: string
           ord: number
+          pagamentos_historicos: number
           taxa: number
           updated_at: string
         }
@@ -321,10 +323,12 @@ export type Database = {
           apartamento?: number
           contacto?: string
           created_at?: string
+          divida_anterior?: number
           divida_inicial?: number
           id?: string
           nome: string
           ord?: number
+          pagamentos_historicos?: number
           taxa?: number
           updated_at?: string
         }
@@ -332,10 +336,12 @@ export type Database = {
           apartamento?: number
           contacto?: string
           created_at?: string
+          divida_anterior?: number
           divida_inicial?: number
           id?: string
           nome?: string
           ord?: number
+          pagamentos_historicos?: number
           taxa?: number
           updated_at?: string
         }
@@ -742,11 +748,13 @@ export type Database = {
           categoria: string
           contacto: string
           created_at: string
+          divida_anterior: number
           divida_inicial: number
           edificio: number
           id: string
           nome: string
           ord: number
+          pagamentos_historicos: number
           updated_at: string
           via: string
         }
@@ -756,11 +764,13 @@ export type Database = {
           categoria?: string
           contacto?: string
           created_at?: string
+          divida_anterior?: number
           divida_inicial?: number
           edificio?: number
           id?: string
           nome: string
           ord?: number
+          pagamentos_historicos?: number
           updated_at?: string
           via?: string
         }
@@ -770,11 +780,13 @@ export type Database = {
           categoria?: string
           contacto?: string
           created_at?: string
+          divida_anterior?: number
           divida_inicial?: number
           edificio?: number
           id?: string
           nome?: string
           ord?: number
+          pagamentos_historicos?: number
           updated_at?: string
           via?: string
         }
