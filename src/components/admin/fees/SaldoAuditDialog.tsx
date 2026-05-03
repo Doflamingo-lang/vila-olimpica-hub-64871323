@@ -154,7 +154,10 @@ const SaldoAuditDialog = ({ open, onOpenChange, onApplied }: Props) => {
       // Aplicar em lotes via update individuais (Supabase não tem batch update nativo)
       let ok = 0;
       for (const d of diffs) {
-        const { error } = await supabase.from("unidades").update({ divida_inicial: d.novo }).eq("id", d.id);
+        const { error } = await supabase
+          .from("unidades")
+          .update({ divida_anterior: d.novo, divida_inicial: d.novo, pagamentos_historicos: 0 })
+          .eq("id", d.id);
         if (!error) ok++;
       }
       toast({ title: "Aplicado", description: `${ok}/${diffs.length} atualizações concluídas.` });
