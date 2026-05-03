@@ -180,6 +180,19 @@ const DataGrid = () => {
     };
   }, [taxasAnoAtual]);
 
+  // Dívida acumulada histórica do escopo activo (categoria filtrada)
+  const dividaAcumulada = useMemo(() => {
+    let total = 0;
+    let unidadesComDivida = 0;
+    for (const u of filteredUnidades) {
+      const d = getDividaHistorica(u);
+      if (d > 0) { total += d; unidadesComDivida++; }
+    }
+    return { total, unidadesComDivida };
+  }, [filteredUnidades]);
+
+  const dataHoje = useMemo(() => new Date().toLocaleDateString("pt-PT", { day: "2-digit", month: "long", year: "numeric" }), []);
+
   const handleGerarTaxas = async (mes: number | null, ano: number, valor: number) => {
     const targetUnidades = activeTab !== "total_colectado" ? filteredUnidades : unidades;
     if (targetUnidades.length === 0) {
