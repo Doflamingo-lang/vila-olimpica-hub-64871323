@@ -108,14 +108,19 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
     return map;
   }, [unidades]);
 
-  /** Dívida total acumulada por unidade (até hoje): divida_inicial + Σ meses vencidos não pagos */
+  /** Dívida histórica (anterior ao sistema) por unidade — max(divida_anterior - pagamentos_historicos, 0) */
+  const dividaHistoricaPorUnidade = useMemo(() => {
+    const map: Record<string, number> = {};
+    unidades.forEach(u => { map[u.id] = getDividaHistorica(u); });
+    return map;
+  }, [unidades]);
+
+  /** Dívida total acumulada por unidade (até hoje): histórica + Σ meses vencidos não pagos */
   const dividaTotalPorUnidade = useMemo(() => {
     const hoje = new Date();
     const anoHoje = hoje.getFullYear();
     const mesHoje = hoje.getMonth() + 1;
-    const map: Record<string, number> = {};
-    // Inicializar com dívida histórica
-    unidades.forEach(u => { map[u.id] = Number(u.divida_inicial ?? 0); });
+    const map: Record<string, number> = { ...dividaHistoricaPorUnidade };
     taxas.forEach(t => {
       if (t.ano_referencia > anoHoje) return;
       if (t.ano_referencia === anoHoje && t.mes_referencia > mesHoje) return;
@@ -123,7 +128,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
       if (d > 0) map[t.unidade_id] = (map[t.unidade_id] ?? 0) + d;
     });
     return map;
-  }, [unidades, taxas]);
+  }, [dividaHistoricaPorUnidade, taxas]);
 
   const filtered = useMemo(() => {
     const searchLower = search.toLowerCase();
