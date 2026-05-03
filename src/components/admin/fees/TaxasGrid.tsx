@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Search, MoreVertical, Receipt, Eye } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import FeesPaymentDialog from "./PaymentDialog";
-import { Taxa, Unidade, PaymentStatus, MESES_SHORT, formatCurrency } from "./types";
+import { Taxa, Unidade, PaymentStatus, MESES_SHORT, formatCurrency, getDividaHistorica } from "./types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
