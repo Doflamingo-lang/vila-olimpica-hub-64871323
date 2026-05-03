@@ -12,8 +12,19 @@ export interface Unidade {
   contacto: string;
   via: string;
   categoria: CategoriaUnidade;
-  /** Dívida histórica acumulada anterior ao sistema (importada do Excel) */
+  /** @deprecated mantido para retro-compatibilidade — use divida_anterior */
   divida_inicial?: number;
+  /** Dívida histórica herdada do Excel (anterior ao sistema) */
+  divida_anterior?: number;
+  /** Abatimentos já realizados sobre a dívida histórica */
+  pagamentos_historicos?: number;
+}
+
+/** Saldo histórico em aberto: max(dividaAnterior - pagamentosHistoricos, 0) */
+export function getDividaHistorica(u: Pick<Unidade, "divida_anterior" | "pagamentos_historicos" | "divida_inicial">): number {
+  const da = Number(u.divida_anterior ?? u.divida_inicial ?? 0);
+  const ph = Number(u.pagamentos_historicos ?? 0);
+  return Math.max(0, da - ph);
 }
 
 export interface Taxa {
