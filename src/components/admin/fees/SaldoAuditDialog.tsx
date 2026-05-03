@@ -84,28 +84,34 @@ const SaldoAuditDialog = ({ open, onOpenChange, onApplied }: Props) => {
       }
 
       // 2. Buscar unidades atuais (paginar por segurança)
-      const todas: { id: string; nome: string; divida_inicial: number }[] = [];
+      const todas: { id: string; nome: string; divida_anterior: number; divida_inicial: number; pagamentos_historicos: number }[] = [];
       let from = 0;
       const PAGE = 1000;
       while (true) {
         const { data, error } = await supabase
           .from("unidades")
-          .select("id, nome, divida_inicial")
+          .select("id, nome, divida_anterior, divida_inicial, pagamentos_historicos")
           .range(from, from + PAGE - 1);
         if (error) throw error;
         if (!data || data.length === 0) break;
-        todas.push(...data.map((d: any) => ({ id: d.id, nome: d.nome, divida_inicial: Number(d.divida_inicial ?? 0) })));
+        todas.push(...data.map((d: any) => ({
+          id: d.id,
+          nome: d.nome,
+          divida_anterior: Number(d.divida_anterior ?? 0),
+          divida_inicial: Number(d.divida_inicial ?? 0),
+          pagamentos_historicos: Number(d.pagamentos_historicos ?? 0),
+        })));
         if (data.length < PAGE) break;
         from += PAGE;
       }
 
-      // 3. Calcular diferenças
+      // 3. Calcular diferenças (saldo "actual" do Excel == saldo histórico em aberto líquido)
       const result: DiffRow[] = [];
       for (const u of todas) {
         const k = norm(u.nome);
         if (!saldoMap.has(k)) continue;
         const novo = saldoMap.get(k) ?? 0;
-        const atual = u.divida_inicial;
+        const atual = Math.max(0, u.divida_anterior - u.pagamentos_historicos);
         if (Math.abs(novo - atual) > 0.01) {
           result.push({ id: u.id, nome: u.nome, atual, novo, delta: novo - atual });
         }
