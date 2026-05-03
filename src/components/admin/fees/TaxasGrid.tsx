@@ -39,9 +39,10 @@ interface RowProps {
   onViewReceipt: (url: string) => void;
   onDeleteUnidade: (id: string) => void;
   dividaTotalUnidade: number;
+  dividaHistoricaUnidade: number;
 }
 
-const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewReceipt, onDeleteUnidade, dividaTotalUnidade }: RowProps) => {
+const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewReceipt, onDeleteUnidade, dividaTotalUnidade, dividaHistoricaUnidade }: RowProps) => {
   const divida = Math.max(0, taxa.valor - taxa.valor_pago);
   return (
     <TableRow className="group hover:bg-accent/50">
@@ -53,14 +54,17 @@ const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewRece
       <TableCell className="text-xs text-muted-foreground">{unidade.contacto || "—"}</TableCell>
       <TableCell className="text-right tabular-nums text-sm">{formatCurrency(taxa.valor)}</TableCell>
       <TableCell className="text-right tabular-nums text-sm text-emerald-600 font-medium">{formatCurrency(taxa.valor_pago)}</TableCell>
-      <TableCell className={cn("text-right tabular-nums text-sm font-medium", divida > 0 ? "text-red-600" : "")}>
+      <TableCell className={cn("text-right tabular-nums text-sm font-medium", divida > 0 ? "text-destructive" : "")}>
         {divida > 0 ? formatCurrency(divida) : "—"}
       </TableCell>
       <TableCell
-        className={cn(
-          "text-right tabular-nums text-sm font-bold",
-          dividaTotalUnidade > 0 ? "text-red-700" : "text-muted-foreground"
-        )}
+        className={cn("text-right tabular-nums text-sm font-semibold", dividaHistoricaUnidade > 0 ? "text-destructive" : "text-muted-foreground")}
+        title="Dívida histórica herdada do Excel (anterior ao sistema)"
+      >
+        {dividaHistoricaUnidade > 0 ? formatCurrency(dividaHistoricaUnidade) : "—"}
+      </TableCell>
+      <TableCell
+        className={cn("text-right tabular-nums text-sm font-bold", dividaTotalUnidade > 0 ? "text-destructive" : "text-muted-foreground")}
         title="Dívida total acumulada do inquilino até hoje (histórica + meses vencidos)"
       >
         {dividaTotalUnidade > 0 ? formatCurrency(dividaTotalUnidade) : "—"}
