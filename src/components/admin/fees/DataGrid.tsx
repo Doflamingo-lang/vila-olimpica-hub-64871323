@@ -378,6 +378,26 @@ const DataGrid = () => {
         )}
       </div>
 
+      {/* Highlighted: Dívida acumulada histórica */}
+      {vista === "tabela" && activeTab !== "total_colectado" && dividaAcumulada.total > 0 && (
+        <Card className="border-2 border-destructive/40 bg-destructive/5">
+          <CardContent className="py-4 px-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-wider text-destructive font-semibold">
+                Dívida Acumulada até {dataHoje}
+              </p>
+              <p className="text-3xl font-bold tabular-nums mt-1 text-destructive">
+                {formatCurrency(dividaAcumulada.total)}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Unidades</p>
+              <p className="text-xl font-semibold tabular-nums text-foreground">{dividaAcumulada.unidadesComDivida}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Summary Cards (tabela view, not total_colectado) */}
       {vista === "tabela" && activeTab !== "total_colectado" && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
