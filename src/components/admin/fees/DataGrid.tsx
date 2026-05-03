@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TableProperties, BarChart3, Plus, Loader2, Eye } from "lucide-react";
-import { Unidade, Taxa, PaymentStatus, CategoriaUnidade, MESES_LABELS, CATEGORIAS_LABELS, CATEGORIAS_LIST, formatCurrency, calcStatus } from "./types";
+import { Unidade, Taxa, PaymentStatus, CategoriaUnidade, MESES_LABELS, CATEGORIAS_LABELS, CATEGORIAS_LIST, formatCurrency, calcStatus, getDividaHistorica } from "./types";
 import TaxasGrid from "./TaxasGrid";
 import ReportsView from "./ReportsView";
 import TotalColectadoView from "./TotalColectadoView";
@@ -110,6 +110,9 @@ const DataGrid = () => {
         contacto: u.contacto,
         via: u.via,
         categoria: u.categoria || "quitadas",
+        divida_inicial: Number(u.divida_inicial ?? 0),
+        divida_anterior: Number(u.divida_anterior ?? u.divida_inicial ?? 0),
+        pagamentos_historicos: Number(u.pagamentos_historicos ?? 0),
       })));
 
       setTaxas(taxasData.map((t: any) => {
@@ -176,6 +179,19 @@ const DataGrid = () => {
       emAtraso: arr.filter(t => t.status === "em_atraso").length,
     };
   }, [taxasAnoAtual]);
+
+  // Dívida acumulada histórica do escopo activo (categoria filtrada)
+  const dividaAcumulada = useMemo(() => {
+    let total = 0;
+    let unidadesComDivida = 0;
+    for (const u of filteredUnidades) {
+      const d = getDividaHistorica(u);
+      if (d > 0) { total += d; unidadesComDivida++; }
+    }
+    return { total, unidadesComDivida };
+  }, [filteredUnidades]);
+
+  const dataHoje = useMemo(() => new Date().toLocaleDateString("pt-PT", { day: "2-digit", month: "long", year: "numeric" }), []);
 
   const handleGerarTaxas = async (mes: number | null, ano: number, valor: number) => {
     const targetUnidades = activeTab !== "total_colectado" ? filteredUnidades : unidades;
@@ -361,6 +377,26 @@ const DataGrid = () => {
           </>
         )}
       </div>
+
+      {/* Highlighted: Dívida acumulada histórica */}
+      {vista === "tabela" && activeTab !== "total_colectado" && dividaAcumulada.total > 0 && (
+        <Card className="border-2 border-destructive/40 bg-destructive/5">
+          <CardContent className="py-4 px-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-wider text-destructive font-semibold">
+                Dívida Acumulada até {dataHoje}
+              </p>
+              <p className="text-3xl font-bold tabular-nums mt-1 text-destructive">
+                {formatCurrency(dividaAcumulada.total)}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Unidades</p>
+              <p className="text-xl font-semibold tabular-nums text-foreground">{dividaAcumulada.unidadesComDivida}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary Cards (tabela view, not total_colectado) */}
       {vista === "tabela" && activeTab !== "total_colectado" && (

@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Search, MoreVertical, Receipt, Eye } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import FeesPaymentDialog from "./PaymentDialog";
-import { Taxa, Unidade, PaymentStatus, MESES_SHORT, formatCurrency } from "./types";
+import { Taxa, Unidade, PaymentStatus, MESES_SHORT, formatCurrency, getDividaHistorica } from "./types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -39,9 +39,10 @@ interface RowProps {
   onViewReceipt: (url: string) => void;
   onDeleteUnidade: (id: string) => void;
   dividaTotalUnidade: number;
+  dividaHistoricaUnidade: number;
 }
 
-const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewReceipt, onDeleteUnidade, dividaTotalUnidade }: RowProps) => {
+const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewReceipt, onDeleteUnidade, dividaTotalUnidade, dividaHistoricaUnidade }: RowProps) => {
   const divida = Math.max(0, taxa.valor - taxa.valor_pago);
   return (
     <TableRow className="group hover:bg-accent/50">
@@ -53,14 +54,17 @@ const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewRece
       <TableCell className="text-xs text-muted-foreground">{unidade.contacto || "—"}</TableCell>
       <TableCell className="text-right tabular-nums text-sm">{formatCurrency(taxa.valor)}</TableCell>
       <TableCell className="text-right tabular-nums text-sm text-emerald-600 font-medium">{formatCurrency(taxa.valor_pago)}</TableCell>
-      <TableCell className={cn("text-right tabular-nums text-sm font-medium", divida > 0 ? "text-red-600" : "")}>
+      <TableCell className={cn("text-right tabular-nums text-sm font-medium", divida > 0 ? "text-destructive" : "")}>
         {divida > 0 ? formatCurrency(divida) : "—"}
       </TableCell>
       <TableCell
-        className={cn(
-          "text-right tabular-nums text-sm font-bold",
-          dividaTotalUnidade > 0 ? "text-red-700" : "text-muted-foreground"
-        )}
+        className={cn("text-right tabular-nums text-sm font-semibold", dividaHistoricaUnidade > 0 ? "text-destructive" : "text-muted-foreground")}
+        title="Dívida histórica herdada do Excel (anterior ao sistema)"
+      >
+        {dividaHistoricaUnidade > 0 ? formatCurrency(dividaHistoricaUnidade) : "—"}
+      </TableCell>
+      <TableCell
+        className={cn("text-right tabular-nums text-sm font-bold", dividaTotalUnidade > 0 ? "text-destructive" : "text-muted-foreground")}
         title="Dívida total acumulada do inquilino até hoje (histórica + meses vencidos)"
       >
         {dividaTotalUnidade > 0 ? formatCurrency(dividaTotalUnidade) : "—"}
@@ -108,14 +112,19 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
     return map;
   }, [unidades]);
 
-  /** Dívida total acumulada por unidade (até hoje): divida_inicial + Σ meses vencidos não pagos */
+  /** Dívida histórica (anterior ao sistema) por unidade — max(divida_anterior - pagamentos_historicos, 0) */
+  const dividaHistoricaPorUnidade = useMemo(() => {
+    const map: Record<string, number> = {};
+    unidades.forEach(u => { map[u.id] = getDividaHistorica(u); });
+    return map;
+  }, [unidades]);
+
+  /** Dívida total acumulada por unidade (até hoje): histórica + Σ meses vencidos não pagos */
   const dividaTotalPorUnidade = useMemo(() => {
     const hoje = new Date();
     const anoHoje = hoje.getFullYear();
     const mesHoje = hoje.getMonth() + 1;
-    const map: Record<string, number> = {};
-    // Inicializar com dívida histórica
-    unidades.forEach(u => { map[u.id] = Number(u.divida_inicial ?? 0); });
+    const map: Record<string, number> = { ...dividaHistoricaPorUnidade };
     taxas.forEach(t => {
       if (t.ano_referencia > anoHoje) return;
       if (t.ano_referencia === anoHoje && t.mes_referencia > mesHoje) return;
@@ -123,7 +132,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
       if (d > 0) map[t.unidade_id] = (map[t.unidade_id] ?? 0) + d;
     });
     return map;
-  }, [unidades, taxas]);
+  }, [dividaHistoricaPorUnidade, taxas]);
 
   const filtered = useMemo(() => {
     const searchLower = search.toLowerCase();
@@ -237,6 +246,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="text-right">Pago</TableHead>
                   <TableHead className="text-right">Dívida (mês)</TableHead>
+                  <TableHead className="text-right" title="Dívida histórica anterior ao sistema (importada do Excel)">Dív. Acum.</TableHead>
                   <TableHead className="text-right" title="Dívida total acumulada do inquilino até hoje (histórica + meses vencidos)">Dívida total</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-10"></TableHead>
@@ -255,6 +265,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
                       onOpenPayment={handleOpenPayment}
                       onViewReceipt={onViewReceipt}
                       onDeleteUnidade={onDeleteUnidade}
+                      dividaHistoricaUnidade={dividaHistoricaPorUnidade[u.id] ?? 0}
                       dividaTotalUnidade={dividaTotalPorUnidade[u.id] ?? 0}
                     />
                   );
