@@ -113,6 +113,8 @@ const AdminDashboard = () => {
     reservationsThisMonth: 0,
     pendingServices: 0,
     approvedServices: 0,
+    pendingAccessRequests: 0,
+    totalDebt: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
