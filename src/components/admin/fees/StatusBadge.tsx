@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface StatusBadgeProps {
   status: PaymentStatus;
-  onStatusChange: (status: PaymentStatus) => void;
+  onStatusChange?: (status: PaymentStatus) => void;
 }
 
 const statusConfig: Record<PaymentStatus, { label: string; dot: string; bg: string; text: string; border: string }> = {
