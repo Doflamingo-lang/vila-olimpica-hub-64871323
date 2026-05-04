@@ -174,44 +174,89 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchAllPaged = async <T,>(
+    table: "condominium_fees" | "fpd_fees" | "unidades" | "fpd_unidades",
+    columns: string
+  ): Promise<T[]> => {
+    const PAGE = 1000;
+    let from = 0;
+    const out: T[] = [];
+    while (true) {
+      const { data, error } = await supabase
+        .from(table)
+        .select(columns)
+        .range(from, from + PAGE - 1);
+      if (error || !data || data.length === 0) break;
+      out.push(...(data as unknown as T[]));
+      if (data.length < PAGE) break;
+      from += PAGE;
+    }
+    return out;
+  };
+
   const fetchStats = async () => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const anoHoje = now.getFullYear();
+    const mesHoje = now.getMonth() + 1;
 
-    // Fetch all reservations for stats
-    const { data: allReservations } = await supabase
-      .from("reservations")
-      .select("status, created_at");
+    const [
+      allReservations,
+      areasCountRes,
+      allServices,
+      accessRes,
+      ffhFees,
+      fpdFees,
+      unidades,
+      fpdUnidades,
+    ] = await Promise.all([
+      supabase.from("reservations").select("status, created_at"),
+      supabase.from("common_areas").select("*", { count: "exact", head: true }),
+      supabase.from("marketplace_services").select("status"),
+      supabase.from("access_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
+      fetchAllPaged<{ amount: number; valor_pago: number; reference_year: number; reference_month: string }>("condominium_fees", "amount, valor_pago, reference_year, reference_month"),
+      fetchAllPaged<{ amount: number; valor_pago: number; reference_year: number; reference_month: string }>("fpd_fees", "amount, valor_pago, reference_year, reference_month"),
+      fetchAllPaged<{ divida_anterior: number; divida_inicial: number; pagamentos_historicos: number }>("unidades", "divida_anterior, divida_inicial, pagamentos_historicos"),
+      fetchAllPaged<{ divida_anterior: number; divida_inicial: number; pagamentos_historicos: number }>("fpd_unidades", "divida_anterior, divida_inicial, pagamentos_historicos"),
+    ]);
 
-    // Fetch areas count
-    const { count: areasCount } = await supabase
-      .from("common_areas")
-      .select("*", { count: "exact", head: true });
+    const pendingServices = allServices.data?.filter((s: any) => s.status === "pending").length || 0;
+    const approvedServices = allServices.data?.filter((s: any) => s.status === "approved").length || 0;
 
-    // Fetch services stats
-    const { data: allServices } = await supabase
-      .from("marketplace_services")
-      .select("status");
+    const sumFeesDebt = (rows: { amount: number; valor_pago: number; reference_year: number; reference_month: string }[]) =>
+      rows.reduce((acc, r) => {
+        const ano = Number(r.reference_year);
+        const mes = Number(r.reference_month);
+        if (ano > anoHoje) return acc;
+        if (ano === anoHoje && mes > mesHoje) return acc;
+        return acc + Math.max(0, Number(r.amount || 0) - Number(r.valor_pago || 0));
+      }, 0);
 
-    const pendingServices = allServices?.filter(s => s.status === 'pending').length || 0;
-    const approvedServices = allServices?.filter(s => s.status === 'approved').length || 0;
+    const sumHistoric = (rows: { divida_anterior: number; divida_inicial: number; pagamentos_historicos: number }[]) =>
+      rows.reduce((acc, r) => {
+        const da = Number(r.divida_anterior ?? r.divida_inicial ?? 0);
+        const ph = Number(r.pagamentos_historicos ?? 0);
+        return acc + Math.max(0, da - ph);
+      }, 0);
 
-    if (allReservations) {
-      const thisMonth = allReservations.filter(
-        (r) => new Date(r.created_at) >= startOfMonth
-      );
+    const totalDebt =
+      sumFeesDebt(ffhFees) + sumFeesDebt(fpdFees) + sumHistoric(unidades) + sumHistoric(fpdUnidades);
 
-      setStats({
-        totalReservations: allReservations.length,
-        confirmedReservations: allReservations.filter((r) => r.status === "confirmed").length,
-        cancelledReservations: allReservations.filter((r) => r.status === "cancelled").length,
-        pendingReservations: allReservations.filter((r) => r.status === "pending").length,
-        totalAreas: areasCount || 0,
-        reservationsThisMonth: thisMonth.length,
-        pendingServices,
-        approvedServices,
-      });
-    }
+    const reservList = allReservations.data || [];
+    const thisMonth = reservList.filter((r: any) => new Date(r.created_at) >= startOfMonth);
+
+    setStats({
+      totalReservations: reservList.length,
+      confirmedReservations: reservList.filter((r: any) => r.status === "confirmed").length,
+      cancelledReservations: reservList.filter((r: any) => r.status === "cancelled").length,
+      pendingReservations: reservList.filter((r: any) => r.status === "pending").length,
+      totalAreas: areasCountRes.count || 0,
+      reservationsThisMonth: thisMonth.length,
+      pendingServices,
+      approvedServices,
+      pendingAccessRequests: accessRes.count || 0,
+      totalDebt,
+    });
   };
 
   const handleUpdateStatus = async (reservationId: string, newStatus: string) => {
