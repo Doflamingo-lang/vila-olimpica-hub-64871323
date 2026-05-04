@@ -13,6 +13,7 @@ import TotalColectadoView from "./TotalColectadoView";
 import GerarTaxasDialog from "./GerarTaxasDialog";
 import AddRecordSheet from "./AddRecordSheet";
 import { cn } from "@/lib/utils";
+import { feesCache } from "./feesCache";
 
 type TabValue = CategoriaUnidade | "total_colectado";
 
