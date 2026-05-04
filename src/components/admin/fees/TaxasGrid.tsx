@@ -39,20 +39,21 @@ interface RowProps {
   onStatusChange: (id: string, status: PaymentStatus) => void;
   onOpenPayment: (taxa: Taxa, divida: number) => void;
   onViewReceipt: (url: string) => void;
-  onDeleteUnidade: (id: string) => void;
+  onViewHistory: (u: Unidade) => void;
+  onEditUnidade: (u: Unidade) => void;
   dividaTotalUnidade: number;
   dividaHistoricaUnidade: number;
 }
 
-const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewReceipt, onDeleteUnidade, dividaTotalUnidade, dividaHistoricaUnidade }: RowProps) => {
+const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewReceipt, onViewHistory, onEditUnidade, dividaTotalUnidade, dividaHistoricaUnidade }: RowProps) => {
   const divida = Math.max(0, taxa.valor - taxa.valor_pago);
+  const idMorador = `${unidade.bloco}-${unidade.edificio}-${unidade.apartamento}`;
   return (
     <TableRow className="group hover:bg-accent/50">
       <TableCell className="text-xs text-muted-foreground tabular-nums">{unidade.ord}</TableCell>
       <TableCell className="font-medium text-xs">{MESES_SHORT[taxa.mes_referencia]}</TableCell>
-      <TableCell className="tabular-nums text-xs">{unidade.bloco}</TableCell>
-      <TableCell className="tabular-nums text-xs">{unidade.edificio}/{unidade.apartamento}</TableCell>
-      <TableCell className="max-w-[150px] truncate text-sm font-medium">{unidade.nome}</TableCell>
+      <TableCell className="font-mono text-xs font-semibold">{idMorador}</TableCell>
+      <TableCell className="max-w-[180px] truncate text-sm font-medium">{unidade.nome}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{unidade.contacto || "—"}</TableCell>
       <TableCell className="text-right tabular-nums text-sm">{formatCurrency(taxa.valor)}</TableCell>
       <TableCell className="text-right tabular-nums text-sm text-emerald-600 font-medium">{formatCurrency(taxa.valor_pago)}</TableCell>
@@ -77,21 +78,29 @@ const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewRece
       <TableCell>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
               <MoreVertical className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onOpenPayment(taxa, divida)}>Registar Pagamento</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onOpenPayment(taxa, divida)}>
+              <CreditCard className="w-4 h-4 mr-2" />
+              Registar Pagamento
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onViewHistory(unidade)}>
+              <History className="w-4 h-4 mr-2" />
+              Ver Histórico de Pagamentos
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEditUnidade(unidade)}>
+              <Pencil className="w-4 h-4 mr-2" />
+              Editar Unidade
+            </DropdownMenuItem>
             {taxa.receipt_url && (
               <DropdownMenuItem onClick={() => onViewReceipt(taxa.receipt_url!)}>
                 <Eye className="w-4 h-4 mr-2" />
                 Ver Comprovativo
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem className="text-destructive" onClick={() => onDeleteUnidade(unidade.id)}>
-              Remover Unidade
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>
