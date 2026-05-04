@@ -95,7 +95,8 @@ const MessagesManagement = () => {
   };
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase().trim().replace(/\s+/g, "");
+    const norm = (s: string) => s.toLowerCase().replace(/[\s-]+/g, "");
+    const q = norm(search);
     if (!q) return residents;
     return residents.filter((r) => {
       const idFmt =
@@ -104,11 +105,9 @@ const MessagesManagement = () => {
           : r.apartamento
           ? `apt${r.apartamento}`
           : "";
-      const haystack = [r.nome, r.email, idFmt, r.bloco, r.edificio, r.apartamento]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .replace(/\s+/g, "");
+      const haystack = norm(
+        [r.nome, r.email, idFmt, r.bloco, r.edificio, r.apartamento].filter(Boolean).join(" ")
+      );
       return haystack.includes(q);
     });
   }, [residents, search]);
