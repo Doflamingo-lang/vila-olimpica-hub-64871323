@@ -3,9 +3,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, MoreVertical, Receipt, Eye } from "lucide-react";
+import { Search, MoreVertical, Receipt, Eye, CreditCard, History, Pencil } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import FeesPaymentDialog from "./PaymentDialog";
+import EditUnidadeDialog from "./EditUnidadeDialog";
+import PaymentHistoryDialog from "./PaymentHistoryDialog";
 import { Taxa, Unidade, PaymentStatus, MESES_SHORT, formatCurrency, getDividaHistorica } from "./types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
