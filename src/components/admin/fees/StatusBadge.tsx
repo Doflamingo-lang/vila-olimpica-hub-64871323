@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface StatusBadgeProps {
   status: PaymentStatus;
-  onStatusChange: (status: PaymentStatus) => void;
+  onStatusChange?: (status: PaymentStatus) => void;
 }
 
 const statusConfig: Record<PaymentStatus, { label: string; dot: string; bg: string; text: string; border: string }> = {
@@ -45,19 +45,24 @@ const StatusBadge = ({ status, onStatusChange }: StatusBadgeProps) => {
   const [open, setOpen] = useState(false);
   const config = statusConfig[status];
 
+  const trigger = (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all",
+        onStatusChange && "cursor-pointer hover:shadow-sm",
+        config.bg, config.text, config.border
+      )}
+    >
+      <span className={cn("w-1.5 h-1.5 rounded-full", config.dot)} />
+      {config.label}
+    </span>
+  );
+
+  if (!onStatusChange) return trigger;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          className={cn(
-            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border cursor-pointer transition-all hover:shadow-sm",
-            config.bg, config.text, config.border
-          )}
-        >
-          <span className={cn("w-1.5 h-1.5 rounded-full", config.dot)} />
-          {config.label}
-        </button>
-      </PopoverTrigger>
+      <PopoverTrigger asChild><button>{trigger}</button></PopoverTrigger>
       <PopoverContent className="w-40 p-1" align="start">
         {allStatuses.map((s) => {
           const c = statusConfig[s];

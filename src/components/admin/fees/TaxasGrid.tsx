@@ -3,9 +3,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, MoreVertical, Receipt, Eye } from "lucide-react";
+import { Search, MoreVertical, Receipt, Eye, CreditCard, History, Pencil } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import FeesPaymentDialog from "./PaymentDialog";
+import EditUnidadeDialog from "./EditUnidadeDialog";
+import PaymentHistoryDialog from "./PaymentHistoryDialog";
 import { Taxa, Unidade, PaymentStatus, MESES_SHORT, formatCurrency, getDividaHistorica } from "./types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +20,7 @@ interface TaxasGridProps {
   mesFiltro: number | null;
   onRefresh: () => void;
   onUpdateTaxaLocal?: (taxaId: string, patch: Partial<Taxa>) => void;
-  onDeleteUnidade: (id: string) => void;
+  onDeleteUnidade?: (id: string) => void;
   onViewReceipt: (receiptUrl: string) => void;
 }
 
@@ -37,20 +39,21 @@ interface RowProps {
   onStatusChange: (id: string, status: PaymentStatus) => void;
   onOpenPayment: (taxa: Taxa, divida: number) => void;
   onViewReceipt: (url: string) => void;
-  onDeleteUnidade: (id: string) => void;
+  onViewHistory: (u: Unidade) => void;
+  onEditUnidade: (u: Unidade) => void;
   dividaTotalUnidade: number;
   dividaHistoricaUnidade: number;
 }
 
-const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewReceipt, onDeleteUnidade, dividaTotalUnidade, dividaHistoricaUnidade }: RowProps) => {
+const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewReceipt, onViewHistory, onEditUnidade, dividaTotalUnidade, dividaHistoricaUnidade }: RowProps) => {
   const divida = Math.max(0, taxa.valor - taxa.valor_pago);
+  const idMorador = `${unidade.bloco}-${unidade.edificio}-${unidade.apartamento}`;
   return (
     <TableRow className="group hover:bg-accent/50">
       <TableCell className="text-xs text-muted-foreground tabular-nums">{unidade.ord}</TableCell>
       <TableCell className="font-medium text-xs">{MESES_SHORT[taxa.mes_referencia]}</TableCell>
-      <TableCell className="tabular-nums text-xs">{unidade.bloco}</TableCell>
-      <TableCell className="tabular-nums text-xs">{unidade.edificio}/{unidade.apartamento}</TableCell>
-      <TableCell className="max-w-[150px] truncate text-sm font-medium">{unidade.nome}</TableCell>
+      <TableCell className="font-mono text-xs font-semibold">{idMorador}</TableCell>
+      <TableCell className="max-w-[180px] truncate text-sm font-medium">{unidade.nome}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{unidade.contacto || "—"}</TableCell>
       <TableCell className="text-right tabular-nums text-sm">{formatCurrency(taxa.valor)}</TableCell>
       <TableCell className="text-right tabular-nums text-sm text-emerald-600 font-medium">{formatCurrency(taxa.valor_pago)}</TableCell>
@@ -75,21 +78,29 @@ const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewRece
       <TableCell>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
               <MoreVertical className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onOpenPayment(taxa, divida)}>Registar Pagamento</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onOpenPayment(taxa, divida)}>
+              <CreditCard className="w-4 h-4 mr-2" />
+              Registar Pagamento
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onViewHistory(unidade)}>
+              <History className="w-4 h-4 mr-2" />
+              Ver Histórico de Pagamentos
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEditUnidade(unidade)}>
+              <Pencil className="w-4 h-4 mr-2" />
+              Editar Unidade
+            </DropdownMenuItem>
             {taxa.receipt_url && (
               <DropdownMenuItem onClick={() => onViewReceipt(taxa.receipt_url!)}>
                 <Eye className="w-4 h-4 mr-2" />
                 Ver Comprovativo
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem className="text-destructive" onClick={() => onDeleteUnidade(unidade.id)}>
-              Remover Unidade
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>
@@ -98,11 +109,13 @@ const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewRece
 });
 TaxaRow.displayName = "TaxaRow";
 
-const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateTaxaLocal, onDeleteUnidade, onViewReceipt }: TaxasGridProps) => {
+const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateTaxaLocal, onViewReceipt }: TaxasGridProps) => {
   const [statusFiltro, setStatusFiltro] = useState<PaymentStatus | "todos">("todos");
   const [search, setSearch] = useState("");
   const [paymentDialog, setPaymentDialog] = useState<Taxa | null>(null);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [editUnidade, setEditUnidade] = useState<Unidade | null>(null);
+  const [historyUnidade, setHistoryUnidade] = useState<Unidade | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_INCREMENT);
   const { toast } = useToast();
 
@@ -239,8 +252,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
                 <TableRow>
                   <TableHead className="w-10">#</TableHead>
                   <TableHead>Mês</TableHead>
-                  <TableHead>Bloco</TableHead>
-                  <TableHead>Ed/Apt</TableHead>
+                  <TableHead>ID Morador</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Contacto</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
@@ -249,7 +261,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
                   <TableHead className="text-right" title="Dívida histórica anterior ao sistema (importada do Excel)">Dív. Acum.</TableHead>
                   <TableHead className="text-right" title="Dívida total acumulada do inquilino até hoje (histórica + meses vencidos)">Dívida total</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-10"></TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -264,7 +276,8 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
                       onStatusChange={handleStatusChange}
                       onOpenPayment={handleOpenPayment}
                       onViewReceipt={onViewReceipt}
-                      onDeleteUnidade={onDeleteUnidade}
+                      onViewHistory={setHistoryUnidade}
+                      onEditUnidade={setEditUnidade}
                       dividaHistoricaUnidade={dividaHistoricaPorUnidade[u.id] ?? 0}
                       dividaTotalUnidade={dividaTotalPorUnidade[u.id] ?? 0}
                     />
@@ -303,6 +316,20 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
         }
         table="condominium_fees"
         onSuccess={handlePaymentSuccess}
+      />
+
+      <EditUnidadeDialog
+        open={!!editUnidade}
+        onOpenChange={(o) => { if (!o) setEditUnidade(null); }}
+        unidade={editUnidade}
+        onSaved={onRefresh}
+      />
+
+      <PaymentHistoryDialog
+        open={!!historyUnidade}
+        onOpenChange={(o) => { if (!o) setHistoryUnidade(null); }}
+        unidade={historyUnidade}
+        taxas={taxas}
       />
     </div>
   );
