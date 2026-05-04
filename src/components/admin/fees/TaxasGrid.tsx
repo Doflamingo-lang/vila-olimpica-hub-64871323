@@ -252,8 +252,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
                 <TableRow>
                   <TableHead className="w-10">#</TableHead>
                   <TableHead>Mês</TableHead>
-                  <TableHead>Bloco</TableHead>
-                  <TableHead>Ed/Apt</TableHead>
+                  <TableHead>ID Morador</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Contacto</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
@@ -262,7 +261,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
                   <TableHead className="text-right" title="Dívida histórica anterior ao sistema (importada do Excel)">Dív. Acum.</TableHead>
                   <TableHead className="text-right" title="Dívida total acumulada do inquilino até hoje (histórica + meses vencidos)">Dívida total</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-10"></TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -277,7 +276,8 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
                       onStatusChange={handleStatusChange}
                       onOpenPayment={handleOpenPayment}
                       onViewReceipt={onViewReceipt}
-                      onDeleteUnidade={onDeleteUnidade}
+                      onViewHistory={setHistoryUnidade}
+                      onEditUnidade={setEditUnidade}
                       dividaHistoricaUnidade={dividaHistoricaPorUnidade[u.id] ?? 0}
                       dividaTotalUnidade={dividaTotalPorUnidade[u.id] ?? 0}
                     />
