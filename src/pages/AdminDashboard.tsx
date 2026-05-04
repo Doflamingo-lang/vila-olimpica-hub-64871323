@@ -17,7 +17,8 @@ import {
   Megaphone,
   Receipt,
   UserPlus,
-  Shield
+  Shield,
+  MessageSquare
 } from "lucide-react";
 import { Image as ImageIcon } from "lucide-react";
 import logoVilaOlimpica from "@/assets/logo-vila-olimpica.png";
@@ -32,6 +33,7 @@ import AdminsManagement from "@/components/admin/AdminsManagement";
 import AboutGalleryManagement from "@/components/admin/AboutGalleryManagement";
 import ReservationsManagement from "@/components/admin/ReservationsManagement";
 import ResidentsManagement from "@/components/admin/ResidentsManagement";
+import MessagesManagement from "@/components/admin/MessagesManagement";
 import NotificationBell from "@/components/admin/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -346,6 +348,7 @@ const AdminDashboard = () => {
     { icon: FileText, label: "Documentos", section: "documents" },
     { icon: Download, label: "Estatísticas", section: "downloads" },
     { icon: Users, label: "Moradores", section: "residents" },
+    { icon: MessageSquare, label: "Mensagens", section: "messages" },
     { icon: UserPlus, label: "Pedidos Acesso", section: "access-requests" },
     { icon: ImageIcon, label: "Galeria Sobre", section: "about-gallery" },
     { icon: Shield, label: "Administradores", section: "admins" },
@@ -738,6 +741,10 @@ const AdminDashboard = () => {
           {/* Access Requests Section */}
           {activeSection === "access-requests" && (
             <AccessRequestsManagement />
+          )}
+          {/* Messages Section */}
+          {activeSection === "messages" && (
+            <MessagesManagement />
           )}
           {/* About Gallery Section */}
           {activeSection === "about-gallery" && (
