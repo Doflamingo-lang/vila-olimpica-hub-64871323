@@ -157,7 +157,8 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
         if (search) {
           const u = unidadeMap[t.unidade_id];
           if (!u) return false;
-          const text = `${u.nome} ${u.contacto}`.toLowerCase();
+          const idMorador = `${u.bloco}-${u.edificio}-${u.apartamento}`;
+          const text = `${u.nome} ${u.contacto} ${idMorador}`.toLowerCase();
           if (!text.includes(searchLower)) return false;
         }
         return true;
@@ -230,7 +231,7 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Pesquisar nome ou contacto..."
+            placeholder="Pesquisar por ID (bloco-edif-apt), nome ou contacto..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setVisibleCount(PAGE_INCREMENT); }}
             className="pl-10 h-9"
