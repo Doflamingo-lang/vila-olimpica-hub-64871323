@@ -255,7 +255,7 @@ const DataGrid = () => {
       toast({ title: "Erro", description: "Não foi possível gerar as taxas.", variant: "destructive" });
     } else {
       toast({ title: "Sucesso", description: `${toInsert.length} taxa(s) gerada(s).` });
-      fetchData();
+      refresh();
     }
   };
 
@@ -265,7 +265,7 @@ const DataGrid = () => {
       toast({ title: "Erro", description: "Não foi possível adicionar a unidade.", variant: "destructive" });
     } else {
       toast({ title: "Sucesso", description: "Unidade adicionada." });
-      fetchData();
+      refresh();
     }
   };
 
@@ -275,7 +275,7 @@ const DataGrid = () => {
       toast({ title: "Erro", description: "Não foi possível remover a unidade.", variant: "destructive" });
     } else {
       toast({ title: "Sucesso", description: "Unidade e taxas associadas removidas." });
-      fetchData();
+      refresh();
     }
   };
 
