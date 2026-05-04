@@ -20,7 +20,7 @@ interface TaxasGridProps {
   mesFiltro: number | null;
   onRefresh: () => void;
   onUpdateTaxaLocal?: (taxaId: string, patch: Partial<Taxa>) => void;
-  onDeleteUnidade: (id: string) => void;
+  onDeleteUnidade?: (id: string) => void;
   onViewReceipt: (receiptUrl: string) => void;
 }
 
