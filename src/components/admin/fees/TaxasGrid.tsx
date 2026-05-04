@@ -317,6 +317,20 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
         table="condominium_fees"
         onSuccess={handlePaymentSuccess}
       />
+
+      <EditUnidadeDialog
+        open={!!editUnidade}
+        onOpenChange={(o) => { if (!o) setEditUnidade(null); }}
+        unidade={editUnidade}
+        onSaved={onRefresh}
+      />
+
+      <PaymentHistoryDialog
+        open={!!historyUnidade}
+        onOpenChange={(o) => { if (!o) setHistoryUnidade(null); }}
+        unidade={historyUnidade}
+        taxas={taxas}
+      />
     </div>
   );
 };
