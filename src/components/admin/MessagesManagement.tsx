@@ -125,7 +125,7 @@ const MessagesManagement = () => {
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
                 <Input
-                  placeholder="Procurar morador..."
+                  placeholder="Procurar por nome ou ID (ex: 1-2-3)..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
