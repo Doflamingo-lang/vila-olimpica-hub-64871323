@@ -95,11 +95,22 @@ const MessagesManagement = () => {
   };
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase().trim();
+    const q = search.toLowerCase().trim().replace(/\s+/g, "");
     if (!q) return residents;
-    return residents.filter((r) =>
-      [r.nome, r.email, r.bloco, r.edificio, r.apartamento].join(" ").toLowerCase().includes(q)
-    );
+    return residents.filter((r) => {
+      const idFmt =
+        r.bloco && r.edificio && r.apartamento
+          ? `${r.bloco}-${r.edificio}-${r.apartamento}`
+          : r.apartamento
+          ? `apt${r.apartamento}`
+          : "";
+      const haystack = [r.nome, r.email, idFmt, r.bloco, r.edificio, r.apartamento]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .replace(/\s+/g, "");
+      return haystack.includes(q);
+    });
   }, [residents, search]);
 
   if (!session) return null;
