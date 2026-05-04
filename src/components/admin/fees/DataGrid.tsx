@@ -13,6 +13,7 @@ import TotalColectadoView from "./TotalColectadoView";
 import GerarTaxasDialog from "./GerarTaxasDialog";
 import AddRecordSheet from "./AddRecordSheet";
 import { cn } from "@/lib/utils";
+import { feesCache } from "./feesCache";
 
 type TabValue = CategoriaUnidade | "total_colectado";
 
@@ -87,7 +88,18 @@ const DataGrid = () => {
 
   const [availableYears, setAvailableYearsState] = useState<number[]>([new Date().getFullYear()]);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (opts: { force?: boolean } = {}) => {
+    const cacheKey = `ffh:${anoFiltro}`;
+    const cached = !opts.force ? feesCache.get<{ unidades: Unidade[]; taxas: Taxa[]; years: number[] }>(cacheKey) : null;
+
+    if (cached) {
+      setUnidades(cached.unidades);
+      setTaxas(cached.taxas);
+      setAvailableYearsState(cached.years);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const [unidadesRes, taxasData, years] = await Promise.all([
@@ -98,9 +110,7 @@ const DataGrid = () => {
 
       if (unidadesRes.error) throw unidadesRes.error;
 
-      setAvailableYearsState(years);
-
-      setUnidades((unidadesRes.data || []).map((u: any) => ({
+      const mappedUnidades: Unidade[] = (unidadesRes.data || []).map((u: any) => ({
         id: u.id,
         ord: u.ord,
         bloco: u.bloco,
@@ -113,9 +123,9 @@ const DataGrid = () => {
         divida_inicial: Number(u.divida_inicial ?? 0),
         divida_anterior: Number(u.divida_anterior ?? u.divida_inicial ?? 0),
         pagamentos_historicos: Number(u.pagamentos_historicos ?? 0),
-      })));
+      }));
 
-      setTaxas(taxasData.map((t: any) => {
+      const mappedTaxas: Taxa[] = taxasData.map((t: any) => {
         const valor = Number(t.amount);
         const valorPago = Number(t.valor_pago || 0);
         return {
@@ -132,7 +142,12 @@ const DataGrid = () => {
           receipt_url: t.receipt_url,
           payment_method: t.payment_method,
         };
-      }).filter((t: Taxa) => t.unidade_id));
+      }).filter((t: Taxa) => t.unidade_id);
+
+      setAvailableYearsState(years);
+      setUnidades(mappedUnidades);
+      setTaxas(mappedTaxas);
+      feesCache.set(cacheKey, { unidades: mappedUnidades, taxas: mappedTaxas, years });
     } catch (error) {
       console.error("Erro ao carregar taxas:", error);
       toast({ title: "Erro", description: "Não foi possível carregar as taxas.", variant: "destructive" });
@@ -142,6 +157,12 @@ const DataGrid = () => {
   }, [toast, anoFiltro]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const refresh = useCallback(() => {
+    feesCache.invalidate("ffh:");
+    fetchData({ force: true });
+  }, [fetchData]);
+
 
   // Optimistic local update — avoids full refetch on row edits
   const updateTaxaLocal = useCallback((taxaId: string, patch: Partial<Taxa>) => {
@@ -234,7 +255,7 @@ const DataGrid = () => {
       toast({ title: "Erro", description: "Não foi possível gerar as taxas.", variant: "destructive" });
     } else {
       toast({ title: "Sucesso", description: `${toInsert.length} taxa(s) gerada(s).` });
-      fetchData();
+      refresh();
     }
   };
 
@@ -244,7 +265,7 @@ const DataGrid = () => {
       toast({ title: "Erro", description: "Não foi possível adicionar a unidade.", variant: "destructive" });
     } else {
       toast({ title: "Sucesso", description: "Unidade adicionada." });
-      fetchData();
+      refresh();
     }
   };
 
@@ -254,7 +275,7 @@ const DataGrid = () => {
       toast({ title: "Erro", description: "Não foi possível remover a unidade.", variant: "destructive" });
     } else {
       toast({ title: "Sucesso", description: "Unidade e taxas associadas removidas." });
-      fetchData();
+      refresh();
     }
   };
 
@@ -443,7 +464,7 @@ const DataGrid = () => {
           unidades={filteredUnidades}
           anoFiltro={anoFiltro}
           mesFiltro={mesFiltro}
-          onRefresh={fetchData}
+          onRefresh={refresh}
           onUpdateTaxaLocal={updateTaxaLocal}
           onDeleteUnidade={handleDeleteUnidade}
           onViewReceipt={handleViewReceipt}
