@@ -14,6 +14,7 @@ import {
   LogOut,
   Loader2,
   Shield,
+  MessageSquare,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import NoticesSection from "@/components/resident/NoticesSection";
 import FeesSection from "@/components/resident/FeesSection";
 import TransactionHistory from "@/components/resident/TransactionHistory";
+import MessagesSection from "@/components/resident/MessagesSection";
 
 
 const ResidentArea = () => {
@@ -162,10 +164,14 @@ const ResidentArea = () => {
 
         {/* Tabs Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+          <TabsList className="grid grid-cols-5 w-full max-w-3xl">
             <TabsTrigger value="overview">Resumo</TabsTrigger>
             <TabsTrigger value="notices">Avisos</TabsTrigger>
             <TabsTrigger value="fees">Taxas</TabsTrigger>
+            <TabsTrigger value="messages">
+              <MessageSquare className="w-4 h-4 mr-1 inline md:hidden" />
+              Mensagens
+            </TabsTrigger>
             <TabsTrigger value="history">Transações</TabsTrigger>
           </TabsList>
 
@@ -235,6 +241,10 @@ const ResidentArea = () => {
 
           <TabsContent value="fees">
             <FeesSection />
+          </TabsContent>
+
+          <TabsContent value="messages">
+            <MessagesSection />
           </TabsContent>
 
           <TabsContent value="history">
