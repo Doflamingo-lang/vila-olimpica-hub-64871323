@@ -103,7 +103,16 @@ const FpdDataGrid = () => {
   const [visibleCount, setVisibleCount] = useState(PAGE_INCREMENT);
   const { toast } = useToast();
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (opts: { force?: boolean } = {}) => {
+    const cacheKey = `fdp:${anoFiltro}`;
+    const cached = !opts.force ? feesCache.get<{ unidades: FpdUnidade[]; taxas: FpdTaxa[]; years: number[] }>(cacheKey) : null;
+    if (cached) {
+      setUnidades(cached.unidades);
+      setTaxas(cached.taxas);
+      setAvailableYears(cached.years);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [unidadesRes, feesData, years] = await Promise.all([
@@ -113,14 +122,12 @@ const FpdDataGrid = () => {
       ]);
       if (unidadesRes.error) throw unidadesRes.error;
 
-      setAvailableYears(years);
-
-      setUnidades((unidadesRes.data || []).map((u: any) => ({
+      const mappedUnidades: FpdUnidade[] = (unidadesRes.data || []).map((u: any) => ({
         id: u.id, ord: u.ord, apartamento: u.apartamento,
         nome: u.nome, contacto: u.contacto, taxa: Number(u.taxa),
-      })));
+      }));
 
-      setTaxas(feesData.map((t: any) => {
+      const mappedTaxas: FpdTaxa[] = feesData.map((t: any) => {
         const valor = Number(t.amount);
         const valorPago = Number(t.valor_pago || 0);
         const month = parseInt(t.reference_month, 10);
@@ -133,7 +140,12 @@ const FpdDataGrid = () => {
           due_date: t.due_date, receipt_url: t.receipt_url,
           payment_method: t.payment_method,
         };
-      }));
+      });
+
+      setAvailableYears(years);
+      setUnidades(mappedUnidades);
+      setTaxas(mappedTaxas);
+      feesCache.set(cacheKey, { unidades: mappedUnidades, taxas: mappedTaxas, years });
     } catch (error) {
       console.error("Erro ao carregar taxas FDP:", error);
       toast({ title: "Erro", description: "Não foi possível carregar as taxas FDP.", variant: "destructive" });
@@ -143,6 +155,12 @@ const FpdDataGrid = () => {
   }, [toast, anoFiltro]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const refresh = useCallback(() => {
+    feesCache.invalidate("fdp:");
+    fetchData({ force: true });
+  }, [fetchData]);
+
 
   // Optimistic local update — avoids full refetch on row edits
   const updateTaxaLocal = useCallback((taxaId: string, patch: Partial<FpdTaxa>) => {
