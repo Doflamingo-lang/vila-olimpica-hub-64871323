@@ -477,6 +477,16 @@ const AdminDashboard = () => {
             <>
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveSection("access-requests")}>
+                  <CardHeader className="pb-2">
+                    <CardDescription>Pedidos de Acesso</CardDescription>
+                    <CardTitle className="text-3xl text-primary">{stats.pendingAccessRequests}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">pendentes de aprovação</p>
+                  </CardContent>
+                </Card>
+
                 <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveSection("reservations")}>
                   <CardHeader className="pb-2">
                     <CardDescription>Total de Reservas</CardDescription>
@@ -484,31 +494,7 @@ const AdminDashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">
-                      {stats.reservationsThisMonth} este mês
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>Confirmadas</CardDescription>
-                    <CardTitle className="text-3xl text-green-600">{stats.confirmedReservations}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      {((stats.confirmedReservations / (stats.totalReservations || 1)) * 100).toFixed(0)}% do total
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>Canceladas</CardDescription>
-                    <CardTitle className="text-3xl text-red-600">{stats.cancelledReservations}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      {((stats.cancelledReservations / (stats.totalReservations || 1)) * 100).toFixed(0)}% do total
+                      {stats.reservationsThisMonth} este mês · {stats.pendingReservations} pendentes
                     </p>
                   </CardContent>
                 </Card>
@@ -516,12 +502,22 @@ const AdminDashboard = () => {
                 <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveSection("services")}>
                   <CardHeader className="pb-2">
                     <CardDescription>Serviços Pendentes</CardDescription>
-                    <CardTitle className="text-3xl text-yellow-600">{stats.pendingServices}</CardTitle>
+                    <CardTitle className="text-3xl text-accent">{stats.pendingServices}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      {stats.approvedServices} aprovados
-                    </p>
+                    <p className="text-sm text-muted-foreground">{stats.approvedServices} aprovados</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveSection("fees")}>
+                  <CardHeader className="pb-2">
+                    <CardDescription>Valor Total em Dívida</CardDescription>
+                    <CardTitle className="text-3xl text-destructive tabular-nums">
+                      {new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN", maximumFractionDigits: 0 }).format(stats.totalDebt)}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">Histórico + meses vencidos (FFH + FDP)</p>
                   </CardContent>
                 </Card>
               </div>
