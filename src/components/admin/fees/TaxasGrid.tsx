@@ -157,7 +157,8 @@ const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateT
         if (search) {
           const u = unidadeMap[t.unidade_id];
           if (!u) return false;
-          const text = `${u.nome} ${u.contacto}`.toLowerCase();
+          const idMorador = `${u.bloco}-${u.edificio}-${u.apartamento}`;
+          const text = `${u.nome} ${u.contacto} ${idMorador}`.toLowerCase();
           if (!text.includes(searchLower)) return false;
         }
         return true;
