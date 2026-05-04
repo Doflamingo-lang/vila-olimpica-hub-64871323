@@ -96,6 +96,8 @@ interface Stats {
   reservationsThisMonth: number;
   pendingServices: number;
   approvedServices: number;
+  pendingAccessRequests: number;
+  totalDebt: number;
 }
 
 const AdminDashboard = () => {
