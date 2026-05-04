@@ -133,7 +133,7 @@ const ResidentArea = () => {
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-2">
                 <CreditCard className="w-6 h-6" />
               </div>
-              <p className="font-medium text-sm">Pagamentos</p>
+              <p className="font-medium text-sm">Taxas</p>
             </CardContent>
           </Card>
           
@@ -165,7 +165,7 @@ const ResidentArea = () => {
           <TabsList className="grid grid-cols-4 w-full max-w-2xl">
             <TabsTrigger value="overview">Resumo</TabsTrigger>
             <TabsTrigger value="notices">Avisos</TabsTrigger>
-            <TabsTrigger value="fees">Pagamentos</TabsTrigger>
+            <TabsTrigger value="fees">Taxas</TabsTrigger>
             <TabsTrigger value="history">Transações</TabsTrigger>
           </TabsList>
 

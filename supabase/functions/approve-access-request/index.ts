@@ -161,6 +161,48 @@ Deno.serve(async (req) => {
       role: "resident",
     }, { onConflict: "user_id,role" });
 
+    // Auto-associate to existing taxas record (unidade) by bloco/edifício/apartamento.
+    // If no record exists, create a new one without history.
+    try {
+      const blocoNum = parseInt(String(accessRequest.block).replace(/\D/g, ""), 10) || 1;
+      const edifNum = parseInt(String(accessRequest.building).replace(/\D/g, ""), 10) || 1;
+      const aptNum = parseInt(String(accessRequest.apartment).replace(/\D/g, ""), 10) || 1;
+
+      const { data: existingUnidade } = await adminClient
+        .from("unidades")
+        .select("id, user_id")
+        .eq("bloco", blocoNum)
+        .eq("edificio", edifNum)
+        .eq("apartamento", aptNum)
+        .maybeSingle();
+
+      if (existingUnidade) {
+        // Link existing unidade to this user (preserves all historical fees & dívida_anterior)
+        await adminClient
+          .from("unidades")
+          .update({ user_id: userId, nome: accessRequest.full_name, contacto: accessRequest.phone })
+          .eq("id", existingUnidade.id);
+      } else {
+        // Create a fresh unidade with no history
+        await adminClient.from("unidades").insert({
+          bloco: blocoNum,
+          edificio: edifNum,
+          apartamento: aptNum,
+          nome: accessRequest.full_name,
+          contacto: accessRequest.phone,
+          via: "",
+          categoria: "quitadas",
+          divida_anterior: 0,
+          divida_inicial: 0,
+          pagamentos_historicos: 0,
+          user_id: userId,
+        });
+      }
+    } catch (linkErr) {
+      console.error("Erro ao associar unidade:", linkErr);
+      // não falhar o fluxo de aprovação
+    }
+
     // Update access request status
     await adminClient
       .from("access_requests")

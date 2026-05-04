@@ -318,6 +318,7 @@ export type Database = {
           pagamentos_historicos: number
           taxa: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           apartamento?: number
@@ -331,6 +332,7 @@ export type Database = {
           pagamentos_historicos?: number
           taxa?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           apartamento?: number
@@ -344,6 +346,7 @@ export type Database = {
           pagamentos_historicos?: number
           taxa?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -756,6 +759,7 @@ export type Database = {
           ord: number
           pagamentos_historicos: number
           updated_at: string
+          user_id: string | null
           via: string
         }
         Insert: {
@@ -772,6 +776,7 @@ export type Database = {
           ord?: number
           pagamentos_historicos?: number
           updated_at?: string
+          user_id?: string | null
           via?: string
         }
         Update: {
@@ -788,6 +793,7 @@ export type Database = {
           ord?: number
           pagamentos_historicos?: number
           updated_at?: string
+          user_id?: string | null
           via?: string
         }
         Relationships: []
