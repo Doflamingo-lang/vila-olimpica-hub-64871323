@@ -109,11 +109,13 @@ const TaxaRow = memo(({ taxa, unidade, onStatusChange, onOpenPayment, onViewRece
 });
 TaxaRow.displayName = "TaxaRow";
 
-const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateTaxaLocal, onDeleteUnidade, onViewReceipt }: TaxasGridProps) => {
+const TaxasGrid = ({ taxas, unidades, anoFiltro, mesFiltro, onRefresh, onUpdateTaxaLocal, onViewReceipt }: TaxasGridProps) => {
   const [statusFiltro, setStatusFiltro] = useState<PaymentStatus | "todos">("todos");
   const [search, setSearch] = useState("");
   const [paymentDialog, setPaymentDialog] = useState<Taxa | null>(null);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [editUnidade, setEditUnidade] = useState<Unidade | null>(null);
+  const [historyUnidade, setHistoryUnidade] = useState<Unidade | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_INCREMENT);
   const { toast } = useToast();
 
