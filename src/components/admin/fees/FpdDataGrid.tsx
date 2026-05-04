@@ -225,7 +225,7 @@ const FpdDataGrid = () => {
       .eq("id", taxaId);
     if (error) {
       toast({ title: "Erro", description: "Não foi possível atualizar o status.", variant: "destructive" });
-      fetchData();
+      refresh();
     }
   }, [updateTaxaLocal, fetchData, toast]);
 
@@ -274,7 +274,7 @@ const FpdDataGrid = () => {
     } else {
       toast({ title: "Sucesso", description: `${toInsert.length} taxa(s) gerada(s).` });
       setGerarOpen(false);
-      fetchData();
+      refresh();
     }
   };
 
@@ -299,7 +299,7 @@ const FpdDataGrid = () => {
       toast({ title: "Erro", description: "Não foi possível remover a unidade.", variant: "destructive" });
     } else {
       toast({ title: "Sucesso", description: "Unidade e taxas removidas." });
-      fetchData();
+      refresh();
     }
   };
 
