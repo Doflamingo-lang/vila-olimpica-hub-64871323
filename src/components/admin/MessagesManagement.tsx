@@ -95,11 +95,21 @@ const MessagesManagement = () => {
   };
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase().trim();
+    const norm = (s: string) => s.toLowerCase().replace(/[\s-]+/g, "");
+    const q = norm(search);
     if (!q) return residents;
-    return residents.filter((r) =>
-      [r.nome, r.email, r.bloco, r.edificio, r.apartamento].join(" ").toLowerCase().includes(q)
-    );
+    return residents.filter((r) => {
+      const idFmt =
+        r.bloco && r.edificio && r.apartamento
+          ? `${r.bloco}-${r.edificio}-${r.apartamento}`
+          : r.apartamento
+          ? `apt${r.apartamento}`
+          : "";
+      const haystack = norm(
+        [r.nome, r.email, idFmt, r.bloco, r.edificio, r.apartamento].filter(Boolean).join(" ")
+      );
+      return haystack.includes(q);
+    });
   }, [residents, search]);
 
   if (!session) return null;
@@ -114,7 +124,7 @@ const MessagesManagement = () => {
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
                 <Input
-                  placeholder="Procurar morador..."
+                  placeholder="Procurar por nome ou ID (ex: 1-2-3)..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
