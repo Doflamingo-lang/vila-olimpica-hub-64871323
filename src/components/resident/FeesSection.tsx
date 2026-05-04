@@ -1,27 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import PaymentDialog from "./PaymentDialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { CreditCard, Loader2, CheckCircle, Clock, AlertCircle, Receipt, Calendar } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CreditCard, Loader2, CheckCircle, Clock, AlertCircle, Receipt, History, TrendingDown, Wallet } from "lucide-react";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 interface Fee {
@@ -29,368 +17,291 @@ interface Fee {
   reference_month: string;
   reference_year: number;
   amount: number;
+  valor_pago?: number;
   due_date: string;
   status: string;
   paid_at: string | null;
   payment_method: string | null;
 }
 
+interface UnidadeInfo {
+  id: string;
+  divida_anterior: number;
+  pagamentos_historicos: number;
+}
+
+const MONTHS: Record<string, string> = {
+  "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
+  "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
+  "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro",
+};
+
+const formatCurrency = (v: number) =>
+  new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(v);
+
+const methodLabel = (m: string | null) => {
+  switch (m) {
+    case "mpesa": return "M-Pesa";
+    case "emola": return "e-Mola";
+    case "card": return "Cartão Visa";
+    case "bank_transfer": return "Transferência Bancária";
+    default: return m || "—";
+  }
+};
+
 const FeesSection = () => {
   const { user } = useAuth();
   const [fees, setFees] = useState<Fee[]>([]);
+  const [unidade, setUnidade] = useState<UnidadeInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedFee, setSelectedFee] = useState<Fee | null>(null);
-  const [showAllFees, setShowAllFees] = useState(false);
   const [paymentFee, setPaymentFee] = useState<Fee | null>(null);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchFees();
-    }
+  const fetchAll = useCallback(async () => {
+    if (!user?.id) return;
+    setIsLoading(true);
+
+    const [{ data: unidadeData }, { data: feesData }] = await Promise.all([
+      supabase.from("unidades").select("id, divida_anterior, pagamentos_historicos").eq("user_id", user.id).maybeSingle(),
+      supabase.from("condominium_fees").select("*").eq("user_id", user.id)
+        .order("reference_year", { ascending: false })
+        .order("reference_month", { ascending: false }),
+    ]);
+
+    setUnidade(unidadeData ? {
+      id: unidadeData.id,
+      divida_anterior: Number(unidadeData.divida_anterior || 0),
+      pagamentos_historicos: Number(unidadeData.pagamentos_historicos || 0),
+    } : null);
+    setFees(feesData || []);
+    setIsLoading(false);
   }, [user?.id]);
 
-  const fetchFees = async () => {
-    setIsLoading(true);
-    const { data, error } = await supabase
-      .from("condominium_fees")
-      .select("*")
-      .eq("user_id", user?.id)
-      .order("reference_year", { ascending: false })
-      .order("reference_month", { ascending: false });
-
-    if (error) {
-      console.error("Error fetching fees:", error);
-    } else {
-      setFees(data || []);
-    }
-    setIsLoading(false);
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "paid":
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case "pending_verification":
-        return <Clock className="w-4 h-4 text-blue-500" />;
-      case "overdue":
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "paid":
-        return "Pago";
-      case "pending_verification":
-        return "Em Verificação";
-      case "overdue":
-        return "Vencido";
-      default:
-        return "Pendente";
-    }
-  };
-
-  const getStatusStyles = (status: string) => {
-    switch (status) {
-      case "paid":
-        return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
-      case "pending_verification":
-        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
-      case "overdue":
-        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-      default:
-        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
-    }
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-MZ", {
-      style: "currency",
-      currency: "MZN",
-    }).format(value);
-  };
-
-  const getMonthName = (month: string) => {
-    const months: Record<string, string> = {
-      "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
-      "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
-      "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
-    };
-    return months[month] || month;
-  };
-
-  // Calculate summary
-  const paidFees = fees.filter(f => f.status === "paid");
-  const pendingFees = fees.filter(f => f.status === "pending");
-  const overdueFees = fees.filter(f => f.status === "overdue");
-  const totalPaid = paidFees.reduce((sum, f) => sum + Number(f.amount), 0);
-  const totalPending = [...pendingFees, ...overdueFees].reduce((sum, f) => sum + Number(f.amount), 0);
-
-  const displayedFees = showAllFees ? fees : fees.slice(0, 6);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-        </CardContent>
-      </Card>
+      <Card><CardContent className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </CardContent></Card>
     );
   }
+
+  // ===== Cálculos =====
+  const dividaAcumulada = unidade ? Math.max(0, unidade.divida_anterior - unidade.pagamentos_historicos) : 0;
+
+  const dividaSistema = fees.reduce((sum, f) => {
+    const valor = Number(f.amount || 0);
+    const pago = Number(f.valor_pago || 0);
+    if (f.status === "paid") return sum;
+    return sum + Math.max(0, valor - pago);
+  }, 0);
+
+  const dividaTotal = dividaAcumulada + dividaSistema;
+
+  const pagas = fees.filter(f => f.status === "paid");
+  const totalPago = pagas.reduce((s, f) => s + Number(f.amount || 0), 0);
+
+  const metodosUsados = Array.from(new Set(pagas.map(f => f.payment_method).filter(Boolean))) as string[];
+
+  const dividas = fees
+    .filter(f => f.status !== "paid" && Number(f.amount || 0) - Number(f.valor_pago || 0) > 0)
+    .map(f => ({ ...f, divida: Number(f.amount || 0) - Number(f.valor_pago || 0) }));
+
+  const statusBadge = (s: string) => {
+    const map: Record<string, { lbl: string; cls: string; icon: JSX.Element }> = {
+      paid: { lbl: "Pago", cls: "bg-green-100 text-green-700", icon: <CheckCircle className="w-3.5 h-3.5" /> },
+      pending_verification: { lbl: "Em Verificação", cls: "bg-blue-100 text-blue-700", icon: <Clock className="w-3.5 h-3.5" /> },
+      overdue: { lbl: "Vencido", cls: "bg-red-100 text-red-700", icon: <AlertCircle className="w-3.5 h-3.5" /> },
+    };
+    const v = map[s] || { lbl: "Pendente", cls: "bg-yellow-100 text-yellow-700", icon: <Clock className="w-3.5 h-3.5" /> };
+    return <span className={cn("px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1", v.cls)}>{v.icon}{v.lbl}</span>;
+  };
 
   return (
     <>
       <div className="space-y-6">
-        {/* Summary Cards */}
+        {/* Cards de resumo de dívida */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+          <Card className="border-amber-200 bg-amber-50">
             <CardHeader className="pb-2">
-              <CardDescription className="text-green-700 dark:text-green-400">
-                Total Pago
+              <CardDescription className="flex items-center gap-1 text-amber-700">
+                <History className="w-4 h-4" /> Dívida Acumulada
               </CardDescription>
-              <CardTitle className="text-2xl text-green-700 dark:text-green-400">
-                {formatCurrency(totalPaid)}
-              </CardTitle>
+              <CardTitle className="text-2xl text-amber-700">{formatCurrency(dividaAcumulada)}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm text-green-600 dark:text-green-500">
-                {paidFees.length} {paidFees.length === 1 ? "taxa" : "taxas"} pagas
-              </p>
-            </CardContent>
+            <CardContent><p className="text-xs text-amber-600">Saldo herdado anterior ao sistema</p></CardContent>
           </Card>
 
-          <Card className={cn(
-            "border-2",
-            totalPending > 0 
-              ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800"
-              : "bg-muted/50"
-          )}>
+          <Card className="border-yellow-200 bg-yellow-50">
             <CardHeader className="pb-2">
-              <CardDescription className={totalPending > 0 ? "text-yellow-700 dark:text-yellow-400" : ""}>
-                Pendente
+              <CardDescription className="flex items-center gap-1 text-yellow-700">
+                <TrendingDown className="w-4 h-4" /> Dívida do Sistema
               </CardDescription>
-              <CardTitle className={cn(
-                "text-2xl",
-                totalPending > 0 ? "text-yellow-700 dark:text-yellow-400" : ""
-              )}>
-                {formatCurrency(totalPending)}
-              </CardTitle>
+              <CardTitle className="text-2xl text-yellow-700">{formatCurrency(dividaSistema)}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className={cn(
-                "text-sm",
-                totalPending > 0 ? "text-yellow-600 dark:text-yellow-500" : "text-muted-foreground"
-              )}>
-                {pendingFees.length + overdueFees.length} {pendingFees.length + overdueFees.length === 1 ? "taxa" : "taxas"} pendentes
-              </p>
-            </CardContent>
+            <CardContent><p className="text-xs text-yellow-600">Mensalidades em aberto no sistema</p></CardContent>
           </Card>
 
-          <Card className={cn(
-            overdueFees.length > 0 
-              ? "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800 border-2"
-              : "bg-muted/50"
-          )}>
+          <Card className="border-red-300 bg-red-50 border-2">
             <CardHeader className="pb-2">
-              <CardDescription className={overdueFees.length > 0 ? "text-red-700 dark:text-red-400" : ""}>
-                Em Atraso
+              <CardDescription className="flex items-center gap-1 text-red-700">
+                <Wallet className="w-4 h-4" /> Dívida Atual (Total)
               </CardDescription>
-              <CardTitle className={cn(
-                "text-2xl",
-                overdueFees.length > 0 ? "text-red-700 dark:text-red-400" : ""
-              )}>
-                {overdueFees.length}
-              </CardTitle>
+              <CardTitle className="text-3xl text-red-700">{formatCurrency(dividaTotal)}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className={cn(
-                "text-sm",
-                overdueFees.length > 0 ? "text-red-600 dark:text-red-500" : "text-muted-foreground"
-              )}>
-                {overdueFees.length === 0 ? "Nenhuma taxa em atraso" : "Regularize para evitar multas"}
-              </p>
-            </CardContent>
+            <CardContent><p className="text-xs text-red-600">Acumulada + Sistema</p></CardContent>
           </Card>
         </div>
 
-        {/* Fees List */}
+        {!unidade && (
+          <Card className="border-dashed">
+            <CardContent className="py-6 text-center text-sm text-muted-foreground">
+              A sua unidade ainda não está associada a um registo de Taxas.
+              Aguarde a confirmação da administração ou contacte o condomínio.
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Tabs com históricos */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-primary" />
-              Histórico de Taxas Condominiais
+              Detalhes das Taxas
             </CardTitle>
-            <CardDescription>
-              Consulte todas as suas taxas condominiais
-            </CardDescription>
+            <CardDescription>Consulte as suas dívidas, pagamentos e métodos utilizados.</CardDescription>
           </CardHeader>
           <CardContent>
-            {fees.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Receipt className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhuma taxa registrada.</p>
-                <p className="text-sm mt-2">As taxas serão exibidas aqui quando disponíveis.</p>
-              </div>
-            ) : (
-              <>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Referência</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Vencimento</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {displayedFees.map((fee) => (
-                      <TableRow key={fee.id}>
-                        <TableCell className="font-medium">
-                          {getMonthName(fee.reference_month)} / {fee.reference_year}
-                        </TableCell>
-                        <TableCell>{formatCurrency(Number(fee.amount))}</TableCell>
-                        <TableCell>
-                          {format(new Date(fee.due_date), "dd/MM/yyyy")}
-                        </TableCell>
-                        <TableCell>
-                          <span className={cn(
-                            "px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit",
-                            getStatusStyles(fee.status)
-                          )}>
-                            {getStatusIcon(fee.status)}
-                            {getStatusLabel(fee.status)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setSelectedFee(fee)}
-                            >
-                              Detalhes
-                            </Button>
-                            {fee.status !== "paid" && fee.status !== "pending_verification" && (
-                              <Button 
-                                size="sm"
-                                onClick={() => {
-                                  setPaymentFee(fee);
-                                  setPaymentDialogOpen(true);
-                                }}
-                              >
-                                Pagar
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+            <Tabs defaultValue="dividas" className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="dividas">Dívidas</TabsTrigger>
+                <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
+                <TabsTrigger value="metodos">Métodos</TabsTrigger>
+                <TabsTrigger value="todas">Histórico Completo</TabsTrigger>
+              </TabsList>
 
-                {fees.length > 6 && (
-                  <Button 
-                    variant="outline" 
-                    className="w-full mt-4"
-                    onClick={() => setShowAllFees(!showAllFees)}
-                  >
-                    {showAllFees ? "Ver menos" : `Ver todas as ${fees.length} taxas`}
-                  </Button>
+              {/* Dívidas em aberto */}
+              <TabsContent value="dividas">
+                {dividas.length === 0 ? (
+                  <p className="text-center py-8 text-muted-foreground text-sm">Sem dívidas no sistema. 🎉</p>
+                ) : (
+                  <Table>
+                    <TableHeader><TableRow>
+                      <TableHead>Referência</TableHead><TableHead>Valor</TableHead>
+                      <TableHead>Pago</TableHead><TableHead>Em Dívida</TableHead>
+                      <TableHead>Vencimento</TableHead><TableHead>Status</TableHead><TableHead>Ação</TableHead>
+                    </TableRow></TableHeader>
+                    <TableBody>
+                      {dividas.map(f => (
+                        <TableRow key={f.id}>
+                          <TableCell className="font-medium">{MONTHS[f.reference_month]}/{f.reference_year}</TableCell>
+                          <TableCell>{formatCurrency(Number(f.amount))}</TableCell>
+                          <TableCell className="text-green-700">{formatCurrency(Number(f.valor_pago || 0))}</TableCell>
+                          <TableCell className="text-red-700 font-semibold">{formatCurrency(f.divida)}</TableCell>
+                          <TableCell>{format(new Date(f.due_date), "dd/MM/yyyy")}</TableCell>
+                          <TableCell>{statusBadge(f.status)}</TableCell>
+                          <TableCell>
+                            {f.status !== "pending_verification" && (
+                              <Button size="sm" onClick={() => { setPaymentFee(f); setPaymentDialogOpen(true); }}>Pagar</Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 )}
-              </>
-            )}
+              </TabsContent>
+
+              {/* Pagamentos realizados */}
+              <TabsContent value="pagamentos">
+                {pagas.length === 0 ? (
+                  <p className="text-center py-8 text-muted-foreground text-sm">Sem pagamentos registados.</p>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground mb-3">Total pago: <span className="font-bold text-foreground">{formatCurrency(totalPago)}</span></p>
+                    <Table>
+                      <TableHeader><TableRow>
+                        <TableHead>Referência</TableHead><TableHead>Valor</TableHead>
+                        <TableHead>Data</TableHead><TableHead>Método</TableHead>
+                      </TableRow></TableHeader>
+                      <TableBody>
+                        {pagas.map(f => (
+                          <TableRow key={f.id}>
+                            <TableCell className="font-medium">{MONTHS[f.reference_month]}/{f.reference_year}</TableCell>
+                            <TableCell>{formatCurrency(Number(f.amount))}</TableCell>
+                            <TableCell>{f.paid_at ? format(new Date(f.paid_at), "dd/MM/yyyy HH:mm") : "—"}</TableCell>
+                            <TableCell>{methodLabel(f.payment_method)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </>
+                )}
+              </TabsContent>
+
+              {/* Métodos de pagamento */}
+              <TabsContent value="metodos">
+                {metodosUsados.length === 0 ? (
+                  <p className="text-center py-8 text-muted-foreground text-sm">Ainda não utilizou nenhum método.</p>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {metodosUsados.map(m => {
+                      const count = pagas.filter(p => p.payment_method === m).length;
+                      const total = pagas.filter(p => p.payment_method === m).reduce((s, p) => s + Number(p.amount || 0), 0);
+                      return (
+                        <Card key={m}>
+                          <CardContent className="p-4">
+                            <p className="font-semibold">{methodLabel(m)}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{count} pagamento(s)</p>
+                            <p className="text-sm font-bold text-primary mt-2">{formatCurrency(total)}</p>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Histórico completo */}
+              <TabsContent value="todas">
+                {fees.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Receipt className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Nenhuma taxa registrada.</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader><TableRow>
+                      <TableHead>Referência</TableHead><TableHead>Valor</TableHead>
+                      <TableHead>Pago</TableHead><TableHead>Vencimento</TableHead>
+                      <TableHead>Status</TableHead><TableHead>Método</TableHead>
+                    </TableRow></TableHeader>
+                    <TableBody>
+                      {fees.map(f => (
+                        <TableRow key={f.id}>
+                          <TableCell className="font-medium">{MONTHS[f.reference_month]}/{f.reference_year}</TableCell>
+                          <TableCell>{formatCurrency(Number(f.amount))}</TableCell>
+                          <TableCell>{formatCurrency(Number(f.valor_pago || 0))}</TableCell>
+                          <TableCell>{format(new Date(f.due_date), "dd/MM/yyyy")}</TableCell>
+                          <TableCell>{statusBadge(f.status)}</TableCell>
+                          <TableCell>{methodLabel(f.payment_method)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
 
-      {/* Fee Detail Dialog */}
-      <Dialog open={!!selectedFee} onOpenChange={() => setSelectedFee(null)}>
-        <DialogContent className="sm:max-w-[500px]">
-          {selectedFee && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Receipt className="w-5 h-5 text-primary" />
-                  Detalhes da Taxa
-                </DialogTitle>
-                <DialogDescription>
-                  {getMonthName(selectedFee.reference_month)} de {selectedFee.reference_year}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Valor</p>
-                    <p className="text-xl font-bold">{formatCurrency(Number(selectedFee.amount))}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Status</p>
-                    <span className={cn(
-                      "px-3 py-1 rounded-full text-sm font-medium inline-flex items-center gap-1",
-                      getStatusStyles(selectedFee.status)
-                    )}>
-                      {getStatusIcon(selectedFee.status)}
-                      {getStatusLabel(selectedFee.status)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    Data de Vencimento
-                  </p>
-                  <p className="font-medium">
-                    {format(new Date(selectedFee.due_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                  </p>
-                </div>
-
-                {selectedFee.paid_at && (
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                      Data do Pagamento
-                    </p>
-                    <p className="font-medium text-green-600 dark:text-green-400">
-                      {format(new Date(selectedFee.paid_at), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
-                    </p>
-                  </div>
-                )}
-
-                {selectedFee.payment_method && (
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Método de Pagamento</p>
-                    <p className="font-medium">{selectedFee.payment_method}</p>
-                  </div>
-                )}
-
-                {selectedFee.status !== "paid" && selectedFee.status !== "pending_verification" && (
-                  <Button 
-                    className="w-full mt-4"
-                    onClick={() => {
-                      setPaymentFee(selectedFee);
-                      setPaymentDialogOpen(true);
-                      setSelectedFee(null);
-                    }}
-                  >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Pagar Agora
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
       <PaymentDialog
         fee={paymentFee}
         open={paymentDialogOpen}
         onOpenChange={setPaymentDialogOpen}
-        onPaymentSuccess={fetchFees}
+        onPaymentSuccess={fetchAll}
       />
     </>
   );
