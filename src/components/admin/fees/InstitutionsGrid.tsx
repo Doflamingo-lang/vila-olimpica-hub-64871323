@@ -69,10 +69,11 @@ const StatusBadge = ({ s }: { s: string }) => {
   return <Badge variant="outline" className={cn("font-medium", map[s] || map.pending)}>{label}</Badge>;
 };
 
-const FeeRow = memo(({ fee, onPay, onHistory }: {
+const FeeRow = memo(({ fee, onPay, onHistory, onEdit }: {
   fee: Fee;
   onPay: (f: Fee) => void;
   onHistory: (f: Fee) => void;
+  onEdit: (f: Fee) => void;
 }) => {
   const saldo = Math.max(0, Number(fee.valor) - Number(fee.valor_pago));
   return (
@@ -89,6 +90,9 @@ const FeeRow = memo(({ fee, onPay, onHistory }: {
       <TableCell><StatusBadge s={fee.status} /></TableCell>
       <TableCell>
         <div className="flex gap-1 justify-end">
+          <Button size="sm" variant="outline" onClick={() => onEdit(fee)} className="h-8" title="Editar taxa/apartamentos">
+            <Pencil className="w-3.5 h-3.5" />
+          </Button>
           <Button size="sm" variant="outline" onClick={() => onHistory(fee)} className="h-8">
             <History className="w-3.5 h-3.5" />
           </Button>
