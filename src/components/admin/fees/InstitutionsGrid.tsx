@@ -383,7 +383,7 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
               {filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Sem registos</TableCell></TableRow>
               ) : filtered.map((f) => (
-                <FeeRow key={f.id} fee={f} onPay={openPay} onHistory={openHistory} />
+                <FeeRow key={f.id} fee={f} onPay={openPay} onHistory={openHistory} onEdit={openEdit} />
               ))}
             </TableBody>
           </Table>
