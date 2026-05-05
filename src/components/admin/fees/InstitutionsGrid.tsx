@@ -97,7 +97,7 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
   const [addYear, setAddYear] = useState(String(new Date().getFullYear()));
   const [addMonth, setAddMonth] = useState("1");
   const [addDesc, setAddDesc] = useState("Taxa de condomínio");
-  const [addTaxa, setAddTaxa] = useState("1000");
+  const [addTaxa, setAddTaxa] = useState(String(TAXA_MENSAL_BY_INSTITUTION[institution] ?? 1000));
   const [addNApt, setAddNApt] = useState("1");
   const [adding, setAdding] = useState(false);
 
