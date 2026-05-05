@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Users, Search, Loader2, UserX, UserCheck } from "lucide-react";
+import { Users, Search, Loader2, UserX, UserCheck, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -27,8 +27,15 @@ const ResidentsManagement = () => {
   const [residents, setResidents] = useState<ApprovedResident[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [confirmTarget, setConfirmTarget] = useState<{ resident: ApprovedResident; action: "deactivate" | "reactivate" } | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{ resident: ApprovedResident; action: "deactivate" | "reactivate" | "remove" } | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
+
+  const moradorId = (r: ApprovedResident) => {
+    const b = String(r.block || "").replace(/\D/g, "");
+    const e = String(r.building || "").replace(/\D/g, "");
+    const a = String(r.apartment || "").replace(/\D/g, "");
+    return `${parseInt(b || "0", 10)}${parseInt(e || "0", 10)}${parseInt(a || "0", 10)}`;
+  };
 
   useEffect(() => {
     fetchResidents();
@@ -51,13 +58,16 @@ const ResidentsManagement = () => {
   };
 
   const filtered = residents.filter((r) => {
-    const term = searchTerm.toLowerCase();
+    const term = searchTerm.toLowerCase().trim();
+    if (!term) return true;
     return (
       r.full_name.toLowerCase().includes(term) ||
       r.email.toLowerCase().includes(term) ||
+      (r.phone || "").toLowerCase().includes(term) ||
       r.block.toLowerCase().includes(term) ||
       r.building.toLowerCase().includes(term) ||
-      r.apartment.toLowerCase().includes(term)
+      r.apartment.toLowerCase().includes(term) ||
+      moradorId(r).includes(term.replace(/\D/g, ""))
     );
   });
 
@@ -66,11 +76,17 @@ const ResidentsManagement = () => {
     const { resident, action } = confirmTarget;
     setProcessingId(resident.id);
     try {
-      const { data, error } = await supabase.functions.invoke("toggle-resident-status", {
-        body: { request_id: resident.id, action },
-      });
-      if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
-      toast.success(action === "deactivate" ? "Morador desativado com sucesso" : "Morador reativado com sucesso");
+      if (action === "remove") {
+        const { error } = await supabase.from("access_requests").delete().eq("id", resident.id);
+        if (error) throw error;
+        toast.success("Morador removido com sucesso");
+      } else {
+        const { data, error } = await supabase.functions.invoke("toggle-resident-status", {
+          body: { request_id: resident.id, action },
+        });
+        if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
+        toast.success(action === "deactivate" ? "Morador desativado com sucesso" : "Morador reativado com sucesso");
+      }
       setConfirmTarget(null);
       await fetchResidents();
     } catch (e: any) {
@@ -129,9 +145,10 @@ const ResidentsManagement = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nome Completo</TableHead>
+                    <TableHead>ID Morador</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Contacto</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Telefone</TableHead>
                     <TableHead>Bloco</TableHead>
                     <TableHead>Edifício</TableHead>
                     <TableHead>Apartamento</TableHead>
@@ -146,9 +163,10 @@ const ResidentsManagement = () => {
                     const isInactive = resident.status === "deactivated";
                     return (
                       <TableRow key={resident.id} className={isInactive ? "opacity-60" : ""}>
+                        <TableCell className="font-mono font-semibold text-primary">{moradorId(resident)}</TableCell>
                         <TableCell className="font-medium">{resident.full_name}</TableCell>
-                        <TableCell>{resident.email}</TableCell>
                         <TableCell>{resident.phone}</TableCell>
+                        <TableCell>{resident.email}</TableCell>
                         <TableCell>{resident.block}</TableCell>
                         <TableCell>{resident.building}</TableCell>
                         <TableCell>{resident.apartment}</TableCell>
@@ -169,27 +187,38 @@ const ResidentsManagement = () => {
                           {format(new Date(resident.created_at), "dd/MM/yyyy")}
                         </TableCell>
                         <TableCell className="text-right">
-                          {isInactive ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={processingId === resident.id}
-                              onClick={() => setConfirmTarget({ resident, action: "reactivate" })}
-                            >
-                              <UserCheck className="w-4 h-4 mr-1" />
-                              Reativar
-                            </Button>
-                          ) : (
+                          <div className="flex items-center justify-end gap-2">
+                            {isInactive ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={processingId === resident.id}
+                                onClick={() => setConfirmTarget({ resident, action: "reactivate" })}
+                              >
+                                <UserCheck className="w-4 h-4 mr-1" />
+                                Reativar
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={processingId === resident.id}
+                                onClick={() => setConfirmTarget({ resident, action: "deactivate" })}
+                              >
+                                <UserX className="w-4 h-4 mr-1" />
+                                Desativar
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="destructive"
                               disabled={processingId === resident.id}
-                              onClick={() => setConfirmTarget({ resident, action: "deactivate" })}
+                              onClick={() => setConfirmTarget({ resident, action: "remove" })}
                             >
-                              <UserX className="w-4 h-4 mr-1" />
-                              Desativar
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Remover
                             </Button>
-                          )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -205,17 +234,16 @@ const ResidentsManagement = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmTarget?.action === "deactivate" ? "Desativar morador?" : "Reativar morador?"}
+              {confirmTarget?.action === "deactivate" ? "Desativar morador?" :
+               confirmTarget?.action === "reactivate" ? "Reativar morador?" : "Remover morador?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmTarget?.action === "deactivate" ? (
-                <>
-                  Tem certeza que deseja desativar <strong>{confirmTarget?.resident.full_name}</strong>? O morador deixará de poder iniciar sessão no sistema. Os dados são preservados e poderá reativar a qualquer momento.
-                </>
+                <>Tem certeza que deseja desativar <strong>{confirmTarget?.resident.full_name}</strong>? O morador deixará de poder iniciar sessão. Os dados são preservados.</>
+              ) : confirmTarget?.action === "reactivate" ? (
+                <>Reativar <strong>{confirmTarget?.resident.full_name}</strong>? O morador voltará a poder aceder ao sistema.</>
               ) : (
-                <>
-                  Reativar <strong>{confirmTarget?.resident.full_name}</strong>? O morador voltará a poder aceder ao sistema com as credenciais existentes.
-                </>
+                <>Esta ação <strong>removerá permanentemente</strong> o registo de <strong>{confirmTarget?.resident.full_name}</strong>. Esta operação não pode ser revertida.</>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>

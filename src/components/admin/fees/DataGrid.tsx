@@ -389,15 +389,10 @@ const DataGrid = () => {
         <div className="flex-1" />
 
         {activeTab !== "total_colectado" && (
-          <>
-            <Button variant="outline" size="sm" onClick={() => setGerarOpen(true)}>
-              Gerar Taxas
-            </Button>
-            <Button size="sm" onClick={() => setAddOpen(true)}>
-              <Plus className="w-4 h-4 mr-1" />
-              Nova Unidade
-            </Button>
-          </>
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" />
+            Nova Unidade
+          </Button>
         )}
       </div>
 
