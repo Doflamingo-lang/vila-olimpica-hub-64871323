@@ -147,6 +147,7 @@ const FpdDataGrid = () => {
           status: mapFeeStatus(t.status, valor, valorPago),
           due_date: t.due_date, receipt_url: t.receipt_url,
           payment_method: t.payment_method,
+          data_pagamento: t.paid_at,
         };
       });
 
