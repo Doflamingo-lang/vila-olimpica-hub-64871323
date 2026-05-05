@@ -149,7 +149,7 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
   const years = useMemo(() => {
     const s = new Set(fees.map((f) => f.reference_year));
     const cur = new Date().getFullYear();
-    s.add(cur);
+    for (let y = cur - 10; y <= cur + 30; y++) s.add(y);
     return Array.from(s).sort((a, b) => a - b);
   }, [fees]);
 

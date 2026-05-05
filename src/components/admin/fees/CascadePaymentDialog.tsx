@@ -77,7 +77,7 @@ const CascadePaymentDialog = ({
   const anosDisponiveis = useMemo(() => {
     const set = new Set<number>();
     const y = new Date().getFullYear();
-    for (let i = y - 5; i <= y + 1; i++) set.add(i);
+    for (let i = y - 10; i <= y + 30; i++) set.add(i);
     taxasInquilino.forEach((t) => set.add(t.ano_referencia));
     return Array.from(set).sort((a, b) => b - a);
   }, [taxasInquilino]);

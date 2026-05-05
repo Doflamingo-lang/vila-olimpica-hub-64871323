@@ -173,7 +173,8 @@ const DataGrid = () => {
 
   const anosDisponiveis = useMemo(() => {
     const set = new Set<number>(availableYears);
-    set.add(new Date().getFullYear());
+    const cur = new Date().getFullYear();
+    for (let y = cur - 10; y <= cur + 30; y++) set.add(y);
     return [...set].sort((a, b) => b - a);
   }, [availableYears]);
 
