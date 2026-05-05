@@ -23,12 +23,18 @@ import InstitutionsDashboard from "./InstitutionsDashboard";
 import { generateReceiptPdf, downloadBlob } from "@/lib/paymentReceipt";
 
 const DEFAULT_INSTITUTIONS = [
-  { key: "FDP", label: "FDP", desc: "Fundo de Desenvolvimento para a Paz" },
-  { key: "UP", label: "UP", desc: "Universidade Pedagógica" },
-  { key: "Bolsa de Mercadorias", label: "Bolsa de Mercadorias", desc: "Bolsa de Mercadorias de Moçambique" },
-  { key: "CNBB", label: "CNBB", desc: "Centro Nacional de Biotecnologia e Biociências" },
-  { key: "IIA", label: "IIA", desc: "Instituto de Investigação em Águas" },
+  { key: "FDP", label: "FDP", desc: "Fundo de Desenvolvimento para a Paz", taxaMensal: 80000 },
+  { key: "UP", label: "UP", desc: "Universidade Pedagógica", taxaMensal: 8000 },
+  { key: "Bolsa de Mercadorias", label: "Bolsa de Mercadorias", desc: "Bolsa de Mercadorias de Moçambique", taxaMensal: 5000 },
+  { key: "CNBB", label: "CNBB", desc: "Centro Nacional de Biotecnologia e Biociências", taxaMensal: 4000 },
+  { key: "IIA", label: "IIA", desc: "Instituto de Investigação em Águas", taxaMensal: 3000 },
+  { key: "Fundo da Paz", label: "Fundo da Paz", desc: "Fundo da Paz", taxaMensal: 4000 },
 ];
+
+const TAXA_MENSAL_BY_INSTITUTION: Record<string, number> = DEFAULT_INSTITUTIONS.reduce(
+  (acc, i) => ({ ...acc, [i.key]: i.taxaMensal }),
+  {} as Record<string, number>
+);
 
 const CUSTOM_KEY = "vo_custom_institutions";
 const loadCustom = (): { key: string; label: string; desc: string }[] => {
