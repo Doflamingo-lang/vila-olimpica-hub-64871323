@@ -16,8 +16,11 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Wallet, History, CheckCircle2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, Wallet, History, CheckCircle2, Pencil, FileDown, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
+import InstitutionsDashboard from "./InstitutionsDashboard";
+import { generateReceiptPdf, downloadBlob } from "@/lib/paymentReceipt";
 
 const INSTITUTIONS = [
   { key: "FDP", label: "FDP", desc: "Fundo de Desenvolvimento para a Paz" },
@@ -66,10 +69,11 @@ const StatusBadge = ({ s }: { s: string }) => {
   return <Badge variant="outline" className={cn("font-medium", map[s] || map.pending)}>{label}</Badge>;
 };
 
-const FeeRow = memo(({ fee, onPay, onHistory }: {
+const FeeRow = memo(({ fee, onPay, onHistory, onEdit }: {
   fee: Fee;
   onPay: (f: Fee) => void;
   onHistory: (f: Fee) => void;
+  onEdit: (f: Fee) => void;
 }) => {
   const saldo = Math.max(0, Number(fee.valor) - Number(fee.valor_pago));
   return (
@@ -86,6 +90,9 @@ const FeeRow = memo(({ fee, onPay, onHistory }: {
       <TableCell><StatusBadge s={fee.status} /></TableCell>
       <TableCell>
         <div className="flex gap-1 justify-end">
+          <Button size="sm" variant="outline" onClick={() => onEdit(fee)} className="h-8" title="Editar taxa/apartamentos">
+            <Pencil className="w-3.5 h-3.5" />
+          </Button>
           <Button size="sm" variant="outline" onClick={() => onHistory(fee)} className="h-8">
             <History className="w-3.5 h-3.5" />
           </Button>
@@ -124,6 +131,13 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
   const [histTarget, setHistTarget] = useState<Fee | null>(null);
   const [history, setHistory] = useState<Payment[]>([]);
   const [histLoading, setHistLoading] = useState(false);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Fee | null>(null);
+  const [editTaxa, setEditTaxa] = useState("");
+  const [editNApt, setEditNApt] = useState("");
+  const [editValorPago, setEditValorPago] = useState("");
+  const [editing, setEditing] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -223,9 +237,10 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
       ? { ...f, valor_pago: newPaid, status: newStatus, payment_method: payMethod }
       : f));
     setPayOpen(false);
+    await generateInstitutionReceipt(payTarget, amount, payMethod, payDate);
     toast({
       title: newStatus === "paid" ? "Pagamento total registado" : "Pagamento parcial registado",
-      description: `Mês ${payTarget.period_label} · Saldo restante: ${fmtMZN(Math.max(0, Number(payTarget.valor) - newPaid))}`,
+      description: `Recibo PDF gerado · Saldo restante: ${fmtMZN(Math.max(0, Number(payTarget.valor) - newPaid))}`,
     });
   };
 
@@ -243,6 +258,62 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       setHistory((data || []) as Payment[]);
+    }
+  };
+
+  const openEdit = (f: Fee) => {
+    setEditTarget(f);
+    setEditTaxa(String(f.taxa));
+    setEditNApt(String(f.n_apartamentos));
+    setEditValorPago(String(f.valor_pago));
+    setEditOpen(true);
+  };
+
+  const submitEdit = async () => {
+    if (!editTarget) return;
+    const taxa = Number(editTaxa);
+    const nApt = Number(editNApt);
+    const vPago = Number(editValorPago);
+    if (taxa < 0 || nApt < 0 || vPago < 0) {
+      toast({ title: "Valores inválidos", variant: "destructive" });
+      return;
+    }
+    setEditing(true);
+    const novoValor = taxa * nApt;
+    const novoStatus = vPago >= novoValor - 0.01 && novoValor > 0 ? "paid" : vPago > 0 ? "partial" : "pending";
+    const { error } = await supabase
+      .from("institution_fees")
+      .update({ taxa, n_apartamentos: nApt, valor: novoValor, valor_pago: vPago, status: novoStatus })
+      .eq("id", editTarget.id);
+    setEditing(false);
+    if (error) {
+      toast({ title: "Erro ao editar", description: error.message, variant: "destructive" });
+      return;
+    }
+    setFees((prev) => prev.map((f) => f.id === editTarget.id
+      ? { ...f, taxa, n_apartamentos: nApt, valor: novoValor, valor_pago: vPago, status: novoStatus }
+      : f));
+    setEditOpen(false);
+    toast({ title: "Registo atualizado" });
+  };
+
+  const generateInstitutionReceipt = async (fee: Fee, amount: number, method: string, dateStr: string) => {
+    try {
+      const receiptNumber = `REC-INST-${fee.id.slice(0, 8).toUpperCase()}`;
+      const pdf = await generateReceiptPdf({
+        receiptNumber,
+        system: "FFH",
+        residentName: fee.institution,
+        residentId: fee.institution,
+        allocations: [{ period: fee.period_label, amount }],
+        totalPago: amount,
+        paymentMethod: method,
+        paymentDate: new Date(dateStr),
+        saldoRemanescente: Math.max(0, Number(fee.valor) - Number(fee.valor_pago) - amount),
+      });
+      downloadBlob(pdf, `${receiptNumber}.pdf`);
+    } catch (e: any) {
+      toast({ title: "Aviso", description: "Pagamento ok, mas falhou gerar PDF.", variant: "destructive" });
     }
   };
 
@@ -313,7 +384,7 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
               {filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Sem registos</TableCell></TableRow>
               ) : filtered.map((f) => (
-                <FeeRow key={f.id} fee={f} onPay={openPay} onHistory={openHistory} />
+                <FeeRow key={f.id} fee={f} onPay={openPay} onHistory={openHistory} onEdit={openEdit} />
               ))}
             </TableBody>
           </Table>
@@ -449,19 +520,76 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5 text-primary" /> Editar Registo
+            </DialogTitle>
+            <DialogDescription>
+              {editTarget && <>{editTarget.institution} · {editTarget.period_label}</>}
+            </DialogDescription>
+          </DialogHeader>
+          {editTarget && (
+            <div className="space-y-3">
+              <div>
+                <Label>Taxa mensal por apartamento (MZN)</Label>
+                <Input type="number" min="0" step="0.01" value={editTaxa} onChange={(e) => setEditTaxa(e.target.value)} />
+              </div>
+              <div>
+                <Label>Nº de apartamentos</Label>
+                <Input type="number" min="0" step="1" value={editNApt} onChange={(e) => setEditNApt(e.target.value)} />
+              </div>
+              <div>
+                <Label>Dívida acumulada / Valor já pago (MZN)</Label>
+                <Input type="number" min="0" step="0.01" value={editValorPago} onChange={(e) => setEditValorPago(e.target.value)} />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Ajuste manual: representa o que já foi pago (saldo = taxa × nº apt − valor pago).
+                </p>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3 text-sm">
+                <div className="flex justify-between">
+                  <span>Novo valor total:</span>
+                  <span className="font-semibold">{fmtMZN(Number(editTaxa) * Number(editNApt))}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Novo saldo:</span>
+                  <span className="font-bold text-red-700">
+                    {fmtMZN(Math.max(0, Number(editTaxa) * Number(editNApt) - Number(editValorPago)))}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={editing}>Cancelar</Button>
+            <Button onClick={submitEdit} disabled={editing}>
+              {editing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 const InstitutionsGrid = () => {
-  const [active, setActive] = useState<string>(INSTITUTIONS[0].key);
-  const mountedRef = useRef<Set<string>>(new Set([INSTITUTIONS[0].key]));
+  const [active, setActive] = useState<string>("__dashboard");
+  const mountedRef = useRef<Set<string>>(new Set(["__dashboard"]));
   if (!mountedRef.current.has(active)) mountedRef.current.add(active);
 
   return (
     <div className="space-y-4">
       <Tabs value={active} onValueChange={setActive}>
         <TabsList className="flex flex-wrap h-auto gap-1 bg-muted p-1">
+          <TabsTrigger
+            value="__dashboard"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            <LayoutDashboard className="w-4 h-4 mr-1" /> Dashboard
+          </TabsTrigger>
           {INSTITUTIONS.map((i) => (
             <TabsTrigger
               key={i.key}
@@ -473,6 +601,10 @@ const InstitutionsGrid = () => {
             </TabsTrigger>
           ))}
         </TabsList>
+
+        <TabsContent value="__dashboard" className="mt-4" forceMount={mountedRef.current.has("__dashboard") ? true : undefined} hidden={active !== "__dashboard"}>
+          {mountedRef.current.has("__dashboard") && <InstitutionsDashboard />}
+        </TabsContent>
 
         {INSTITUTIONS.map((i) => (
           <TabsContent key={i.key} value={i.key} className="mt-4 space-y-2" forceMount={mountedRef.current.has(i.key) ? true : undefined} hidden={active !== i.key}>
