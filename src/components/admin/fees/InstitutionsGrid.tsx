@@ -260,6 +260,62 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
     }
   };
 
+  const openEdit = (f: Fee) => {
+    setEditTarget(f);
+    setEditTaxa(String(f.taxa));
+    setEditNApt(String(f.n_apartamentos));
+    setEditValorPago(String(f.valor_pago));
+    setEditOpen(true);
+  };
+
+  const submitEdit = async () => {
+    if (!editTarget) return;
+    const taxa = Number(editTaxa);
+    const nApt = Number(editNApt);
+    const vPago = Number(editValorPago);
+    if (taxa < 0 || nApt < 0 || vPago < 0) {
+      toast({ title: "Valores inválidos", variant: "destructive" });
+      return;
+    }
+    setEditing(true);
+    const novoValor = taxa * nApt;
+    const novoStatus = vPago >= novoValor - 0.01 && novoValor > 0 ? "paid" : vPago > 0 ? "partial" : "pending";
+    const { error } = await supabase
+      .from("institution_fees")
+      .update({ taxa, n_apartamentos: nApt, valor: novoValor, valor_pago: vPago, status: novoStatus })
+      .eq("id", editTarget.id);
+    setEditing(false);
+    if (error) {
+      toast({ title: "Erro ao editar", description: error.message, variant: "destructive" });
+      return;
+    }
+    setFees((prev) => prev.map((f) => f.id === editTarget.id
+      ? { ...f, taxa, n_apartamentos: nApt, valor: novoValor, valor_pago: vPago, status: novoStatus }
+      : f));
+    setEditOpen(false);
+    toast({ title: "Registo atualizado" });
+  };
+
+  const generateInstitutionReceipt = async (fee: Fee, amount: number, method: string, dateStr: string) => {
+    try {
+      const receiptNumber = `REC-INST-${fee.id.slice(0, 8).toUpperCase()}`;
+      const pdf = await generateReceiptPdf({
+        receiptNumber,
+        system: "FFH",
+        residentName: fee.institution,
+        residentId: fee.institution,
+        allocations: [{ period: fee.period_label, amount }],
+        totalPago: amount,
+        paymentMethod: method,
+        paymentDate: new Date(dateStr),
+        saldoRemanescente: Math.max(0, Number(fee.valor) - Number(fee.valor_pago) - amount),
+      });
+      downloadBlob(pdf, `${receiptNumber}.pdf`);
+    } catch (e: any) {
+      toast({ title: "Aviso", description: "Pagamento ok, mas falhou gerar PDF.", variant: "destructive" });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
