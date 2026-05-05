@@ -520,6 +520,57 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5 text-primary" /> Editar Registo
+            </DialogTitle>
+            <DialogDescription>
+              {editTarget && <>{editTarget.institution} · {editTarget.period_label}</>}
+            </DialogDescription>
+          </DialogHeader>
+          {editTarget && (
+            <div className="space-y-3">
+              <div>
+                <Label>Taxa mensal por apartamento (MZN)</Label>
+                <Input type="number" min="0" step="0.01" value={editTaxa} onChange={(e) => setEditTaxa(e.target.value)} />
+              </div>
+              <div>
+                <Label>Nº de apartamentos</Label>
+                <Input type="number" min="0" step="1" value={editNApt} onChange={(e) => setEditNApt(e.target.value)} />
+              </div>
+              <div>
+                <Label>Dívida acumulada / Valor já pago (MZN)</Label>
+                <Input type="number" min="0" step="0.01" value={editValorPago} onChange={(e) => setEditValorPago(e.target.value)} />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Ajuste manual: representa o que já foi pago (saldo = taxa × nº apt − valor pago).
+                </p>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3 text-sm">
+                <div className="flex justify-between">
+                  <span>Novo valor total:</span>
+                  <span className="font-semibold">{fmtMZN(Number(editTaxa) * Number(editNApt))}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Novo saldo:</span>
+                  <span className="font-bold text-red-700">
+                    {fmtMZN(Math.max(0, Number(editTaxa) * Number(editNApt) - Number(editValorPago)))}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={editing}>Cancelar</Button>
+            <Button onClick={submitEdit} disabled={editing}>
+              {editing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
