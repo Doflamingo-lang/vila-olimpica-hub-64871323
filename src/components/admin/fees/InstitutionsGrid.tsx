@@ -386,6 +386,41 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
     toast({ title: "Registo atualizado" });
   };
 
+  const handleDelete = async (f: Fee) => {
+    if (!confirm(`Eliminar o registo de ${f.period_label}? Os pagamentos associados também serão removidos.`)) return;
+    const { error: pErr } = await supabase.from("institution_payments").delete().eq("fee_id", f.id);
+    if (pErr) { toast({ title: "Erro", description: pErr.message, variant: "destructive" }); return; }
+    const { error } = await supabase.from("institution_fees").delete().eq("id", f.id);
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    setFees((prev) => prev.filter((x) => x.id !== f.id));
+    toast({ title: "Registo eliminado" });
+  };
+
+  const handlePrintLastReceipt = async (f: Fee) => {
+    const { data, error } = await supabase
+      .from("institution_payments")
+      .select("id,amount,payment_method,payment_date")
+      .eq("fee_id", f.id)
+      .order("payment_date", { ascending: false })
+      .limit(1);
+    if (error || !data || data.length === 0) {
+      toast({ title: "Sem pagamentos", description: "Este registo ainda não tem pagamentos.", variant: "destructive" });
+      return;
+    }
+    const p = data[0];
+    const receiptNumber = `REC-INST-${p.id.slice(0, 8).toUpperCase()}`;
+    const pdf = await generateReceiptPdf({
+      receiptNumber, system: "FFH",
+      residentName: f.institution, residentId: f.institution,
+      allocations: [{ period: f.period_label, amount: Number(p.amount) }],
+      totalPago: Number(p.amount),
+      paymentMethod: p.payment_method,
+      paymentDate: new Date(p.payment_date),
+      saldoRemanescente: Math.max(0, Number(f.valor) - Number(f.valor_pago)),
+    });
+    downloadBlob(pdf, `${receiptNumber}.pdf`);
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   }
