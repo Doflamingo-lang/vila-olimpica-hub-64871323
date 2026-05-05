@@ -34,12 +34,37 @@ const PAGE_INCREMENT = 100;
 
 const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"todos" | "em_dia" | "em_atraso">("todos");
   const [paymentUnidade, setPaymentUnidade] = useState<Unidade | null>(null);
   const [editUnidade, setEditUnidade] = useState<Unidade | null>(null);
   const [historyUnidade, setHistoryUnidade] = useState<Unidade | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_INCREMENT);
+
+  const handlePrintReceipt = useCallback(async (unidade: Unidade, system: "FFH" | "FDP" = "FFH") => {
+    const ts = (taxas || []).filter((t) => t.unidade_id === unidade.id && t.valor_pago > 0)
+      .sort((a, b) => (b.ano_referencia - a.ano_referencia) || (b.mes_referencia - a.mes_referencia));
+    if (ts.length === 0) {
+      toast({ title: "Sem pagamentos", description: "Esta unidade ainda não tem pagamentos registados.", variant: "destructive" });
+      return;
+    }
+    const last = ts[0];
+    const receiptNumber = `REC-${system}-${last.id.slice(0, 8).toUpperCase()}`;
+    const pdf = await generateReceiptPdf({
+      receiptNumber,
+      system,
+      residentName: unidade.nome,
+      residentId: `${unidade.bloco}-${unidade.edificio}-${unidade.apartamento}`,
+      contacto: unidade.contacto,
+      allocations: [{ period: `${MESES_LABELS[last.mes_referencia]}/${last.ano_referencia}`, amount: last.valor_pago }],
+      totalPago: last.valor_pago,
+      paymentMethod: last.payment_method || "—",
+      paymentDate: last.data_pagamento ? new Date(last.data_pagamento) : new Date(),
+      saldoRemanescente: Math.max(0, last.valor - last.valor_pago),
+    });
+    downloadBlob(pdf, `${receiptNumber}.pdf`);
+  }, [taxas, toast]);
 
   const taxasPorUnidade = useMemo(() => {
     const map: Record<string, Taxa[]> = {};
