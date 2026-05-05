@@ -104,7 +104,8 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
 
   // Multi-month payment
   const [payOpen, setPayOpen] = useState(false);
-  const [payYear, setPayYear] = useState(String(new Date().getFullYear()));
+  const [payYear, setPayYear] = useState<string>("all");
+  const [payMonth, setPayMonth] = useState<string>("all");
   const [paySelected, setPaySelected] = useState<Set<string>>(new Set());
   const [payMethod, setPayMethod] = useState("M-Pesa");
   const [payRef, setPayRef] = useState("");
