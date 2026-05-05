@@ -123,6 +123,7 @@ const DataGrid = () => {
         divida_inicial: Number(u.divida_inicial ?? 0),
         divida_anterior: Number(u.divida_anterior ?? u.divida_inicial ?? 0),
         pagamentos_historicos: Number(u.pagamentos_historicos ?? 0),
+        user_id: u.user_id ?? null,
       }));
 
       const mappedTaxas: Taxa[] = taxasData.map((t: any) => {
