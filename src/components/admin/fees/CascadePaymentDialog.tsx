@@ -3,11 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Receipt, Download, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MESES_LABELS, formatCurrency, calcStatus, PaymentStatus } from "./types";
+import { MESES_LABELS, MESES_SHORT, formatCurrency, calcStatus, PaymentStatus } from "./types";
 import { PAYMENT_METHODS } from "./PaymentDialog";
 import { generateReceiptPdf, sendReceiptToResident, downloadBlob } from "@/lib/paymentReceipt";
 
@@ -24,29 +25,20 @@ export interface CascadeTaxa {
 interface CascadePaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Sistema (FFH ou FDP) */
   system: "FFH" | "FDP";
-  /** Tabela alvo */
   table: "condominium_fees" | "fpd_fees";
-  /** Tabela de unidades */
   unidadesTable: "unidades" | "fpd_unidades";
-  /** Unidade do morador */
   unidade: {
     id: string;
     nome: string;
     contacto?: string;
-    /** ID legível (ex.: "1-2-3" ou "Apt 12") */
     idLegivel: string;
-    /** user_id do morador (para enviar mensagem). Pode ser null se não estiver associado. */
     user_id?: string | null;
     divida_anterior: number;
     pagamentos_historicos: number;
   };
-  /** Todas as taxas do morador */
   taxasInquilino: CascadeTaxa[];
-  /** ID do admin actual (para mensagens) */
   adminUserId?: string | null;
-  /** Callback após sucesso */
   onSuccess: () => void;
 }
 
@@ -56,6 +48,8 @@ const STATUS_MAP: Record<PaymentStatus, string> = {
   em_atraso: "overdue",
   arquivado: "pending",
 };
+
+const TAXA_MENSAL = 1000;
 
 const CascadePaymentDialog = ({
   open,
@@ -72,40 +66,68 @@ const CascadePaymentDialog = ({
   const [valor, setValor] = useState("");
   const [via, setVia] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [ano, setAno] = useState(String(new Date().getFullYear()));
+  const [mesesSelecionados, setMesesSelecionados] = useState<number[]>([]);
 
-  // Dívida acumulada histórica
   const dividaAcumulada = useMemo(
     () => Math.max(0, (unidade.divida_anterior ?? 0) - (unidade.pagamentos_historicos ?? 0)),
     [unidade]
   );
 
-  // Taxas vencidas (até mês corrente) ordenadas mais antiga → mais recente
-  const taxasVencidas = useMemo(() => {
-    const hoje = new Date();
-    const anoH = hoje.getFullYear();
-    const mesH = hoje.getMonth() + 1;
-    return [...taxasInquilino]
-      .filter((t) => t.ano_referencia < anoH || (t.ano_referencia === anoH && t.mes_referencia <= mesH))
-      .filter((t) => t.valor - t.valor_pago > 0)
-      .sort((a, b) =>
-        a.ano_referencia !== b.ano_referencia
-          ? a.ano_referencia - b.ano_referencia
-          : a.mes_referencia - b.mes_referencia
-      );
+  const anosDisponiveis = useMemo(() => {
+    const set = new Set<number>();
+    const y = new Date().getFullYear();
+    for (let i = y - 5; i <= y + 1; i++) set.add(i);
+    taxasInquilino.forEach((t) => set.add(t.ano_referencia));
+    return Array.from(set).sort((a, b) => b - a);
   }, [taxasInquilino]);
 
-  const dividaMes = useMemo(
-    () => taxasVencidas.reduce((s, t) => s + Math.max(0, t.valor - t.valor_pago), 0),
-    [taxasVencidas]
+  // Para cada mês 1..12 do ano, calcular dívida (taxa - pago)
+  const mesesDoAno = useMemo(() => {
+    const anoNum = Number(ano);
+    return Array.from({ length: 12 }, (_, i) => {
+      const mes = i + 1;
+      const taxa = taxasInquilino.find((t) => t.ano_referencia === anoNum && t.mes_referencia === mes);
+      const valor = taxa?.valor ?? TAXA_MENSAL;
+      const pago = taxa?.valor_pago ?? 0;
+      const divida = Math.max(0, valor - pago);
+      return { mes, taxa, valor, pago, divida };
+    });
+  }, [ano, taxasInquilino]);
+
+  const totalSelecionado = useMemo(
+    () => mesesDoAno.filter((m) => mesesSelecionados.includes(m.mes)).reduce((s, m) => s + m.divida, 0),
+    [mesesDoAno, mesesSelecionados]
   );
-  const dividaTotal = dividaAcumulada + dividaMes;
+
+  const totalAPagar = dividaAcumulada + totalSelecionado;
 
   useEffect(() => {
     if (open) {
-      setValor(String(dividaTotal.toFixed(2)));
       setVia("");
+      // pré-selecciona meses em dívida do ano corrente
+      const anoNum = Number(ano);
+      const atrasados = taxasInquilino
+        .filter((t) => t.ano_referencia === anoNum && t.valor - t.valor_pago > 0)
+        .map((t) => t.mes_referencia);
+      setMesesSelecionados(atrasados);
     }
-  }, [open, dividaTotal]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  useEffect(() => {
+    setValor(String(totalAPagar.toFixed(2)));
+  }, [totalAPagar]);
+
+  const toggleMes = (mes: number) => {
+    setMesesSelecionados((prev) => (prev.includes(mes) ? prev.filter((m) => m !== mes) : [...prev, mes].sort((a, b) => a - b)));
+  };
+
+  const selecionarTodosEmDivida = () => {
+    setMesesSelecionados(mesesDoAno.filter((m) => m.divida > 0).map((m) => m.mes));
+  };
+
+  const limparSelecao = () => setMesesSelecionados([]);
 
   const handleConfirm = async () => {
     const valorNumber = parseFloat(valor);
@@ -117,10 +139,15 @@ const CascadePaymentDialog = ({
       toast({ title: "Via obrigatória", description: "Selecione a via de pagamento.", variant: "destructive" });
       return;
     }
+    if (mesesSelecionados.length === 0 && dividaAcumulada <= 0) {
+      toast({ title: "Selecione meses", description: "Seleccione pelo menos um mês para pagar.", variant: "destructive" });
+      return;
+    }
     setSubmitting(true);
     try {
       let restante = valorNumber;
       const allocations: Array<{ period: string; amount: number }> = [];
+      const anoNum = Number(ano);
 
       // 1. Abater dívida histórica primeiro
       let novosPagHist = unidade.pagamentos_historicos ?? 0;
@@ -128,34 +155,38 @@ const CascadePaymentDialog = ({
         const aplicar = Math.min(restante, dividaAcumulada);
         novosPagHist += aplicar;
         restante -= aplicar;
-        allocations.push({ period: "Dívida histórica acumulada", amount: aplicar });
+        allocations.push({ period: "Dívida acumulada", amount: aplicar });
       }
 
-      // 2. Distribuir entre taxas vencidas (mais antiga primeiro)
-      const updates: Array<{ id: string; valor_pago: number; status: string; paid_at: string | null }> = [];
-      for (const t of taxasVencidas) {
+      // 2. Distribuir entre meses seleccionados (mais antigo → mais recente)
+      const mesesOrdenados = [...mesesSelecionados].sort((a, b) => a - b);
+      const updates: Array<{ id?: string; mes: number; ano: number; valor_pago: number; valor: number; status: string; paid_at: string | null; existingTaxa?: CascadeTaxa }> = [];
+
+      for (const mes of mesesOrdenados) {
         if (restante <= 0) break;
-        const dividaT = t.valor - t.valor_pago;
-        if (dividaT <= 0) continue;
-        const aplicar = Math.min(restante, dividaT);
-        const novoValorPago = t.valor_pago + aplicar;
-        const novoStatus = calcStatus(t.valor, novoValorPago);
+        const dadosMes = mesesDoAno.find((m) => m.mes === mes);
+        if (!dadosMes || dadosMes.divida <= 0) continue;
+        const aplicar = Math.min(restante, dadosMes.divida);
+        const novoValorPago = dadosMes.pago + aplicar;
+        const novoStatus = calcStatus(dadosMes.valor, novoValorPago);
         updates.push({
-          id: t.id,
+          id: dadosMes.taxa?.id,
+          mes,
+          ano: anoNum,
           valor_pago: novoValorPago,
+          valor: dadosMes.valor,
           status: STATUS_MAP[novoStatus],
           paid_at: novoStatus === "em_dia" ? new Date().toISOString() : null,
+          existingTaxa: dadosMes.taxa,
         });
-        allocations.push({
-          period: `${MESES_LABELS[t.mes_referencia]}/${t.ano_referencia}`,
-          amount: aplicar,
-        });
+        allocations.push({ period: `${MESES_LABELS[mes]}/${anoNum}`, amount: aplicar });
         restante -= aplicar;
       }
 
-      // 3. Aplicar updates
-      if (updates.length > 0) {
-        for (const u of updates) {
+      // 3. Aplicar updates / inserts
+      const monthNames = ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      for (const u of updates) {
+        if (u.existingTaxa) {
           const { error } = await supabase
             .from(table)
             .update({
@@ -164,12 +195,31 @@ const CascadePaymentDialog = ({
               paid_at: u.paid_at,
               payment_method: via,
             })
-            .eq("id", u.id);
+            .eq("id", u.existingTaxa.id);
+          if (error) throw error;
+        } else {
+          // criar novo registo de taxa
+          const dueDate = new Date(u.ano, u.mes, 5).toISOString().slice(0, 10);
+          const insertData: any = {
+            unidade_id: unidade.id,
+            reference_month: monthNames[u.mes],
+            reference_year: u.ano,
+            amount: u.valor,
+            valor_pago: u.valor_pago,
+            status: u.status,
+            paid_at: u.paid_at,
+            payment_method: via,
+            due_date: dueDate,
+          };
+          if (table === "condominium_fees" && unidade.user_id) {
+            insertData.user_id = unidade.user_id;
+          }
+          const { error } = await (supabase.from(table) as any).insert(insertData);
           if (error) throw error;
         }
       }
 
-      // 4. Atualizar pagamentos_historicos da unidade (se houve abate)
+      // 4. Atualizar pagamentos_historicos
       if (novosPagHist !== (unidade.pagamentos_historicos ?? 0)) {
         const { error } = await (supabase.from(unidadesTable) as any)
           .update({ pagamentos_historicos: novosPagHist })
@@ -177,13 +227,12 @@ const CascadePaymentDialog = ({
         if (error) throw error;
       }
 
-      // 5. Saldo remanescente (crédito)
       const saldoRemanescente = restante;
       if (saldoRemanescente > 0) {
         allocations.push({ period: "Crédito (próximo mês)", amount: saldoRemanescente });
       }
 
-      // 6. Gerar PDF
+      // 5. Gerar PDF
       const receiptNumber = `REC-${system}-${Date.now().toString().slice(-8)}`;
       const fileName = `${receiptNumber}.pdf`;
       const pdf = await generateReceiptPdf({
@@ -199,10 +248,8 @@ const CascadePaymentDialog = ({
         saldoRemanescente,
       });
 
-      // 7. Download para o admin
       downloadBlob(pdf, fileName);
 
-      // 8. Enviar para o morador via mensagens (se possível)
       if (adminUserId && unidade.user_id) {
         const send = await sendReceiptToResident({
           pdf,
@@ -212,23 +259,14 @@ const CascadePaymentDialog = ({
           message: `Recibo de pagamento ${system} no valor de ${formatCurrency(valorNumber)} (${PAYMENT_METHODS.find((m) => m.value === via)?.label || via}).`,
         });
         if (!send.ok) {
-          toast({
-            title: "Pagamento registado",
-            description: `Recibo gerado, mas não foi possível enviar a mensagem: ${send.error}`,
-            variant: "destructive",
-          });
+          toast({ title: "Pagamento registado", description: `Recibo gerado, mas mensagem falhou: ${send.error}`, variant: "destructive" });
         } else {
-          toast({
-            title: "Pagamento registado",
-            description: "Recibo PDF descarregado e enviado ao morador.",
-          });
+          toast({ title: "Pagamento registado", description: "Recibo PDF descarregado e enviado ao morador." });
         }
       } else {
         toast({
           title: "Pagamento registado",
-          description: unidade.user_id
-            ? "Recibo gerado. (Admin não autenticado para envio.)"
-            : "Recibo gerado. Morador ainda não associado a uma conta — mensagem não enviada.",
+          description: unidade.user_id ? "Recibo gerado." : "Recibo gerado. Morador sem conta — mensagem não enviada.",
         });
       }
 
@@ -244,7 +282,7 @@ const CascadePaymentDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="w-5 h-5 text-primary" />
@@ -257,27 +295,79 @@ const CascadePaymentDialog = ({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="rounded-lg border bg-muted/30 p-3 space-y-1.5">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Dívida acumulada (histórica):</span>
-              <span className="font-medium tabular-nums">{formatCurrency(dividaAcumulada)}</span>
+          {dividaAcumulada > 0 && (
+            <div className="rounded-lg border bg-destructive/5 border-destructive/30 p-3 flex justify-between text-sm">
+              <span className="text-muted-foreground">Dívida acumulada da unidade:</span>
+              <span className="font-semibold tabular-nums text-destructive">{formatCurrency(dividaAcumulada)}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Dívida do mês (sistema):</span>
-              <span className="font-medium tabular-nums">{formatCurrency(dividaMes)}</span>
+          )}
+
+          <div>
+            <Label>Ano de referência</Label>
+            <Select value={ano} onValueChange={(v) => { setAno(v); setMesesSelecionados([]); }}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {anosDisponiveis.map((a) => (
+                  <SelectItem key={a} value={String(a)}>{a}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <Label>Selecionar meses</Label>
+              <div className="flex gap-2">
+                <button type="button" className="text-xs text-primary hover:underline" onClick={selecionarTodosEmDivida}>
+                  Em dívida
+                </button>
+                <span className="text-muted-foreground text-xs">·</span>
+                <button type="button" className="text-xs text-muted-foreground hover:underline" onClick={limparSelecao}>
+                  Limpar
+                </button>
+              </div>
             </div>
-            <div className="flex justify-between text-base pt-2 border-t">
-              <span className="font-semibold">Total em dívida:</span>
-              <span className="font-bold tabular-nums text-destructive">{formatCurrency(dividaTotal)}</span>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 border rounded-lg p-2">
+              {mesesDoAno.map((m) => {
+                const checked = mesesSelecionados.includes(m.mes);
+                const pago = m.divida === 0;
+                return (
+                  <label
+                    key={m.mes}
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs cursor-pointer border transition-colors ${
+                      checked ? "bg-primary/10 border-primary" : "border-transparent hover:bg-muted"
+                    } ${pago ? "opacity-50" : ""}`}
+                  >
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={() => toggleMes(m.mes)}
+                      disabled={pago}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium">{MESES_SHORT[m.mes]}</div>
+                      <div className={`text-[10px] tabular-nums ${pago ? "text-emerald-600" : "text-destructive"}`}>
+                        {pago ? "Pago" : formatCurrency(m.divida)}
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
+            <div className="flex justify-between text-xs mt-2 px-1">
+              <span className="text-muted-foreground">{mesesSelecionados.length} mês(es) selecionado(s)</span>
+              <span className="font-medium tabular-nums">Total meses: {formatCurrency(totalSelecionado)}</span>
+            </div>
+          </div>
+
+          <div className="rounded-lg border bg-muted/30 p-3 flex justify-between">
+            <span className="font-semibold">Total a pagar:</span>
+            <span className="font-bold tabular-nums text-destructive">{formatCurrency(totalAPagar)}</span>
           </div>
 
           <div>
             <Label>Via de pagamento *</Label>
             <Select value={via} onValueChange={setVia}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
+              <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
               <SelectContent className="max-h-72">
                 {PAYMENT_METHODS.map((m) => (
                   <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
@@ -287,23 +377,16 @@ const CascadePaymentDialog = ({
           </div>
 
           <div>
-            <Label>Valor a pagar (MT)</Label>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              value={valor}
-              onChange={(e) => setValor(e.target.value)}
-              className="mt-1"
-            />
+            <Label>Valor pago (MT)</Label>
+            <Input type="number" step="0.01" min="0" value={valor} onChange={(e) => setValor(e.target.value)} className="mt-1" />
             <p className="text-[11px] text-muted-foreground mt-1">
-              O valor será aplicado primeiro à dívida histórica, depois aos meses mais antigos. Saldo restante fica como crédito.
+              Aplica-se primeiro à dívida acumulada, depois aos meses seleccionados (mais antigo → mais recente).
             </p>
           </div>
 
           <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 rounded p-2">
             <MessageSquare className="w-3.5 h-3.5" />
-            <span>Após confirmar, o recibo PDF será descarregado e enviado ao morador via mensagens.</span>
+            <span>O recibo PDF será descarregado e enviado ao morador via mensagens.</span>
           </div>
 
           <Button className="w-full" onClick={handleConfirm} disabled={submitting || !via || !valor}>
