@@ -16,7 +16,9 @@ const MessagesSection = () => {
 
   const fetchAdmin = async () => {
     setLoading(true);
-    // Pick admin who has most recent message with this user, else any admin
+    let chosen: string | null = null;
+
+    // 1) Prefer admin from most recent conversation
     const { data: convoMsg } = await supabase
       .from("messages")
       .select("sender_id, recipient_id, is_from_admin, created_at")
@@ -24,20 +26,17 @@ const MessagesSection = () => {
       .or(`sender_id.eq.${user?.id},recipient_id.eq.${user?.id}`)
       .order("created_at", { ascending: false })
       .limit(1);
-
-    let chosen: string | null = null;
     if (convoMsg && convoMsg.length > 0) {
       const m = convoMsg[0];
       chosen = m.sender_id === user?.id ? m.recipient_id : m.sender_id;
     }
+
+    // 2) Fallback: any admin via SECURITY DEFINER RPC (residents can't read user_roles directly)
     if (!chosen) {
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "admin")
-        .limit(1);
-      chosen = roles?.[0]?.user_id || null;
+      const { data: rpcId } = await supabase.rpc("get_any_admin_id");
+      if (rpcId) chosen = rpcId as unknown as string;
     }
+
     setAdminId(chosen);
     setLoading(false);
   };
