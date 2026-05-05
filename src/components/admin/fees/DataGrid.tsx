@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { TableProperties, BarChart3, Plus, Loader2, Eye } from "lucide-react";
 import { Unidade, Taxa, PaymentStatus, CategoriaUnidade, MESES_LABELS, CATEGORIAS_LABELS, CATEGORIAS_LIST, formatCurrency, calcStatus, getDividaHistorica } from "./types";
 import TaxasGrid from "./TaxasGrid";
+import MoradoresGrid from "./MoradoresGrid";
 import ReportsView from "./ReportsView";
 import TotalColectadoView from "./TotalColectadoView";
 import GerarTaxasDialog from "./GerarTaxasDialog";
@@ -466,6 +467,7 @@ const DataGrid = () => {
           anoFiltro={anoFiltro}
           onRefresh={refresh}
         />
+      ) : (
         <ReportsView taxas={filteredTaxas} unidades={filteredUnidades} />
       )}
 
