@@ -41,18 +41,21 @@ Deno.serve(async (req) => {
     }
 
     const { email } = await req.json();
-    if (!email || typeof email !== "string") {
-      return new Response(JSON.stringify({ error: "Email inválido" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const cleaned = (email || "").toString().trim().toLowerCase();
+    // Apenas ASCII (rejeita acentos como "í" que o Supabase Auth não aceita)
+    if (!cleaned || !/^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/.test(cleaned)) {
+      return new Response(JSON.stringify({
+        error: "Email inválido. Use apenas caracteres ASCII (sem acentos), ex.: vilaolimpica.cmvomz@gmail.com"
+      }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const { error } = await admin.auth.admin.updateUserById(user.id, {
-      email: email.trim(),
+      email: cleaned,
       email_confirm: true,
     });
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
+      console.error("updateUserById error:", error);
+      return new Response(JSON.stringify({ error: error.message || "Falha ao atualizar email" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
