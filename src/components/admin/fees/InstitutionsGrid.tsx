@@ -457,14 +457,20 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
 };
 
 const InstitutionsGrid = () => {
-  const [active, setActive] = useState<string>(INSTITUTIONS[0].key);
-  const mountedRef = useRef<Set<string>>(new Set([INSTITUTIONS[0].key]));
+  const [active, setActive] = useState<string>("__dashboard");
+  const mountedRef = useRef<Set<string>>(new Set(["__dashboard"]));
   if (!mountedRef.current.has(active)) mountedRef.current.add(active);
 
   return (
     <div className="space-y-4">
       <Tabs value={active} onValueChange={setActive}>
         <TabsList className="flex flex-wrap h-auto gap-1 bg-muted p-1">
+          <TabsTrigger
+            value="__dashboard"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            <LayoutDashboard className="w-4 h-4 mr-1" /> Dashboard
+          </TabsTrigger>
           {INSTITUTIONS.map((i) => (
             <TabsTrigger
               key={i.key}
@@ -476,6 +482,10 @@ const InstitutionsGrid = () => {
             </TabsTrigger>
           ))}
         </TabsList>
+
+        <TabsContent value="__dashboard" className="mt-4" forceMount={mountedRef.current.has("__dashboard") ? true : undefined} hidden={active !== "__dashboard"}>
+          {mountedRef.current.has("__dashboard") && <InstitutionsDashboard />}
+        </TabsContent>
 
         {INSTITUTIONS.map((i) => (
           <TabsContent key={i.key} value={i.key} className="mt-4 space-y-2" forceMount={mountedRef.current.has(i.key) ? true : undefined} hidden={active !== i.key}>
