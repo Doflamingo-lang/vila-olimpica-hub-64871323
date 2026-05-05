@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Unidade, CategoriaUnidade, CATEGORIAS_LABELS, CATEGORIAS_LIST } from "./types";
+import { Unidade, CategoriaUnidade, CATEGORIAS_LABELS, CATEGORIAS_LIST, getDividaHistorica } from "./types";
 
 interface Props {
   open: boolean;
@@ -17,7 +17,7 @@ interface Props {
 }
 
 const EditUnidadeDialog = ({ open, onOpenChange, unidade, onSaved }: Props) => {
-  const [form, setForm] = useState({ nome: "", bloco: "1", edificio: "1", apartamento: "1", contacto: "", via: "", categoria: "quitadas" as CategoriaUnidade });
+  const [form, setForm] = useState({ nome: "", bloco: "1", edificio: "1", apartamento: "1", contacto: "", divida_acumulada: "0", categoria: "quitadas" as CategoriaUnidade });
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
@@ -29,7 +29,7 @@ const EditUnidadeDialog = ({ open, onOpenChange, unidade, onSaved }: Props) => {
         edificio: String(unidade.edificio),
         apartamento: String(unidade.apartamento),
         contacto: unidade.contacto || "",
-        via: unidade.via || "",
+        divida_acumulada: String(getDividaHistorica(unidade)),
         categoria: unidade.categoria,
       });
     }
@@ -38,14 +38,16 @@ const EditUnidadeDialog = ({ open, onOpenChange, unidade, onSaved }: Props) => {
   const handleSave = async () => {
     if (!unidade) return;
     setSaving(true);
+    const dividaAcum = Math.max(0, parseFloat(form.divida_acumulada) || 0);
     const { error } = await supabase.from("unidades").update({
       nome: form.nome,
       bloco: parseInt(form.bloco) || 1,
       edificio: parseInt(form.edificio) || 1,
       apartamento: parseInt(form.apartamento) || 1,
       contacto: form.contacto,
-      via: form.via,
       categoria: form.categoria,
+      divida_anterior: dividaAcum,
+      pagamentos_historicos: 0,
     }).eq("id", unidade.id);
     setSaving(false);
     if (error) {
@@ -99,8 +101,17 @@ const EditUnidadeDialog = ({ open, onOpenChange, unidade, onSaved }: Props) => {
             <Input value={form.contacto} onChange={(e) => setForm({ ...form, contacto: e.target.value })} placeholder="+258..." />
           </div>
           <div>
-            <Label>Via</Label>
-            <Input value={form.via} onChange={(e) => setForm({ ...form, via: e.target.value })} />
+            <Label>Dívida acumulada da unidade (MT)</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={form.divida_acumulada}
+              onChange={(e) => setForm({ ...form, divida_acumulada: e.target.value })}
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Valor histórico em dívida desta unidade. Pagamentos futuros abaterão este valor.
+            </p>
           </div>
         </div>
         <DialogFooter>
