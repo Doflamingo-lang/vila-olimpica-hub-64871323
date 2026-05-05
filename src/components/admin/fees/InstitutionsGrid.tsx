@@ -237,9 +237,10 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
       ? { ...f, valor_pago: newPaid, status: newStatus, payment_method: payMethod }
       : f));
     setPayOpen(false);
+    await generateInstitutionReceipt(payTarget, amount, payMethod, payDate);
     toast({
       title: newStatus === "paid" ? "Pagamento total registado" : "Pagamento parcial registado",
-      description: `Mês ${payTarget.period_label} · Saldo restante: ${fmtMZN(Math.max(0, Number(payTarget.valor) - newPaid))}`,
+      description: `Recibo PDF gerado · Saldo restante: ${fmtMZN(Math.max(0, Number(payTarget.valor) - newPaid))}`,
     });
   };
 
