@@ -16,8 +16,11 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Wallet, History, CheckCircle2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, Wallet, History, CheckCircle2, Pencil, FileDown, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
+import InstitutionsDashboard from "./InstitutionsDashboard";
+import { generateReceiptPdf, downloadBlob } from "@/lib/paymentReceipt";
 
 const INSTITUTIONS = [
   { key: "FDP", label: "FDP", desc: "Fundo de Desenvolvimento para a Paz" },
