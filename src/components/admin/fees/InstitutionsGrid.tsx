@@ -505,19 +505,32 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
                     <TableCell className={cn("text-right font-bold", saldo > 0 ? "text-red-700" : "text-green-700")}>{fmtMZN(saldo)}</TableCell>
                     <TableCell><StatusBadge s={f.status} /></TableCell>
                     <TableCell>
-                      <div className="flex gap-1 justify-end">
-                        <Button size="sm" variant="outline" onClick={() => openEdit(f)} className="h-8" title="Editar">
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => openHistory(f)} className="h-8" title="Histórico / Recibos">
-                          <History className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handlePrintLastReceipt(f)} className="h-8" title="Imprimir último recibo">
-                          <Printer className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleDelete(f)} className="h-8 text-red-600 hover:text-red-700" title="Eliminar">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                      <div className="flex justify-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Acções">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-popover z-50">
+                            <DropdownMenuItem onClick={() => openPay(f.id)}>
+                              <Wallet className="w-4 h-4 mr-2" /> Registar pagamento
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openEdit(f)}>
+                              <Pencil className="w-4 h-4 mr-2" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openHistory(f)}>
+                              <History className="w-4 h-4 mr-2" /> Histórico / Recibos
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handlePrintLastReceipt(f)}>
+                              <Printer className="w-4 h-4 mr-2" /> Imprimir último recibo
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleDelete(f)} className="text-red-600 focus:text-red-700">
+                              <Trash2 className="w-4 h-4 mr-2" /> Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>
