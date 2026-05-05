@@ -596,21 +596,36 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Wallet className="w-5 h-5 text-primary" /> Registar Pagamento</DialogTitle>
-            <DialogDescription>{institution} · seleccione meses do ano</DialogDescription>
+            <DialogDescription>{institution} · filtre e seleccione qualquer mês/ano</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <div>
-              <Label>Ano de referência</Label>
-              <Select value={payYear} onValueChange={(v) => { setPayYear(v); setPaySelected(new Set()); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>Ano</Label>
+                <Select value={payYear} onValueChange={(v) => setPayYear(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os anos</SelectItem>
+                    {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Mês</Label>
+                <Select value={payMonth} onValueChange={(v) => setPayMonth(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os meses</SelectItem>
+                    {MESES.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div>
-              <Label>Meses</Label>
+              <Label>Registos disponíveis</Label>
               <div className="border rounded-lg p-2 max-h-56 overflow-auto space-y-1 mt-1">
                 {payYearFees.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-4">Nenhum registo neste ano.</p>
+                  <p className="text-xs text-muted-foreground text-center py-4">Nenhum registo encontrado para o filtro.</p>
                 ) : payYearFees.map((f) => {
                   const saldo = Math.max(0, Number(f.valor) - Number(f.valor_pago));
                   const pago = saldo === 0;
