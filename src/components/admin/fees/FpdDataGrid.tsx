@@ -337,12 +337,6 @@ const FpdDataGrid = () => {
             {unidades.length} unidades · {taxasAno.length} taxas em {anoFiltro}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setGerarOpen(true)}>
-            <Plus className="w-4 h-4 mr-1" />
-            Gerar Taxas (Novo Ano)
-          </Button>
-        </div>
       </div>
 
       {/* Year Tabs */}
