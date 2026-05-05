@@ -37,6 +37,13 @@ const MessagesManagement = () => {
       const { data: listData } = await supabase.functions.invoke("list-residents");
       const authUsers: { id: string; email: string }[] = listData?.residents || [];
 
+      // Get active (approved) emails
+      const { data: activeReqs } = await supabase
+        .from("access_requests")
+        .select("email")
+        .eq("status", "approved");
+      const activeEmails = new Set((activeReqs || []).map((r: any) => (r.email || "").toLowerCase()));
+
       // Get unidades with user_id (FFH + FPD)
       const [{ data: u1 }, { data: u2 }, { data: msgs }] = await Promise.all([
         supabase.from("unidades").select("user_id, nome, bloco, edificio, apartamento").not("user_id", "is", null),
@@ -49,16 +56,17 @@ const MessagesManagement = () => {
 
       const map = new Map<string, ResidentEntry>();
       for (const au of authUsers) {
+        if (!activeEmails.has((au.email || "").toLowerCase())) continue;
         map.set(au.id, { user_id: au.id, email: au.email });
       }
       for (const r of u1 || []) {
-        if (!r.user_id) continue;
-        const cur = map.get(r.user_id) || { user_id: r.user_id };
+        if (!r.user_id || !map.has(r.user_id)) continue;
+        const cur = map.get(r.user_id)!;
         map.set(r.user_id, { ...cur, nome: r.nome, bloco: r.bloco, edificio: r.edificio, apartamento: r.apartamento });
       }
       for (const r of u2 || []) {
-        if (!r.user_id) continue;
-        const cur = map.get(r.user_id) || { user_id: r.user_id };
+        if (!r.user_id || !map.has(r.user_id)) continue;
+        const cur = map.get(r.user_id)!;
         map.set(r.user_id, { ...cur, nome: cur.nome || r.nome, apartamento: cur.apartamento || r.apartamento });
       }
 
@@ -72,7 +80,7 @@ const MessagesManagement = () => {
         if (m.recipient_id === adminId && !m.read_at) {
           unreadBy.set(peer, (unreadBy.get(peer) || 0) + 1);
         }
-        if (!map.has(peer)) map.set(peer, { user_id: peer });
+        // Only show active residents - skip messages from non-active users
       }
 
       const list = Array.from(map.values()).map((r) => ({

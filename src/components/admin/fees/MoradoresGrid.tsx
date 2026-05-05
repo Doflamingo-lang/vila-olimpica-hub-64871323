@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, MoreVertical, CreditCard, History, Pencil, CheckCircle2, AlertCircle } from "lucide-react";
+import { Search, MoreVertical, CreditCard, History, Pencil, CheckCircle2, AlertCircle, Printer } from "lucide-react";
 import EditUnidadeDialog from "./EditUnidadeDialog";
 import PaymentHistoryDialog from "./PaymentHistoryDialog";
 import CascadePaymentDialog from "./CascadePaymentDialog";
-import { Taxa, Unidade, formatCurrency } from "./types";
+import { Taxa, Unidade, formatCurrency, MESES_LABELS } from "./types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { generateReceiptPdf, downloadBlob } from "@/lib/paymentReceipt";
+import { useToast } from "@/hooks/use-toast";
 
 interface Props {
   taxas: Taxa[];
@@ -32,12 +34,37 @@ const PAGE_INCREMENT = 100;
 
 const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"todos" | "em_dia" | "em_atraso">("todos");
   const [paymentUnidade, setPaymentUnidade] = useState<Unidade | null>(null);
   const [editUnidade, setEditUnidade] = useState<Unidade | null>(null);
   const [historyUnidade, setHistoryUnidade] = useState<Unidade | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_INCREMENT);
+
+  const handlePrintReceipt = useCallback(async (unidade: Unidade, system: "FFH" | "FDP" = "FFH") => {
+    const ts = (taxas || []).filter((t) => t.unidade_id === unidade.id && t.valor_pago > 0)
+      .sort((a, b) => (b.ano_referencia - a.ano_referencia) || (b.mes_referencia - a.mes_referencia));
+    if (ts.length === 0) {
+      toast({ title: "Sem pagamentos", description: "Esta unidade ainda não tem pagamentos registados.", variant: "destructive" });
+      return;
+    }
+    const last = ts[0];
+    const receiptNumber = `REC-${system}-${last.id.slice(0, 8).toUpperCase()}`;
+    const pdf = await generateReceiptPdf({
+      receiptNumber,
+      system,
+      residentName: unidade.nome,
+      residentId: `${unidade.bloco}-${unidade.edificio}-${unidade.apartamento}`,
+      contacto: unidade.contacto,
+      allocations: [{ period: `${MESES_LABELS[last.mes_referencia]}/${last.ano_referencia}`, amount: last.valor_pago }],
+      totalPago: last.valor_pago,
+      paymentMethod: last.payment_method || "—",
+      paymentDate: last.data_pagamento ? new Date(last.data_pagamento) : new Date(),
+      saldoRemanescente: Math.max(0, last.valor - last.valor_pago),
+    });
+    downloadBlob(pdf, `${receiptNumber}.pdf`);
+  }, [taxas, toast]);
 
   const taxasPorUnidade = useMemo(() => {
     const map: Record<string, Taxa[]> = {};
@@ -182,6 +209,10 @@ const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
                       <DropdownMenuItem onClick={() => setEditUnidade(r.unidade)}>
                         <Pencil className="w-4 h-4 mr-2" />
                         Editar Unidade
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handlePrintReceipt(r.unidade, "FFH")}>
+                        <Printer className="w-4 h-4 mr-2" />
+                        Imprimir Recibo
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

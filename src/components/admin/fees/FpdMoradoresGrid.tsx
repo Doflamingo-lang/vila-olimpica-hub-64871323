@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, MoreVertical, CreditCard, History, Pencil, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Search, MoreVertical, CreditCard, History, Pencil, CheckCircle2, AlertCircle, Loader2, Printer } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import CascadePaymentDialog from "./CascadePaymentDialog";
 import PaymentHistoryDialog from "./PaymentHistoryDialog";
-import { Taxa, Unidade, formatCurrency, PaymentStatus } from "./types";
+import { Taxa, Unidade, formatCurrency, PaymentStatus, MESES_LABELS } from "./types";
+import { generateReceiptPdf, downloadBlob } from "@/lib/paymentReceipt";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -255,6 +256,28 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openEdit(r.unidade)}>
                         <Pencil className="w-4 h-4 mr-2" /> Editar Unidade
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={async () => {
+                        const ts = (taxas || []).filter((t) => t.unidade_id === r.unidade.id && t.valor_pago > 0)
+                          .sort((a, b) => (b.ano_referencia - a.ano_referencia) || (b.mes_referencia - a.mes_referencia));
+                        if (ts.length === 0) {
+                          toast({ title: "Sem pagamentos", description: "Esta unidade ainda não tem pagamentos registados.", variant: "destructive" });
+                          return;
+                        }
+                        const last = ts[0];
+                        const receiptNumber = `REC-FDP-${last.id.slice(0, 8).toUpperCase()}`;
+                        const pdf = await generateReceiptPdf({
+                          receiptNumber, system: "FDP",
+                          residentName: r.unidade.nome, residentId: `Apt ${r.unidade.apartamento}`, contacto: r.unidade.contacto,
+                          allocations: [{ period: `${MESES_LABELS[last.mes_referencia]}/${last.ano_referencia}`, amount: last.valor_pago }],
+                          totalPago: last.valor_pago,
+                          paymentMethod: last.payment_method || "—",
+                          paymentDate: last.data_pagamento ? new Date(last.data_pagamento) : new Date(),
+                          saldoRemanescente: Math.max(0, last.valor - last.valor_pago),
+                        });
+                        downloadBlob(pdf, `${receiptNumber}.pdf`);
+                      }}>
+                        <Printer className="w-4 h-4 mr-2" /> Imprimir Recibo
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

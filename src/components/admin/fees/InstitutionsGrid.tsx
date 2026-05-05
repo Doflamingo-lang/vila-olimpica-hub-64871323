@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Wallet, History, CheckCircle2, Pencil, FileDown, LayoutDashboard, Plus, Receipt } from "lucide-react";
+import { Loader2, Wallet, History, CheckCircle2, Pencil, FileDown, LayoutDashboard, Plus, Receipt, Trash2, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import InstitutionsDashboard from "./InstitutionsDashboard";
 import { generateReceiptPdf, downloadBlob } from "@/lib/paymentReceipt";
@@ -386,6 +386,41 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
     toast({ title: "Registo atualizado" });
   };
 
+  const handleDelete = async (f: Fee) => {
+    if (!confirm(`Eliminar o registo de ${f.period_label}? Os pagamentos associados também serão removidos.`)) return;
+    const { error: pErr } = await supabase.from("institution_payments").delete().eq("fee_id", f.id);
+    if (pErr) { toast({ title: "Erro", description: pErr.message, variant: "destructive" }); return; }
+    const { error } = await supabase.from("institution_fees").delete().eq("id", f.id);
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    setFees((prev) => prev.filter((x) => x.id !== f.id));
+    toast({ title: "Registo eliminado" });
+  };
+
+  const handlePrintLastReceipt = async (f: Fee) => {
+    const { data, error } = await supabase
+      .from("institution_payments")
+      .select("id,amount,payment_method,payment_date")
+      .eq("fee_id", f.id)
+      .order("payment_date", { ascending: false })
+      .limit(1);
+    if (error || !data || data.length === 0) {
+      toast({ title: "Sem pagamentos", description: "Este registo ainda não tem pagamentos.", variant: "destructive" });
+      return;
+    }
+    const p = data[0];
+    const receiptNumber = `REC-INST-${p.id.slice(0, 8).toUpperCase()}`;
+    const pdf = await generateReceiptPdf({
+      receiptNumber, system: "FFH",
+      residentName: f.institution, residentId: f.institution,
+      allocations: [{ period: f.period_label, amount: Number(p.amount) }],
+      totalPago: Number(p.amount),
+      paymentMethod: p.payment_method,
+      paymentDate: new Date(p.payment_date),
+      saldoRemanescente: Math.max(0, Number(f.valor) - Number(f.valor_pago)),
+    });
+    downloadBlob(pdf, `${receiptNumber}.pdf`);
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   }
@@ -473,6 +508,12 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => openHistory(f)} className="h-8" title="Histórico / Recibos">
                           <History className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handlePrintLastReceipt(f)} className="h-8" title="Imprimir último recibo">
+                          <Printer className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleDelete(f)} className="h-8 text-red-600 hover:text-red-700" title="Eliminar">
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
                     </TableCell>
