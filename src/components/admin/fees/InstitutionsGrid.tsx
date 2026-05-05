@@ -509,6 +509,12 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
                         <Button size="sm" variant="outline" onClick={() => openHistory(f)} className="h-8" title="Histórico / Recibos">
                           <History className="w-3.5 h-3.5" />
                         </Button>
+                        <Button size="sm" variant="outline" onClick={() => handlePrintLastReceipt(f)} className="h-8" title="Imprimir último recibo">
+                          <Printer className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleDelete(f)} className="h-8 text-red-600 hover:text-red-700" title="Eliminar">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
