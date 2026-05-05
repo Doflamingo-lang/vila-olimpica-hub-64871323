@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, MoreVertical, CreditCard, History, Pencil, CheckCircle2, AlertCircle } from "lucide-react";
+import { Search, MoreVertical, CreditCard, History, Pencil, CheckCircle2, AlertCircle, Printer } from "lucide-react";
 import EditUnidadeDialog from "./EditUnidadeDialog";
 import PaymentHistoryDialog from "./PaymentHistoryDialog";
 import CascadePaymentDialog from "./CascadePaymentDialog";
-import { Taxa, Unidade, formatCurrency } from "./types";
+import { Taxa, Unidade, formatCurrency, MESES_LABELS } from "./types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { generateReceiptPdf, downloadBlob } from "@/lib/paymentReceipt";
+import { useToast } from "@/hooks/use-toast";
 
 interface Props {
   taxas: Taxa[];
