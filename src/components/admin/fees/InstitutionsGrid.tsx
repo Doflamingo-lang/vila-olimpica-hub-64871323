@@ -17,18 +17,27 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Wallet, History, CheckCircle2, Pencil, FileDown, LayoutDashboard } from "lucide-react";
+import { Loader2, Wallet, History, CheckCircle2, Pencil, FileDown, LayoutDashboard, Plus, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 import InstitutionsDashboard from "./InstitutionsDashboard";
 import { generateReceiptPdf, downloadBlob } from "@/lib/paymentReceipt";
 
-const INSTITUTIONS = [
+const DEFAULT_INSTITUTIONS = [
   { key: "FDP", label: "FDP", desc: "Fundo de Desenvolvimento para a Paz" },
   { key: "UP", label: "UP", desc: "Universidade Pedagógica" },
   { key: "Bolsa de Mercadorias", label: "Bolsa de Mercadorias", desc: "Bolsa de Mercadorias de Moçambique" },
   { key: "CNBB", label: "CNBB", desc: "Centro Nacional de Biotecnologia e Biociências" },
   { key: "IIA", label: "IIA", desc: "Instituto de Investigação em Águas" },
-] as const;
+];
+
+const CUSTOM_KEY = "vo_custom_institutions";
+const loadCustom = (): { key: string; label: string; desc: string }[] => {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_KEY) || "[]"); } catch { return []; }
+};
+const saveCustom = (list: { key: string; label: string; desc: string }[]) =>
+  localStorage.setItem(CUSTOM_KEY, JSON.stringify(list));
+
+const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
 type Fee = {
   id: string;
@@ -48,6 +57,7 @@ type Fee = {
 
 type Payment = {
   id: string;
+  fee_id: string;
   amount: number;
   payment_method: string;
   payment_date: string;
@@ -69,48 +79,6 @@ const StatusBadge = ({ s }: { s: string }) => {
   return <Badge variant="outline" className={cn("font-medium", map[s] || map.pending)}>{label}</Badge>;
 };
 
-const FeeRow = memo(({ fee, onPay, onHistory, onEdit }: {
-  fee: Fee;
-  onPay: (f: Fee) => void;
-  onHistory: (f: Fee) => void;
-  onEdit: (f: Fee) => void;
-}) => {
-  const saldo = Math.max(0, Number(fee.valor) - Number(fee.valor_pago));
-  return (
-    <TableRow>
-      <TableCell className="font-medium whitespace-nowrap">{fee.period_label}</TableCell>
-      <TableCell className="text-muted-foreground">{fee.descricao}</TableCell>
-      <TableCell className="text-right">{fmtMZN(Number(fee.taxa))}</TableCell>
-      <TableCell className="text-center">{fee.n_apartamentos}</TableCell>
-      <TableCell className="text-right font-semibold">{fmtMZN(Number(fee.valor))}</TableCell>
-      <TableCell className="text-right">{fmtMZN(Number(fee.valor_pago))}</TableCell>
-      <TableCell className={cn("text-right font-bold", saldo > 0 ? "text-red-700" : "text-green-700")}>
-        {fmtMZN(saldo)}
-      </TableCell>
-      <TableCell><StatusBadge s={fee.status} /></TableCell>
-      <TableCell>
-        <div className="flex gap-1 justify-end">
-          <Button size="sm" variant="outline" onClick={() => onEdit(fee)} className="h-8" title="Editar taxa/apartamentos">
-            <Pencil className="w-3.5 h-3.5" />
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => onHistory(fee)} className="h-8">
-            <History className="w-3.5 h-3.5" />
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => onPay(fee)}
-            disabled={saldo <= 0}
-            className="h-8 bg-primary text-primary-foreground"
-          >
-            <Wallet className="w-3.5 h-3.5 mr-1" /> Pagar
-          </Button>
-        </div>
-      </TableCell>
-    </TableRow>
-  );
-});
-FeeRow.displayName = "FeeRow";
-
 const InstitutionPanel = ({ institution }: { institution: string }) => {
   const { toast } = useToast();
   const [fees, setFees] = useState<Fee[]>([]);
@@ -118,22 +86,38 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
   const [yearFilter, setYearFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
+  // Add record
+  const [addOpen, setAddOpen] = useState(false);
+  const [addYear, setAddYear] = useState(String(new Date().getFullYear()));
+  const [addMonth, setAddMonth] = useState("1");
+  const [addDesc, setAddDesc] = useState("Taxa de condomínio");
+  const [addTaxa, setAddTaxa] = useState("1000");
+  const [addNApt, setAddNApt] = useState("1");
+  const [adding, setAdding] = useState(false);
+
+  // Multi-month payment
   const [payOpen, setPayOpen] = useState(false);
-  const [payTarget, setPayTarget] = useState<Fee | null>(null);
-  const [payAmount, setPayAmount] = useState("");
+  const [payYear, setPayYear] = useState(String(new Date().getFullYear()));
+  const [paySelected, setPaySelected] = useState<Set<string>>(new Set());
   const [payMethod, setPayMethod] = useState("M-Pesa");
   const [payRef, setPayRef] = useState("");
   const [payNotes, setPayNotes] = useState("");
   const [payDate, setPayDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [payAmount, setPayAmount] = useState("");
   const [paying, setPaying] = useState(false);
 
+  // History (and view receipt)
   const [histOpen, setHistOpen] = useState(false);
   const [histTarget, setHistTarget] = useState<Fee | null>(null);
   const [history, setHistory] = useState<Payment[]>([]);
   const [histLoading, setHistLoading] = useState(false);
 
+  // Edit
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Fee | null>(null);
+  const [editYear, setEditYear] = useState("");
+  const [editMonth, setEditMonth] = useState("1");
+  const [editDesc, setEditDesc] = useState("");
   const [editTaxa, setEditTaxa] = useState("");
   const [editNApt, setEditNApt] = useState("");
   const [editValorPago, setEditValorPago] = useState("");
@@ -147,11 +131,8 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
       .eq("institution", institution)
       .order("reference_year", { ascending: true })
       .order("reference_month", { ascending: true });
-    if (error) {
-      toast({ title: "Erro a carregar", description: error.message, variant: "destructive" });
-    } else {
-      setFees((data || []) as Fee[]);
-    }
+    if (error) toast({ title: "Erro a carregar", description: error.message, variant: "destructive" });
+    else setFees((data || []) as Fee[]);
     setLoading(false);
   }, [institution, toast]);
 
@@ -159,16 +140,16 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
 
   const years = useMemo(() => {
     const s = new Set(fees.map((f) => f.reference_year));
+    const cur = new Date().getFullYear();
+    s.add(cur);
     return Array.from(s).sort((a, b) => a - b);
   }, [fees]);
 
-  const filtered = useMemo(() => {
-    return fees.filter((f) => {
-      if (yearFilter !== "all" && String(f.reference_year) !== yearFilter) return false;
-      if (statusFilter !== "all" && f.status !== statusFilter) return false;
-      return true;
-    });
-  }, [fees, yearFilter, statusFilter]);
+  const filtered = useMemo(() => fees.filter((f) => {
+    if (yearFilter !== "all" && String(f.reference_year) !== yearFilter) return false;
+    if (statusFilter !== "all" && f.status !== statusFilter) return false;
+    return true;
+  }), [fees, yearFilter, statusFilter]);
 
   const totals = useMemo(() => {
     const valor = filtered.reduce((a, f) => a + Number(f.valor), 0);
@@ -176,93 +157,193 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
     return { valor, pago, saldo: Math.max(0, valor - pago) };
   }, [filtered]);
 
-  const openPay = (f: Fee) => {
-    const remaining = Math.max(0, Number(f.valor) - Number(f.valor_pago));
-    setPayTarget(f);
-    setPayAmount(String(remaining));
+  // ---- Add record ----
+  const submitAdd = async () => {
+    const y = Number(addYear), m = Number(addMonth), t = Number(addTaxa), n = Number(addNApt);
+    if (!y || !m || t < 0 || n < 0) {
+      toast({ title: "Valores inválidos", variant: "destructive" });
+      return;
+    }
+    setAdding(true);
+    const valor = t * n;
+    const { data, error } = await supabase.from("institution_fees").insert({
+      institution,
+      reference_year: y,
+      reference_month: m,
+      period_label: `${MESES[m - 1]}/${y}`,
+      descricao: addDesc || "Taxa de condomínio",
+      taxa: t,
+      n_apartamentos: n,
+      valor,
+      valor_pago: 0,
+      status: "pending",
+    }).select().single();
+    setAdding(false);
+    if (error) {
+      toast({ title: "Erro ao adicionar", description: error.message, variant: "destructive" });
+      return;
+    }
+    setFees((prev) => [...prev, data as Fee].sort((a, b) =>
+      a.reference_year - b.reference_year || a.reference_month - b.reference_month));
+    setAddOpen(false);
+    toast({ title: "Registo criado" });
+  };
+
+  // ---- Multi-month payment ----
+  const openPay = () => {
+    setPayYear(String(new Date().getFullYear()));
+    setPaySelected(new Set());
     setPayMethod("M-Pesa");
     setPayRef("");
     setPayNotes("");
+    setPayAmount("");
     setPayDate(new Date().toISOString().slice(0, 10));
     setPayOpen(true);
   };
 
+  const payYearFees = useMemo(() =>
+    fees.filter((f) => String(f.reference_year) === payYear)
+      .sort((a, b) => a.reference_month - b.reference_month),
+  [fees, payYear]);
+
+  const payTotal = useMemo(() => {
+    return payYearFees
+      .filter((f) => paySelected.has(f.id))
+      .reduce((s, f) => s + Math.max(0, Number(f.valor) - Number(f.valor_pago)), 0);
+  }, [payYearFees, paySelected]);
+
+  useEffect(() => {
+    setPayAmount(payTotal > 0 ? String(payTotal.toFixed(2)) : "");
+  }, [payTotal]);
+
+  const togglePaySel = (id: string) => {
+    setPaySelected((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  };
+
   const submitPayment = async () => {
-    if (!payTarget) return;
     const amount = Number(payAmount);
-    const remaining = Math.max(0, Number(payTarget.valor) - Number(payTarget.valor_pago));
     if (!amount || amount <= 0) {
       toast({ title: "Montante inválido", variant: "destructive" });
       return;
     }
-    if (amount > remaining + 0.01) {
-      toast({ title: "Montante excede o saldo", description: `Saldo restante: ${fmtMZN(remaining)}`, variant: "destructive" });
+    if (paySelected.size === 0) {
+      toast({ title: "Selecione pelo menos um mês", variant: "destructive" });
       return;
     }
     setPaying(true);
-    const newPaid = Number(payTarget.valor_pago) + amount;
-    const newStatus = newPaid >= Number(payTarget.valor) - 0.01 ? "paid" : "partial";
-
     const { data: u } = await supabase.auth.getUser();
-    const { error: payErr } = await supabase.from("institution_payments").insert({
-      fee_id: payTarget.id,
-      institution: payTarget.institution,
-      amount,
-      payment_method: payMethod,
-      payment_date: payDate,
-      reference: payRef || null,
-      notes: payNotes || null,
-      created_by: u.user?.id ?? null,
-    });
-    if (payErr) {
+
+    let restante = amount;
+    const allocations: { period: string; amount: number }[] = [];
+    const updates: { fee: Fee; aplicar: number; novoPago: number; novoStatus: string }[] = [];
+
+    const ordered = payYearFees.filter((f) => paySelected.has(f.id));
+    for (const f of ordered) {
+      if (restante <= 0) break;
+      const saldo = Math.max(0, Number(f.valor) - Number(f.valor_pago));
+      if (saldo <= 0) continue;
+      const aplicar = Math.min(restante, saldo);
+      const novoPago = Number(f.valor_pago) + aplicar;
+      const novoStatus = novoPago >= Number(f.valor) - 0.01 ? "paid" : "partial";
+      updates.push({ fee: f, aplicar, novoPago, novoStatus });
+      allocations.push({ period: f.period_label, amount: aplicar });
+      restante -= aplicar;
+    }
+
+    try {
+      for (const up of updates) {
+        const { error: payErr } = await supabase.from("institution_payments").insert({
+          fee_id: up.fee.id,
+          institution: up.fee.institution,
+          amount: up.aplicar,
+          payment_method: payMethod,
+          payment_date: payDate,
+          reference: payRef || null,
+          notes: payNotes || null,
+          created_by: u.user?.id ?? null,
+        });
+        if (payErr) throw payErr;
+        const { error: updErr } = await supabase.from("institution_fees").update({
+          valor_pago: up.novoPago,
+          status: up.novoStatus,
+          paid_at: up.novoStatus === "paid" ? new Date().toISOString() : up.fee.paid_at,
+          payment_method: payMethod,
+        }).eq("id", up.fee.id);
+        if (updErr) throw updErr;
+      }
+
+      // generate receipt
+      const receiptNumber = `REC-INST-${Date.now().toString().slice(-8)}`;
+      const pdf = await generateReceiptPdf({
+        receiptNumber,
+        system: "FFH",
+        residentName: institution,
+        residentId: institution,
+        allocations,
+        totalPago: amount,
+        paymentMethod: payMethod,
+        paymentDate: new Date(payDate),
+        saldoRemanescente: Math.max(0, restante),
+      });
+      downloadBlob(pdf, `${receiptNumber}.pdf`);
+
+      setFees((prev) => prev.map((f) => {
+        const u = updates.find((x) => x.fee.id === f.id);
+        return u ? { ...f, valor_pago: u.novoPago, status: u.novoStatus, payment_method: payMethod } : f;
+      }));
+      setPayOpen(false);
+      toast({ title: "Pagamento registado", description: `Recibo PDF gerado · ${updates.length} mês(es).` });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
       setPaying(false);
-      toast({ title: "Erro ao registar pagamento", description: payErr.message, variant: "destructive" });
-      return;
     }
-    const { error: updErr } = await supabase
-      .from("institution_fees")
-      .update({
-        valor_pago: newPaid,
-        status: newStatus,
-        paid_at: newStatus === "paid" ? new Date().toISOString() : payTarget.paid_at,
-        payment_method: payMethod,
-      })
-      .eq("id", payTarget.id);
-    setPaying(false);
-    if (updErr) {
-      toast({ title: "Pagamento registado mas saldo não atualizado", description: updErr.message, variant: "destructive" });
-      return;
-    }
-    setFees((prev) => prev.map((f) => f.id === payTarget.id
-      ? { ...f, valor_pago: newPaid, status: newStatus, payment_method: payMethod }
-      : f));
-    setPayOpen(false);
-    await generateInstitutionReceipt(payTarget, amount, payMethod, payDate);
-    toast({
-      title: newStatus === "paid" ? "Pagamento total registado" : "Pagamento parcial registado",
-      description: `Recibo PDF gerado · Saldo restante: ${fmtMZN(Math.max(0, Number(payTarget.valor) - newPaid))}`,
-    });
   };
 
+  // ---- History / View receipt ----
   const openHistory = async (f: Fee) => {
     setHistTarget(f);
     setHistOpen(true);
     setHistLoading(true);
     const { data, error } = await supabase
       .from("institution_payments")
-      .select("id,amount,payment_method,payment_date,reference,notes,created_at")
+      .select("id,fee_id,amount,payment_method,payment_date,reference,notes,created_at")
       .eq("fee_id", f.id)
       .order("payment_date", { ascending: false });
     setHistLoading(false);
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    } else {
-      setHistory((data || []) as Payment[]);
-    }
+    if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
+    else setHistory((data || []) as Payment[]);
   };
 
+  const viewReceipt = async (p: Payment) => {
+    if (!histTarget) return;
+    const receiptNumber = `REC-INST-${p.id.slice(0, 8).toUpperCase()}`;
+    const pdf = await generateReceiptPdf({
+      receiptNumber,
+      system: "FFH",
+      residentName: histTarget.institution,
+      residentId: histTarget.institution,
+      allocations: [{ period: histTarget.period_label, amount: Number(p.amount) }],
+      totalPago: Number(p.amount),
+      paymentMethod: p.payment_method,
+      paymentDate: new Date(p.payment_date),
+      saldoRemanescente: 0,
+    });
+    const url = URL.createObjectURL(pdf);
+    window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  };
+
+  // ---- Edit ----
   const openEdit = (f: Fee) => {
     setEditTarget(f);
+    setEditYear(String(f.reference_year));
+    setEditMonth(String(f.reference_month));
+    setEditDesc(f.descricao);
     setEditTaxa(String(f.taxa));
     setEditNApt(String(f.n_apartamentos));
     setEditValorPago(String(f.valor_pago));
@@ -271,58 +352,36 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
 
   const submitEdit = async () => {
     if (!editTarget) return;
-    const taxa = Number(editTaxa);
-    const nApt = Number(editNApt);
-    const vPago = Number(editValorPago);
-    if (taxa < 0 || nApt < 0 || vPago < 0) {
+    const y = Number(editYear), m = Number(editMonth);
+    const taxa = Number(editTaxa), nApt = Number(editNApt), vPago = Number(editValorPago);
+    if (!y || !m || taxa < 0 || nApt < 0 || vPago < 0) {
       toast({ title: "Valores inválidos", variant: "destructive" });
       return;
     }
     setEditing(true);
     const novoValor = taxa * nApt;
     const novoStatus = vPago >= novoValor - 0.01 && novoValor > 0 ? "paid" : vPago > 0 ? "partial" : "pending";
-    const { error } = await supabase
-      .from("institution_fees")
-      .update({ taxa, n_apartamentos: nApt, valor: novoValor, valor_pago: vPago, status: novoStatus })
-      .eq("id", editTarget.id);
+    const updateData = {
+      reference_year: y,
+      reference_month: m,
+      period_label: `${MESES[m - 1]}/${y}`,
+      descricao: editDesc,
+      taxa, n_apartamentos: nApt, valor: novoValor, valor_pago: vPago, status: novoStatus,
+    };
+    const { error } = await supabase.from("institution_fees").update(updateData).eq("id", editTarget.id);
     setEditing(false);
     if (error) {
       toast({ title: "Erro ao editar", description: error.message, variant: "destructive" });
       return;
     }
-    setFees((prev) => prev.map((f) => f.id === editTarget.id
-      ? { ...f, taxa, n_apartamentos: nApt, valor: novoValor, valor_pago: vPago, status: novoStatus }
-      : f));
+    setFees((prev) => prev.map((f) => f.id === editTarget.id ? { ...f, ...updateData } as Fee : f)
+      .sort((a, b) => a.reference_year - b.reference_year || a.reference_month - b.reference_month));
     setEditOpen(false);
     toast({ title: "Registo atualizado" });
   };
 
-  const generateInstitutionReceipt = async (fee: Fee, amount: number, method: string, dateStr: string) => {
-    try {
-      const receiptNumber = `REC-INST-${fee.id.slice(0, 8).toUpperCase()}`;
-      const pdf = await generateReceiptPdf({
-        receiptNumber,
-        system: "FFH",
-        residentName: fee.institution,
-        residentId: fee.institution,
-        allocations: [{ period: fee.period_label, amount }],
-        totalPago: amount,
-        paymentMethod: method,
-        paymentDate: new Date(dateStr),
-        saldoRemanescente: Math.max(0, Number(fee.valor) - Number(fee.valor_pago) - amount),
-      });
-      downloadBlob(pdf, `${receiptNumber}.pdf`);
-    } catch (e: any) {
-      toast({ title: "Aviso", description: "Pagamento ok, mas falhou gerar PDF.", variant: "destructive" });
-    }
-  };
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="flex items-center justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   }
 
   return (
@@ -342,7 +401,7 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
         </Card>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 items-center">
         <Select value={yearFilter} onValueChange={setYearFilter}>
           <SelectTrigger className="w-36"><SelectValue placeholder="Ano" /></SelectTrigger>
           <SelectContent>
@@ -359,9 +418,15 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
             <SelectItem value="paid">Pago</SelectItem>
           </SelectContent>
         </Select>
-        <span className="text-sm text-muted-foreground self-center ml-auto">
-          {filtered.length} {filtered.length === 1 ? "registo" : "registos"}
-        </span>
+        <span className="text-sm text-muted-foreground">{filtered.length} {filtered.length === 1 ? "registo" : "registos"}</span>
+        <div className="ml-auto flex gap-2">
+          <Button onClick={openPay} variant="outline" disabled={fees.length === 0}>
+            <Wallet className="w-4 h-4 mr-1" /> Registar Pagamento
+          </Button>
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" /> Adicionar Registo
+          </Button>
+        </div>
       </div>
 
       <Card className="overflow-hidden">
@@ -369,10 +434,10 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
           <Table>
             <TableHeader className="sticky top-0 bg-card z-10">
               <TableRow>
-                <TableHead>Período</TableHead>
+                <TableHead>Mês</TableHead>
                 <TableHead>Descrição</TableHead>
+                <TableHead className="text-center">Nº Apt</TableHead>
                 <TableHead className="text-right">Taxa (Mt)</TableHead>
-                <TableHead className="text-center">Nr. Apt</TableHead>
                 <TableHead className="text-right">Valor (Mt)</TableHead>
                 <TableHead className="text-right">Pago (Mt)</TableHead>
                 <TableHead className="text-right">Saldo (Mt)</TableHead>
@@ -382,113 +447,177 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Sem registos</TableCell></TableRow>
-              ) : filtered.map((f) => (
-                <FeeRow key={f.id} fee={f} onPay={openPay} onHistory={openHistory} onEdit={openEdit} />
-              ))}
+                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Sem registos. Clique em "Adicionar Registo".</TableCell></TableRow>
+              ) : filtered.map((f) => {
+                const saldo = Math.max(0, Number(f.valor) - Number(f.valor_pago));
+                return (
+                  <TableRow key={f.id}>
+                    <TableCell className="font-medium whitespace-nowrap">{f.period_label}</TableCell>
+                    <TableCell className="text-muted-foreground">{f.descricao}</TableCell>
+                    <TableCell className="text-center">{f.n_apartamentos}</TableCell>
+                    <TableCell className="text-right">{fmtMZN(Number(f.taxa))}</TableCell>
+                    <TableCell className="text-right font-semibold">{fmtMZN(Number(f.valor))}</TableCell>
+                    <TableCell className="text-right">{fmtMZN(Number(f.valor_pago))}</TableCell>
+                    <TableCell className={cn("text-right font-bold", saldo > 0 ? "text-red-700" : "text-green-700")}>{fmtMZN(saldo)}</TableCell>
+                    <TableCell><StatusBadge s={f.status} /></TableCell>
+                    <TableCell>
+                      <div className="flex gap-1 justify-end">
+                        <Button size="sm" variant="outline" onClick={() => openEdit(f)} className="h-8" title="Editar">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => openHistory(f)} className="h-8" title="Histórico / Recibos">
+                          <History className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
       </Card>
 
-      <Dialog open={payOpen} onOpenChange={setPayOpen}>
+      {/* Add record */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Wallet className="w-5 h-5 text-primary" /> Registar Pagamento
-            </DialogTitle>
-            <DialogDescription>
-              {payTarget && (
-                <>
-                  <strong>{payTarget.institution}</strong> · Mês a pagar: <strong>{payTarget.period_label}</strong>
-                </>
-              )}
-            </DialogDescription>
+            <DialogTitle className="flex items-center gap-2"><Plus className="w-5 h-5 text-primary" /> Novo Registo Mensal</DialogTitle>
+            <DialogDescription>{institution}</DialogDescription>
           </DialogHeader>
-
-          {payTarget && (
-            <div className="space-y-3">
-              <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
-                <div className="flex justify-between"><span>Valor total:</span><span className="font-semibold">{fmtMZN(Number(payTarget.valor))}</span></div>
-                <div className="flex justify-between"><span>Já pago:</span><span className="font-semibold text-green-700">{fmtMZN(Number(payTarget.valor_pago))}</span></div>
-                <div className="flex justify-between border-t pt-1 mt-1">
-                  <span>Saldo a pagar:</span>
-                  <span className="font-bold text-red-700">{fmtMZN(Math.max(0, Number(payTarget.valor) - Number(payTarget.valor_pago)))}</span>
-                </div>
-              </div>
-
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Mês de referência</Label>
-                <Input value={payTarget.period_label} disabled />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label>Montante (MZN)</Label>
-                  <Input type="number" min="0" step="0.01" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Data</Label>
-                  <Input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} />
-                </div>
-              </div>
-
-              <div>
-                <Label>Método</Label>
-                <Select value={payMethod} onValueChange={setPayMethod}>
+                <Label>Mês</Label>
+                <Select value={addMonth} onValueChange={setAddMonth}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="M-Pesa">M-Pesa</SelectItem>
-                    <SelectItem value="e-Mola">e-Mola</SelectItem>
-                    <SelectItem value="Transferência Bancária">Transferência Bancária</SelectItem>
-                    <SelectItem value="Depósito">Depósito</SelectItem>
-                    <SelectItem value="Numerário">Numerário</SelectItem>
-                  </SelectContent>
+                  <SelectContent>{MESES.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-
               <div>
-                <Label>Referência (opcional)</Label>
-                <Input value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="Nº de transacção" />
+                <Label>Ano</Label>
+                <Input type="number" value={addYear} onChange={(e) => setAddYear(e.target.value)} />
               </div>
-
-              <div>
-                <Label>Notas (opcional)</Label>
-                <Input value={payNotes} onChange={(e) => setPayNotes(e.target.value)} />
-              </div>
-
-              {Number(payAmount) > 0 && (
-                <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-sm">
-                  <div className="flex justify-between">
-                    <span>Saldo após pagamento:</span>
-                    <span className="font-bold text-primary">
-                      {fmtMZN(Math.max(0, Number(payTarget.valor) - Number(payTarget.valor_pago) - Number(payAmount)))}
-                    </span>
-                  </div>
-                </div>
-              )}
             </div>
-          )}
-
+            <div>
+              <Label>Descrição</Label>
+              <Input value={addDesc} onChange={(e) => setAddDesc(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>Nº Apartamentos</Label>
+                <Input type="number" min="0" value={addNApt} onChange={(e) => setAddNApt(e.target.value)} />
+              </div>
+              <div>
+                <Label>Taxa por Apt (MZN)</Label>
+                <Input type="number" min="0" step="0.01" value={addTaxa} onChange={(e) => setAddTaxa(e.target.value)} />
+              </div>
+            </div>
+            <div className="rounded-lg bg-muted/50 p-3 text-sm flex justify-between">
+              <span>Valor total:</span>
+              <span className="font-bold">{fmtMZN(Number(addTaxa) * Number(addNApt))}</span>
+            </div>
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPayOpen(false)} disabled={paying}>Cancelar</Button>
-            <Button onClick={submitPayment} disabled={paying}>
-              {paying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-              Confirmar Pagamento
+            <Button variant="outline" onClick={() => setAddOpen(false)} disabled={adding}>Cancelar</Button>
+            <Button onClick={submitAdd} disabled={adding}>
+              {adding ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+              Criar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Multi-month payment */}
+      <Dialog open={payOpen} onOpenChange={setPayOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Wallet className="w-5 h-5 text-primary" /> Registar Pagamento</DialogTitle>
+            <DialogDescription>{institution} · seleccione meses do ano</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Ano de referência</Label>
+              <Select value={payYear} onValueChange={(v) => { setPayYear(v); setPaySelected(new Set()); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Meses</Label>
+              <div className="border rounded-lg p-2 max-h-56 overflow-auto space-y-1 mt-1">
+                {payYearFees.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">Nenhum registo neste ano.</p>
+                ) : payYearFees.map((f) => {
+                  const saldo = Math.max(0, Number(f.valor) - Number(f.valor_pago));
+                  const pago = saldo === 0;
+                  return (
+                    <label key={f.id} className={cn("flex items-center gap-2 px-2 py-1.5 rounded text-sm cursor-pointer hover:bg-muted",
+                      paySelected.has(f.id) && "bg-primary/10", pago && "opacity-50")}>
+                      <Checkbox checked={paySelected.has(f.id)} onCheckedChange={() => togglePaySel(f.id)} disabled={pago} />
+                      <span className="flex-1">{f.period_label}</span>
+                      <span className={cn("text-xs tabular-nums", pago ? "text-green-700" : "text-red-700")}>
+                        {pago ? "Pago" : fmtMZN(saldo)}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="rounded-lg bg-muted/50 p-3 flex justify-between text-sm">
+              <span>Total seleccionado:</span>
+              <span className="font-bold text-red-700">{fmtMZN(payTotal)}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>Valor pago (MZN)</Label>
+                <Input type="number" min="0" step="0.01" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} />
+              </div>
+              <div>
+                <Label>Data</Label>
+                <Input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <Label>Via de pagamento</Label>
+              <Select value={payMethod} onValueChange={setPayMethod}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="M-Pesa">M-Pesa</SelectItem>
+                  <SelectItem value="e-Mola">e-Mola</SelectItem>
+                  <SelectItem value="Transferência Bancária">Transferência Bancária</SelectItem>
+                  <SelectItem value="Depósito">Depósito</SelectItem>
+                  <SelectItem value="Numerário">Numerário</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>Referência</Label>
+                <Input value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="opcional" />
+              </div>
+              <div>
+                <Label>Notas</Label>
+                <Input value={payNotes} onChange={(e) => setPayNotes(e.target.value)} placeholder="opcional" />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayOpen(false)} disabled={paying}>Cancelar</Button>
+            <Button onClick={submitPayment} disabled={paying || paySelected.size === 0}>
+              {paying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <FileDown className="w-4 h-4 mr-2" />}
+              Confirmar e Gerar Recibo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* History */}
       <Dialog open={histOpen} onOpenChange={setHistOpen}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <History className="w-5 h-5 text-primary" /> Histórico de Pagamentos
-            </DialogTitle>
-            <DialogDescription>
-              {histTarget && <>{histTarget.institution} · {histTarget.period_label}</>}
-            </DialogDescription>
+            <DialogTitle className="flex items-center gap-2"><History className="w-5 h-5 text-primary" /> Histórico de Pagamentos</DialogTitle>
+            <DialogDescription>{histTarget && <>{histTarget.institution} · {histTarget.period_label}</>}</DialogDescription>
           </DialogHeader>
           {histLoading ? (
             <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
@@ -503,6 +632,7 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
                     <TableHead>Método</TableHead>
                     <TableHead>Referência</TableHead>
                     <TableHead className="text-right">Montante</TableHead>
+                    <TableHead className="text-right">Recibo</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -512,6 +642,11 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
                       <TableCell>{p.payment_method}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{p.reference || "—"}</TableCell>
                       <TableCell className="text-right font-semibold">{fmtMZN(Number(p.amount))}</TableCell>
+                      <TableCell className="text-right">
+                        <Button size="sm" variant="outline" className="h-7" onClick={() => viewReceipt(p)}>
+                          <Receipt className="w-3.5 h-3.5 mr-1" /> Ver
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -521,44 +656,49 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
         </DialogContent>
       </Dialog>
 
+      {/* Edit */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Pencil className="w-5 h-5 text-primary" /> Editar Registo
-            </DialogTitle>
-            <DialogDescription>
-              {editTarget && <>{editTarget.institution} · {editTarget.period_label}</>}
-            </DialogDescription>
+            <DialogTitle className="flex items-center gap-2"><Pencil className="w-5 h-5 text-primary" /> Editar Registo</DialogTitle>
+            <DialogDescription>{editTarget && <>{editTarget.institution}</>}</DialogDescription>
           </DialogHeader>
           {editTarget && (
             <div className="space-y-3">
-              <div>
-                <Label>Taxa mensal por apartamento (MZN)</Label>
-                <Input type="number" min="0" step="0.01" value={editTaxa} onChange={(e) => setEditTaxa(e.target.value)} />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Mês</Label>
+                  <Select value={editMonth} onValueChange={setEditMonth}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{MESES.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Ano</Label>
+                  <Input type="number" value={editYear} onChange={(e) => setEditYear(e.target.value)} />
+                </div>
               </div>
               <div>
-                <Label>Nº de apartamentos</Label>
-                <Input type="number" min="0" step="1" value={editNApt} onChange={(e) => setEditNApt(e.target.value)} />
+                <Label>Descrição</Label>
+                <Input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Nº Apartamentos</Label>
+                  <Input type="number" min="0" value={editNApt} onChange={(e) => setEditNApt(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Taxa por Apt (MZN)</Label>
+                  <Input type="number" min="0" step="0.01" value={editTaxa} onChange={(e) => setEditTaxa(e.target.value)} />
+                </div>
               </div>
               <div>
-                <Label>Dívida acumulada / Valor já pago (MZN)</Label>
+                <Label>Valor já pago (MZN)</Label>
                 <Input type="number" min="0" step="0.01" value={editValorPago} onChange={(e) => setEditValorPago(e.target.value)} />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Ajuste manual: representa o que já foi pago (saldo = taxa × nº apt − valor pago).
-                </p>
               </div>
-              <div className="rounded-lg bg-muted/50 p-3 text-sm">
-                <div className="flex justify-between">
-                  <span>Novo valor total:</span>
-                  <span className="font-semibold">{fmtMZN(Number(editTaxa) * Number(editNApt))}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Novo saldo:</span>
-                  <span className="font-bold text-red-700">
-                    {fmtMZN(Math.max(0, Number(editTaxa) * Number(editNApt) - Number(editValorPago)))}
-                  </span>
-                </div>
+              <div className="rounded-lg bg-muted/50 p-3 text-sm space-y-1">
+                <div className="flex justify-between"><span>Novo valor total:</span><span className="font-semibold">{fmtMZN(Number(editTaxa) * Number(editNApt))}</span></div>
+                <div className="flex justify-between"><span>Novo saldo:</span><span className="font-bold text-red-700">{fmtMZN(Math.max(0, Number(editTaxa) * Number(editNApt) - Number(editValorPago)))}</span></div>
               </div>
             </div>
           )}
@@ -577,37 +717,62 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
 
 const InstitutionsGrid = () => {
   const [active, setActive] = useState<string>("__dashboard");
+  const [customList, setCustomList] = useState(loadCustom);
   const mountedRef = useRef<Set<string>>(new Set(["__dashboard"]));
   if (!mountedRef.current.has(active)) mountedRef.current.add(active);
 
+  const allInstitutions = useMemo(() => [...DEFAULT_INSTITUTIONS, ...customList], [customList]);
+
+  // New institution dialog
+  const [newOpen, setNewOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const { toast } = useToast();
+
+  const submitNewInstitution = () => {
+    const name = newName.trim();
+    if (!name) { toast({ title: "Nome obrigatório", variant: "destructive" }); return; }
+    if (allInstitutions.some((i) => i.key.toLowerCase() === name.toLowerCase())) {
+      toast({ title: "Instituição já existe", variant: "destructive" }); return;
+    }
+    const updated = [...customList, { key: name, label: name, desc: newDesc || name }];
+    setCustomList(updated);
+    saveCustom(updated);
+    setNewOpen(false);
+    setNewName(""); setNewDesc("");
+    setActive(name);
+    toast({ title: "Instituição adicionada" });
+  };
+
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button onClick={() => setNewOpen(true)} variant="outline" size="sm">
+          <Plus className="w-4 h-4 mr-1" /> Nova Instituição
+        </Button>
+      </div>
+
       <Tabs value={active} onValueChange={setActive}>
         <TabsList className="flex flex-wrap h-auto gap-1 bg-muted p-1">
-          <TabsTrigger
-            value="__dashboard"
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-          >
+          <TabsTrigger value="__dashboard" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <LayoutDashboard className="w-4 h-4 mr-1" /> Dashboard
           </TabsTrigger>
-          {INSTITUTIONS.map((i) => (
-            <TabsTrigger
-              key={i.key}
-              value={i.key}
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              title={i.desc}
-            >
+          {allInstitutions.map((i) => (
+            <TabsTrigger key={i.key} value={i.key}
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" title={i.desc}>
               {i.label}
             </TabsTrigger>
           ))}
         </TabsList>
 
-        <TabsContent value="__dashboard" className="mt-4" forceMount={mountedRef.current.has("__dashboard") ? true : undefined} hidden={active !== "__dashboard"}>
+        <TabsContent value="__dashboard" className="mt-4"
+          forceMount={mountedRef.current.has("__dashboard") ? true : undefined} hidden={active !== "__dashboard"}>
           {mountedRef.current.has("__dashboard") && <InstitutionsDashboard />}
         </TabsContent>
 
-        {INSTITUTIONS.map((i) => (
-          <TabsContent key={i.key} value={i.key} className="mt-4 space-y-2" forceMount={mountedRef.current.has(i.key) ? true : undefined} hidden={active !== i.key}>
+        {allInstitutions.map((i) => (
+          <TabsContent key={i.key} value={i.key} className="mt-4 space-y-2"
+            forceMount={mountedRef.current.has(i.key) ? true : undefined} hidden={active !== i.key}>
             <div className="bg-accent/10 border border-accent/30 rounded-lg p-3">
               <p className="text-sm"><strong>{i.label}</strong> — {i.desc}</p>
             </div>
@@ -615,6 +780,29 @@ const InstitutionsGrid = () => {
           </TabsContent>
         ))}
       </Tabs>
+
+      <Dialog open={newOpen} onOpenChange={setNewOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Plus className="w-5 h-5 text-primary" /> Nova Instituição</DialogTitle>
+            <DialogDescription>As taxas mensais são definidas por registo.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Nome / Sigla *</Label>
+              <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Ex: SADC" />
+            </div>
+            <div>
+              <Label>Descrição</Label>
+              <Input value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="Nome completo (opcional)" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewOpen(false)}>Cancelar</Button>
+            <Button onClick={submitNewInstitution}><CheckCircle2 className="w-4 h-4 mr-2" /> Adicionar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
