@@ -39,6 +39,7 @@ interface FpdTaxa {
   due_date: string;
   receipt_url?: string | null;
   payment_method?: string | null;
+  data_pagamento?: string;
 }
 
 const FEE_PAGE_SIZE = 1000;
