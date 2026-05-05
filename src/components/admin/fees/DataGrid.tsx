@@ -460,17 +460,12 @@ const DataGrid = () => {
       {activeTab === "total_colectado" ? (
         <TotalColectadoView taxas={taxas} unidades={unidades} anoFiltro={anoFiltro} />
       ) : vista === "tabela" ? (
-        <TaxasGrid
+        <MoradoresGrid
           taxas={filteredTaxas}
           unidades={filteredUnidades}
           anoFiltro={anoFiltro}
-          mesFiltro={mesFiltro}
           onRefresh={refresh}
-          onUpdateTaxaLocal={updateTaxaLocal}
-          onDeleteUnidade={handleDeleteUnidade}
-          onViewReceipt={handleViewReceipt}
         />
-      ) : (
         <ReportsView taxas={filteredTaxas} unidades={filteredUnidades} />
       )}
 
