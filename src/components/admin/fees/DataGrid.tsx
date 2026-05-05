@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { TableProperties, BarChart3, Plus, Loader2, Eye } from "lucide-react";
 import { Unidade, Taxa, PaymentStatus, CategoriaUnidade, MESES_LABELS, CATEGORIAS_LABELS, CATEGORIAS_LIST, formatCurrency, calcStatus, getDividaHistorica } from "./types";
 import TaxasGrid from "./TaxasGrid";
+import MoradoresGrid from "./MoradoresGrid";
 import ReportsView from "./ReportsView";
 import TotalColectadoView from "./TotalColectadoView";
 import GerarTaxasDialog from "./GerarTaxasDialog";
@@ -123,6 +124,7 @@ const DataGrid = () => {
         divida_inicial: Number(u.divida_inicial ?? 0),
         divida_anterior: Number(u.divida_anterior ?? u.divida_inicial ?? 0),
         pagamentos_historicos: Number(u.pagamentos_historicos ?? 0),
+        user_id: u.user_id ?? null,
       }));
 
       const mappedTaxas: Taxa[] = taxasData.map((t: any) => {
@@ -459,15 +461,11 @@ const DataGrid = () => {
       {activeTab === "total_colectado" ? (
         <TotalColectadoView taxas={taxas} unidades={unidades} anoFiltro={anoFiltro} />
       ) : vista === "tabela" ? (
-        <TaxasGrid
+        <MoradoresGrid
           taxas={filteredTaxas}
           unidades={filteredUnidades}
           anoFiltro={anoFiltro}
-          mesFiltro={mesFiltro}
           onRefresh={refresh}
-          onUpdateTaxaLocal={updateTaxaLocal}
-          onDeleteUnidade={handleDeleteUnidade}
-          onViewReceipt={handleViewReceipt}
         />
       ) : (
         <ReportsView taxas={filteredTaxas} unidades={filteredUnidades} />

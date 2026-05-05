@@ -15,6 +15,7 @@ import FeesPaymentDialog from "./PaymentDialog";
 import { PaymentStatus, MESES_SHORT, MESES_LABELS, formatCurrency, calcStatus } from "./types";
 import { cn } from "@/lib/utils";
 import { feesCache } from "./feesCache";
+import FpdMoradoresGrid from "./FpdMoradoresGrid";
 
 interface FpdUnidade {
   id: string;
@@ -23,6 +24,9 @@ interface FpdUnidade {
   nome: string;
   contacto: string;
   taxa: number;
+  user_id?: string | null;
+  divida_anterior?: number;
+  pagamentos_historicos?: number;
 }
 
 interface FpdTaxa {
@@ -36,6 +40,7 @@ interface FpdTaxa {
   due_date: string;
   receipt_url?: string | null;
   payment_method?: string | null;
+  data_pagamento?: string;
 }
 
 const FEE_PAGE_SIZE = 1000;
@@ -126,6 +131,9 @@ const FpdDataGrid = () => {
       const mappedUnidades: FpdUnidade[] = (unidadesRes.data || []).map((u: any) => ({
         id: u.id, ord: u.ord, apartamento: u.apartamento,
         nome: u.nome, contacto: u.contacto, taxa: Number(u.taxa),
+        user_id: u.user_id ?? null,
+        divida_anterior: Number(u.divida_anterior ?? u.divida_inicial ?? 0),
+        pagamentos_historicos: Number(u.pagamentos_historicos ?? 0),
       }));
 
       const mappedTaxas: FpdTaxa[] = feesData.map((t: any) => {
@@ -140,6 +148,7 @@ const FpdDataGrid = () => {
           status: mapFeeStatus(t.status, valor, valorPago),
           due_date: t.due_date, receipt_url: t.receipt_url,
           payment_method: t.payment_method,
+          data_pagamento: t.paid_at,
         };
       });
 
@@ -403,118 +412,8 @@ const FpdDataGrid = () => {
         </Select>
       </div>
 
-      {/* Toolbar */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b pb-3 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        <div className="flex gap-1.5 flex-wrap">
-          {statusChips.map(chip => (
-            <button
-              key={chip.value}
-              onClick={() => { setStatusFiltro(chip.value); setVisibleCount(PAGE_INCREMENT); }}
-              className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-medium transition-colors border",
-                statusFiltro === chip.value
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
-              )}
-            >
-              {chip.label}
-            </button>
-          ))}
-        </div>
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Pesquisar nome, contacto ou apartamento..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setVisibleCount(PAGE_INCREMENT); }}
-            className="pl-10 h-9"
-          />
-        </div>
-      </div>
-
-      {/* Table */}
-      {filtered.length === 0 ? (
-        <div className="text-center py-16">
-          <Receipt className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
-          <p className="text-muted-foreground">Nenhuma taxa encontrada.</p>
-        </div>
-      ) : (
-        <>
-          <div className="overflow-x-auto border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10">#</TableHead>
-                  <TableHead>Mês</TableHead>
-                  <TableHead>Apt</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Contacto</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                  <TableHead className="text-right">Pago</TableHead>
-                  <TableHead className="text-right">Dívida</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-10"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {visibleSlice.map((taxa) => {
-                  const u = unidadeMap[taxa.unidade_id];
-                  if (!u) return null;
-                  const divida = Math.max(0, taxa.valor - taxa.valor_pago);
-                  return (
-                    <TableRow key={taxa.id} className="group hover:bg-accent/50">
-                      <TableCell className="text-xs text-muted-foreground tabular-nums">{u.ord}</TableCell>
-                      <TableCell className="font-medium text-xs">{MESES_SHORT[taxa.mes_referencia]}</TableCell>
-                      <TableCell className="tabular-nums text-xs">{u.apartamento}</TableCell>
-                      <TableCell className="max-w-[150px] truncate text-sm font-medium">{u.nome}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{u.contacto || "—"}</TableCell>
-                      <TableCell className="text-right tabular-nums text-sm">{formatCurrency(taxa.valor)}</TableCell>
-                      <TableCell className="text-right tabular-nums text-sm text-emerald-600 font-medium">{formatCurrency(taxa.valor_pago)}</TableCell>
-                      <TableCell className={cn("text-right tabular-nums text-sm font-medium", divida > 0 ? "text-red-600" : "")}>
-                        {divida > 0 ? formatCurrency(divida) : "—"}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={taxa.status} onStatusChange={(s) => handleStatusChange(taxa.id, s)} />
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => { setPaymentDialog(taxa); setPaymentDialogOpen(true); }}>
-                              Registar Pagamento
-                            </DropdownMenuItem>
-                            {taxa.receipt_url && (
-                              <DropdownMenuItem onClick={() => handleViewReceipt(taxa.receipt_url!)}>
-                                <Eye className="w-4 h-4 mr-2" />
-                                Ver Comprovativo
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteUnidade(u.id)}>
-                              Remover Unidade
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-          <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-            <span>A mostrar {Math.min(visibleCount, filtered.length)} de {filtered.length}</span>
-            {visibleCount < filtered.length && (
-              <Button variant="outline" size="sm" onClick={() => setVisibleCount(c => c + PAGE_INCREMENT)}>
-                Carregar mais
-              </Button>
-            )}
-          </div>
-        </>
-      )}
+      {/* Tabela morador-centric */}
+      <FpdMoradoresGrid unidades={unidades} taxas={taxas as any} onRefresh={refresh} />
 
       {/* Payment Dialog (com via + histórico) */}
       <FeesPaymentDialog

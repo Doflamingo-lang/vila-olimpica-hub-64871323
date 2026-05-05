@@ -18,6 +18,7 @@ export interface Unidade {
   divida_anterior?: number;
   /** Abatimentos já realizados sobre a dívida histórica */
   pagamentos_historicos?: number;
+  user_id?: string | null;
 }
 
 /** Saldo histórico em aberto: max(dividaAnterior - pagamentosHistoricos, 0) */
