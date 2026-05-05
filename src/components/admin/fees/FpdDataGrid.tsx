@@ -15,6 +15,7 @@ import FeesPaymentDialog from "./PaymentDialog";
 import { PaymentStatus, MESES_SHORT, MESES_LABELS, formatCurrency, calcStatus } from "./types";
 import { cn } from "@/lib/utils";
 import { feesCache } from "./feesCache";
+import FpdMoradoresGrid from "./FpdMoradoresGrid";
 
 interface FpdUnidade {
   id: string;
