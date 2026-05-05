@@ -351,7 +351,7 @@ const AdminDashboard = () => {
     { icon: MessageSquare, label: "Mensagens", section: "messages" },
     { icon: UserPlus, label: "Pedidos Acesso", section: "access-requests" },
     { icon: ImageIcon, label: "Galeria Sobre", section: "about-gallery" },
-    { icon: Shield, label: "Administradores", section: "admins" },
+    { icon: Shield, label: "Minha Conta", section: "admins" },
   ];
 
   if (authLoading || isLoading) {
