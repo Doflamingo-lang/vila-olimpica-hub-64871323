@@ -49,13 +49,31 @@ Deno.serve(async (req) => {
       }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    if (cleaned === (user.email || "").toLowerCase()) {
+      return new Response(JSON.stringify({ error: "O novo email é igual ao atual." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Verificar se o email já está em uso por outro utilizador
+    const { data: existing } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+    const taken = existing?.users?.some((u: any) => (u.email || "").toLowerCase() === cleaned && u.id !== user.id);
+    if (taken) {
+      return new Response(JSON.stringify({ error: "Este email já está em uso por outra conta." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { error } = await admin.auth.admin.updateUserById(user.id, {
       email: cleaned,
       email_confirm: true,
     });
     if (error) {
       console.error("updateUserById error:", error);
-      return new Response(JSON.stringify({ error: error.message || "Falha ao atualizar email" }), {
+      const msg = /duplicate|already/i.test(error.message || "")
+        ? "Este email já está em uso por outra conta."
+        : (error.message || "Falha ao atualizar email");
+      return new Response(JSON.stringify({ error: msg }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
