@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Wallet, History, CheckCircle2, Pencil, FileDown, LayoutDashboard, Plus, Receipt, Trash2, Printer } from "lucide-react";
+import { Loader2, Wallet, History, CheckCircle2, Pencil, FileDown, LayoutDashboard, Plus, Receipt, Trash2, Printer, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import InstitutionsDashboard from "./InstitutionsDashboard";
 import { generateReceiptPdf, downloadBlob } from "@/lib/paymentReceipt";
