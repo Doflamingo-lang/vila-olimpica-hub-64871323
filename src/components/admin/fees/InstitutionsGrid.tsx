@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Wallet, History, CheckCircle2, Pencil, FileDown, LayoutDashboard, Plus, Receipt, Trash2, Printer } from "lucide-react";
+import { Loader2, Wallet, History, CheckCircle2, Pencil, FileDown, LayoutDashboard, Plus, Receipt, Trash2, Printer, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import InstitutionsDashboard from "./InstitutionsDashboard";
 import { generateReceiptPdf, downloadBlob } from "@/lib/paymentReceipt";
@@ -103,7 +104,8 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
 
   // Multi-month payment
   const [payOpen, setPayOpen] = useState(false);
-  const [payYear, setPayYear] = useState(String(new Date().getFullYear()));
+  const [payYear, setPayYear] = useState<string>("all");
+  const [payMonth, setPayMonth] = useState<string>("all");
   const [paySelected, setPaySelected] = useState<Set<string>>(new Set());
   const [payMethod, setPayMethod] = useState("M-Pesa");
   const [payRef, setPayRef] = useState("");
@@ -196,9 +198,10 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
   };
 
   // ---- Multi-month payment ----
-  const openPay = () => {
-    setPayYear(String(new Date().getFullYear()));
-    setPaySelected(new Set());
+  const openPay = (preselectFeeId?: string) => {
+    setPayYear("all");
+    setPayMonth("all");
+    setPaySelected(preselectFeeId ? new Set([preselectFeeId]) : new Set());
     setPayMethod("M-Pesa");
     setPayRef("");
     setPayNotes("");
@@ -208,9 +211,12 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
   };
 
   const payYearFees = useMemo(() =>
-    fees.filter((f) => String(f.reference_year) === payYear)
-      .sort((a, b) => a.reference_month - b.reference_month),
-  [fees, payYear]);
+    fees.filter((f) => {
+      if (payYear !== "all" && String(f.reference_year) !== payYear) return false;
+      if (payMonth !== "all" && String(f.reference_month) !== payMonth) return false;
+      return true;
+    }).sort((a, b) => a.reference_year - b.reference_year || a.reference_month - b.reference_month),
+  [fees, payYear, payMonth]);
 
   const payTotal = useMemo(() => {
     return payYearFees
@@ -461,9 +467,6 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
         </Select>
         <span className="text-sm text-muted-foreground">{filtered.length} {filtered.length === 1 ? "registo" : "registos"}</span>
         <div className="ml-auto flex gap-2">
-          <Button onClick={openPay} variant="outline" disabled={fees.length === 0}>
-            <Wallet className="w-4 h-4 mr-1" /> Registar Pagamento
-          </Button>
           <Button onClick={() => setAddOpen(true)}>
             <Plus className="w-4 h-4 mr-1" /> Adicionar Registo
           </Button>
@@ -502,19 +505,32 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
                     <TableCell className={cn("text-right font-bold", saldo > 0 ? "text-red-700" : "text-green-700")}>{fmtMZN(saldo)}</TableCell>
                     <TableCell><StatusBadge s={f.status} /></TableCell>
                     <TableCell>
-                      <div className="flex gap-1 justify-end">
-                        <Button size="sm" variant="outline" onClick={() => openEdit(f)} className="h-8" title="Editar">
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => openHistory(f)} className="h-8" title="Histórico / Recibos">
-                          <History className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handlePrintLastReceipt(f)} className="h-8" title="Imprimir último recibo">
-                          <Printer className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleDelete(f)} className="h-8 text-red-600 hover:text-red-700" title="Eliminar">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                      <div className="flex justify-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Acções">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-popover z-50">
+                            <DropdownMenuItem onClick={() => openPay(f.id)}>
+                              <Wallet className="w-4 h-4 mr-2" /> Registar pagamento
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openEdit(f)}>
+                              <Pencil className="w-4 h-4 mr-2" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openHistory(f)}>
+                              <History className="w-4 h-4 mr-2" /> Histórico / Recibos
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handlePrintLastReceipt(f)}>
+                              <Printer className="w-4 h-4 mr-2" /> Imprimir último recibo
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleDelete(f)} className="text-red-600 focus:text-red-700">
+                              <Trash2 className="w-4 h-4 mr-2" /> Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -580,21 +596,36 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Wallet className="w-5 h-5 text-primary" /> Registar Pagamento</DialogTitle>
-            <DialogDescription>{institution} · seleccione meses do ano</DialogDescription>
+            <DialogDescription>{institution} · filtre e seleccione qualquer mês/ano</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <div>
-              <Label>Ano de referência</Label>
-              <Select value={payYear} onValueChange={(v) => { setPayYear(v); setPaySelected(new Set()); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>Ano</Label>
+                <Select value={payYear} onValueChange={(v) => setPayYear(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os anos</SelectItem>
+                    {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Mês</Label>
+                <Select value={payMonth} onValueChange={(v) => setPayMonth(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os meses</SelectItem>
+                    {MESES.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div>
-              <Label>Meses</Label>
+              <Label>Registos disponíveis</Label>
               <div className="border rounded-lg p-2 max-h-56 overflow-auto space-y-1 mt-1">
                 {payYearFees.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-4">Nenhum registo neste ano.</p>
+                  <p className="text-xs text-muted-foreground text-center py-4">Nenhum registo encontrado para o filtro.</p>
                 ) : payYearFees.map((f) => {
                   const saldo = Math.max(0, Number(f.valor) - Number(f.valor_pago));
                   const pago = saldo === 0;
