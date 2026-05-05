@@ -79,7 +79,7 @@ export const generateReceiptPdf = async (data: ReceiptPayload): Promise<Blob> =>
 
   // Tabela de distribuição
   doc.setFont("helvetica", "bold");
-  doc.setFillColor(240);
+  doc.setFillColor(240, 240, 240);
   doc.rect(margin, y, W - margin * 2, 7, "F");
   doc.text("Período / Item", margin + 2, y + 5);
   doc.text("Valor (MT)", W - margin - 2, y + 5, { align: "right" });
