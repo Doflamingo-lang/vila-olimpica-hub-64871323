@@ -56,7 +56,7 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
   const [editUnidade, setEditUnidade] = useState<FpdMoradorUnidade | null>(null);
   const [historyUnidade, setHistoryUnidade] = useState<FpdMoradorUnidade | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_INCREMENT);
-  const [editForm, setEditForm] = useState({ nome: "", apartamento: "1", contacto: "", taxa: "1000" });
+  const [editForm, setEditForm] = useState({ nome: "", apartamento: "1", contacto: "", divida_acumulada: "0" });
   const [savingEdit, setSavingEdit] = useState(false);
 
   const taxasPorUnidade = useMemo(() => {
@@ -65,6 +65,7 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
     return map;
   }, [taxas]);
 
+  const TAXA_MENSAL = 1000;
   const rows = useMemo(() => {
     const hoje = new Date();
     const anoH = hoje.getFullYear();
@@ -72,16 +73,14 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
     return unidades.map((u) => {
       const ts = taxasPorUnidade[u.id] || [];
       const dividaAcumulada = Math.max(0, (u.divida_anterior ?? 0) - (u.pagamentos_historicos ?? 0));
-      const vencidas = ts.filter((t) => t.ano_referencia < anoH || (t.ano_referencia === anoH && t.mes_referencia <= mesH));
-      const dividaMes = vencidas.reduce((s, t) => s + Math.max(0, t.valor - t.valor_pago), 0);
       const taxaMes = ts.find((t) => t.ano_referencia === anoH && t.mes_referencia === mesH);
       const pagouMesActual = !!taxaMes && taxaMes.valor_pago >= taxaMes.valor;
       return {
         unidade: u,
         idLegivel: `Apt ${u.apartamento}`,
         dividaAcumulada,
-        dividaMes,
-        dividaTotal: dividaAcumulada + dividaMes,
+        dividaMes: TAXA_MENSAL,
+        dividaTotal: dividaAcumulada + TAXA_MENSAL,
         pagouMesActual,
       };
     });
@@ -107,18 +106,21 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
   ];
 
   const openEdit = (u: FpdMoradorUnidade) => {
-    setEditForm({ nome: u.nome, apartamento: String(u.apartamento), contacto: u.contacto || "", taxa: String(u.taxa) });
+    const dividaAcum = Math.max(0, (u.divida_anterior ?? 0) - (u.pagamentos_historicos ?? 0));
+    setEditForm({ nome: u.nome, apartamento: String(u.apartamento), contacto: u.contacto || "", divida_acumulada: String(dividaAcum) });
     setEditUnidade(u);
   };
 
   const handleSaveEdit = async () => {
     if (!editUnidade) return;
     setSavingEdit(true);
+    const dividaAcum = Math.max(0, parseFloat(editForm.divida_acumulada) || 0);
     const { error } = await supabase.from("fpd_unidades").update({
       nome: editForm.nome,
       apartamento: parseInt(editForm.apartamento) || 1,
       contacto: editForm.contacto,
-      taxa: parseFloat(editForm.taxa) || 1000,
+      divida_anterior: dividaAcum,
+      pagamentos_historicos: 0,
     }).eq("id", editUnidade.id);
     setSavingEdit(false);
     if (error) {
@@ -203,7 +205,7 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
               <TableHead>Nome</TableHead>
               <TableHead>Contacto</TableHead>
               <TableHead className="text-right">Dívida Acumulada</TableHead>
-              <TableHead className="text-right">Dívida do Mês</TableHead>
+              <TableHead className="text-right">Taxa Mensal</TableHead>
               <TableHead className="text-right">Dívida Total</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -220,8 +222,8 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
                 <TableCell className={cn("text-right tabular-nums text-sm", r.dividaAcumulada > 0 ? "text-destructive font-medium" : "text-muted-foreground")}>
                   {r.dividaAcumulada > 0 ? formatCurrency(r.dividaAcumulada) : "—"}
                 </TableCell>
-                <TableCell className={cn("text-right tabular-nums text-sm", r.dividaMes > 0 ? "text-destructive font-medium" : "text-muted-foreground")}>
-                  {r.dividaMes > 0 ? formatCurrency(r.dividaMes) : "—"}
+                <TableCell className="text-right tabular-nums text-sm font-medium">
+                  {formatCurrency(r.dividaMes)}
                 </TableCell>
                 <TableCell className={cn("text-right tabular-nums text-sm font-bold", r.dividaTotal > 0 ? "text-destructive" : "text-emerald-600")}>
                   {formatCurrency(r.dividaTotal)}
@@ -330,8 +332,9 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
               <Input value={editForm.contacto} onChange={(e) => setEditForm({ ...editForm, contacto: e.target.value })} />
             </div>
             <div>
-              <Label>Taxa mensal (MT)</Label>
-              <Input type="number" step="0.01" value={editForm.taxa} onChange={(e) => setEditForm({ ...editForm, taxa: e.target.value })} />
+              <Label>Dívida acumulada da unidade (MT)</Label>
+              <Input type="number" step="0.01" min="0" value={editForm.divida_acumulada} onChange={(e) => setEditForm({ ...editForm, divida_acumulada: e.target.value })} />
+              <p className="text-[11px] text-muted-foreground mt-1">Valor histórico em dívida. Pagamentos abaterão este valor.</p>
             </div>
           </div>
           <DialogFooter>
