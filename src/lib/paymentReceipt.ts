@@ -66,8 +66,8 @@ export const generateReceiptPdf = async (data: ReceiptPayload): Promise<Blob> =>
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text(`Recibo Nº: ${data.receiptNumber}`, margin, y);
-  doc.text(`Data: ${data.paymentDate.toLocaleDateString("pt-PT")}`, W - margin, y, { align: "right" });
+  doc.text(String(`Recibo Nº: ${data.receiptNumber}`), margin, y);
+  doc.text(String(`Data: ${data.paymentDate.toLocaleDateString("pt-PT")}`), W - margin, y, { align: "right" });
   y += 8;
 
   doc.setFont("helvetica", "normal");
