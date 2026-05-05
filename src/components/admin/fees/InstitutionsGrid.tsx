@@ -467,9 +467,6 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
         </Select>
         <span className="text-sm text-muted-foreground">{filtered.length} {filtered.length === 1 ? "registo" : "registos"}</span>
         <div className="ml-auto flex gap-2">
-          <Button onClick={openPay} variant="outline" disabled={fees.length === 0}>
-            <Wallet className="w-4 h-4 mr-1" /> Registar Pagamento
-          </Button>
           <Button onClick={() => setAddOpen(true)}>
             <Plus className="w-4 h-4 mr-1" /> Adicionar Registo
           </Button>
