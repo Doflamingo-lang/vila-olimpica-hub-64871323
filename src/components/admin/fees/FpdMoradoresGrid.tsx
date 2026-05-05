@@ -65,6 +65,7 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
     return map;
   }, [taxas]);
 
+  const TAXA_MENSAL = 1000;
   const rows = useMemo(() => {
     const hoje = new Date();
     const anoH = hoje.getFullYear();
@@ -72,16 +73,14 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
     return unidades.map((u) => {
       const ts = taxasPorUnidade[u.id] || [];
       const dividaAcumulada = Math.max(0, (u.divida_anterior ?? 0) - (u.pagamentos_historicos ?? 0));
-      const vencidas = ts.filter((t) => t.ano_referencia < anoH || (t.ano_referencia === anoH && t.mes_referencia <= mesH));
-      const dividaMes = vencidas.reduce((s, t) => s + Math.max(0, t.valor - t.valor_pago), 0);
       const taxaMes = ts.find((t) => t.ano_referencia === anoH && t.mes_referencia === mesH);
       const pagouMesActual = !!taxaMes && taxaMes.valor_pago >= taxaMes.valor;
       return {
         unidade: u,
         idLegivel: `Apt ${u.apartamento}`,
         dividaAcumulada,
-        dividaMes,
-        dividaTotal: dividaAcumulada + dividaMes,
+        dividaMes: TAXA_MENSAL,
+        dividaTotal: dividaAcumulada + TAXA_MENSAL,
         pagouMesActual,
       };
     });
@@ -206,7 +205,7 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
               <TableHead>Nome</TableHead>
               <TableHead>Contacto</TableHead>
               <TableHead className="text-right">Dívida Acumulada</TableHead>
-              <TableHead className="text-right">Dívida do Mês</TableHead>
+              <TableHead className="text-right">Taxa Mensal</TableHead>
               <TableHead className="text-right">Dívida Total</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -223,8 +222,8 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
                 <TableCell className={cn("text-right tabular-nums text-sm", r.dividaAcumulada > 0 ? "text-destructive font-medium" : "text-muted-foreground")}>
                   {r.dividaAcumulada > 0 ? formatCurrency(r.dividaAcumulada) : "—"}
                 </TableCell>
-                <TableCell className={cn("text-right tabular-nums text-sm", r.dividaMes > 0 ? "text-destructive font-medium" : "text-muted-foreground")}>
-                  {r.dividaMes > 0 ? formatCurrency(r.dividaMes) : "—"}
+                <TableCell className="text-right tabular-nums text-sm font-medium">
+                  {formatCurrency(r.dividaMes)}
                 </TableCell>
                 <TableCell className={cn("text-right tabular-nums text-sm font-bold", r.dividaTotal > 0 ? "text-destructive" : "text-emerald-600")}>
                   {formatCurrency(r.dividaTotal)}
