@@ -213,54 +213,118 @@ const FeesSection = () => {
                 )}
               </TabsContent>
 
-              {/* Pagamentos realizados */}
+              {/* Pagamentos realizados — com saldo devedor evolutivo */}
               <TabsContent value="pagamentos">
                 {pagas.length === 0 ? (
                   <p className="text-center py-8 text-muted-foreground text-sm">Sem pagamentos registados.</p>
                 ) : (
                   <>
-                    <p className="text-sm text-muted-foreground mb-3">Total pago: <span className="font-bold text-foreground">{formatCurrency(totalPago)}</span></p>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Total pago: <span className="font-bold text-foreground">{formatCurrency(totalPago)}</span>
+                    </p>
                     <Table>
                       <TableHeader><TableRow>
-                        <TableHead>Referência</TableHead><TableHead>Valor</TableHead>
-                        <TableHead>Data</TableHead><TableHead>Método</TableHead>
+                        <TableHead>Referência</TableHead>
+                        <TableHead>Saldo Inicial</TableHead>
+                        <TableHead>Valor Pago</TableHead>
+                        <TableHead>Saldo Após</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Método</TableHead>
                       </TableRow></TableHeader>
                       <TableBody>
-                        {pagas.map(f => (
-                          <TableRow key={f.id}>
-                            <TableCell className="font-medium">{MONTHS[f.reference_month]}/{f.reference_year}</TableCell>
-                            <TableCell>{formatCurrency(Number(f.amount))}</TableCell>
-                            <TableCell>{f.paid_at ? format(new Date(f.paid_at), "dd/MM/yyyy HH:mm") : "—"}</TableCell>
-                            <TableCell>{methodLabel(f.payment_method)}</TableCell>
-                          </TableRow>
-                        ))}
+                        {(() => {
+                          // Ordenar por data de pagamento (asc) para calcular o saldo devedor mês a mês
+                          const ordered = [...pagas].sort((a, b) => {
+                            const da = a.paid_at ? new Date(a.paid_at).getTime() : 0;
+                            const db = b.paid_at ? new Date(b.paid_at).getTime() : 0;
+                            return da - db;
+                          });
+                          // Saldo devedor inicial = dívida acumulada + soma de todos os valores pagos no sistema
+                          let saldo = dividaAcumulada + pagas.reduce((s, f) => s + Number(f.amount || 0), 0);
+                          return ordered.map(f => {
+                            const valor = Number(f.amount || 0);
+                            const saldoInicial = saldo;
+                            saldo = Math.max(0, saldo - valor);
+                            return (
+                              <TableRow key={f.id}>
+                                <TableCell className="font-medium">{MONTHS[f.reference_month]}/{f.reference_year}</TableCell>
+                                <TableCell className="text-muted-foreground">{formatCurrency(saldoInicial)}</TableCell>
+                                <TableCell className="text-green-700 font-semibold">{formatCurrency(valor)}</TableCell>
+                                <TableCell className="text-foreground font-semibold">{formatCurrency(saldo)}</TableCell>
+                                <TableCell>{f.paid_at ? format(new Date(f.paid_at), "dd/MM/yyyy") : "—"}</TableCell>
+                                <TableCell>{methodLabel(f.payment_method)}</TableCell>
+                              </TableRow>
+                            );
+                          });
+                        })()}
                       </TableBody>
                     </Table>
                   </>
                 )}
               </TabsContent>
 
-              {/* Métodos de pagamento */}
+              {/* Métodos de pagamento disponíveis */}
               <TabsContent value="metodos">
-                {metodosUsados.length === 0 ? (
-                  <p className="text-center py-8 text-muted-foreground text-sm">Ainda não utilizou nenhum método.</p>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {metodosUsados.map(m => {
-                      const count = pagas.filter(p => p.payment_method === m).length;
-                      const total = pagas.filter(p => p.payment_method === m).reduce((s, p) => s + Number(p.amount || 0), 0);
-                      return (
-                        <Card key={m}>
-                          <CardContent className="p-4">
-                            <p className="font-semibold">{methodLabel(m)}</p>
-                            <p className="text-xs text-muted-foreground mt-1">{count} pagamento(s)</p>
-                            <p className="text-sm font-bold text-primary mt-2">{formatCurrency(total)}</p>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
+                <div className="space-y-4">
+                  <Card className="border-primary/30 bg-primary/5">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-primary">
+                        <Wallet className="w-5 h-5" /> NEDBANK — Transferência Bancária
+                      </CardTitle>
+                      <CardDescription>
+                        Realize a transferência para a conta oficial do condomínio e envie o comprovativo via janela de mensagens.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                        <div>
+                          <dt className="text-xs text-muted-foreground uppercase tracking-wide">Denominação</dt>
+                          <dd className="font-semibold text-foreground">COM DE MORAD DO COND VILA OLIMPICA</dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs text-muted-foreground uppercase tracking-wide">Banco</dt>
+                          <dd className="font-semibold text-foreground">NEDBANK</dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs text-muted-foreground uppercase tracking-wide">Número da Conta</dt>
+                          <dd className="font-mono font-semibold text-foreground">0003676890746</dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs text-muted-foreground uppercase tracking-wide">IBAN</dt>
+                          <dd className="font-mono font-semibold text-foreground">004300000003676890746</dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs text-muted-foreground uppercase tracking-wide">SWIFT</dt>
+                          <dd className="font-mono font-semibold text-foreground">UNICMZMX</dd>
+                        </div>
+                      </dl>
+                      <div className="mt-4 p-3 rounded-md bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                        ⚠️ Após efectuar a transferência, envie o comprovativo (PDF ou imagem) através da aba <strong>Mensagens</strong> para validação pela administração.
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {metodosUsados.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium mb-2 text-muted-foreground">Métodos já utilizados</p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {metodosUsados.map(m => {
+                          const count = pagas.filter(p => p.payment_method === m).length;
+                          const total = pagas.filter(p => p.payment_method === m).reduce((s, p) => s + Number(p.amount || 0), 0);
+                          return (
+                            <Card key={m}>
+                              <CardContent className="p-4">
+                                <p className="font-semibold">{methodLabel(m)}</p>
+                                <p className="text-xs text-muted-foreground mt-1">{count} pagamento(s)</p>
+                                <p className="text-sm font-bold text-primary mt-2">{formatCurrency(total)}</p>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </TabsContent>
 
               {/* Histórico completo */}
