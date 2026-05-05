@@ -23,6 +23,9 @@ interface FpdUnidade {
   nome: string;
   contacto: string;
   taxa: number;
+  user_id?: string | null;
+  divida_anterior?: number;
+  pagamentos_historicos?: number;
 }
 
 interface FpdTaxa {
@@ -126,6 +129,9 @@ const FpdDataGrid = () => {
       const mappedUnidades: FpdUnidade[] = (unidadesRes.data || []).map((u: any) => ({
         id: u.id, ord: u.ord, apartamento: u.apartamento,
         nome: u.nome, contacto: u.contacto, taxa: Number(u.taxa),
+        user_id: u.user_id ?? null,
+        divida_anterior: Number(u.divida_anterior ?? u.divida_inicial ?? 0),
+        pagamentos_historicos: Number(u.pagamentos_historicos ?? 0),
       }));
 
       const mappedTaxas: FpdTaxa[] = feesData.map((t: any) => {
