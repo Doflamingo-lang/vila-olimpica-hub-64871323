@@ -132,6 +132,13 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
   const [history, setHistory] = useState<Payment[]>([]);
   const [histLoading, setHistLoading] = useState(false);
 
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Fee | null>(null);
+  const [editTaxa, setEditTaxa] = useState("");
+  const [editNApt, setEditNApt] = useState("");
+  const [editValorPago, setEditValorPago] = useState("");
+  const [editing, setEditing] = useState(false);
+
   const load = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
