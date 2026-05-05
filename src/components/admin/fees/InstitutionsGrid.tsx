@@ -198,9 +198,10 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
   };
 
   // ---- Multi-month payment ----
-  const openPay = () => {
-    setPayYear(String(new Date().getFullYear()));
-    setPaySelected(new Set());
+  const openPay = (preselectFeeId?: string) => {
+    setPayYear("all");
+    setPayMonth("all");
+    setPaySelected(preselectFeeId ? new Set([preselectFeeId]) : new Set());
     setPayMethod("M-Pesa");
     setPayRef("");
     setPayNotes("");
@@ -210,9 +211,12 @@ const InstitutionPanel = ({ institution }: { institution: string }) => {
   };
 
   const payYearFees = useMemo(() =>
-    fees.filter((f) => String(f.reference_year) === payYear)
-      .sort((a, b) => a.reference_month - b.reference_month),
-  [fees, payYear]);
+    fees.filter((f) => {
+      if (payYear !== "all" && String(f.reference_year) !== payYear) return false;
+      if (payMonth !== "all" && String(f.reference_month) !== payMonth) return false;
+      return true;
+    }).sort((a, b) => a.reference_year - b.reference_year || a.reference_month - b.reference_month),
+  [fees, payYear, payMonth]);
 
   const payTotal = useMemo(() => {
     return payYearFees
