@@ -210,6 +210,10 @@ const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
                         <Pencil className="w-4 h-4 mr-2" />
                         Editar Unidade
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handlePrintReceipt(r.unidade, "FFH")}>
+                        <Printer className="w-4 h-4 mr-2" />
+                        Imprimir Recibo
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
