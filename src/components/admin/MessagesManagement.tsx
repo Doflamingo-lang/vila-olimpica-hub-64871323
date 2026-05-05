@@ -80,7 +80,7 @@ const MessagesManagement = () => {
         if (m.recipient_id === adminId && !m.read_at) {
           unreadBy.set(peer, (unreadBy.get(peer) || 0) + 1);
         }
-        if (!map.has(peer)) map.set(peer, { user_id: peer });
+        // Only show active residents - skip messages from non-active users
       }
 
       const list = Array.from(map.values()).map((r) => ({
