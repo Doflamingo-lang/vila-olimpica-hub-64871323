@@ -340,22 +340,18 @@ const FpdDataGrid = () => {
         </div>
       </div>
 
-      {/* Year Tabs */}
-      <div className="flex gap-1 overflow-x-auto pb-1 border-b">
-        {anosDisponiveis.map(ano => (
-          <button
-            key={ano}
-            onClick={() => { setAnoFiltro(ano); setVisibleCount(PAGE_INCREMENT); }}
-            className={cn(
-              "px-4 py-2 text-sm font-medium whitespace-nowrap rounded-t-lg transition-colors border-b-2",
-              anoFiltro === ano
-                ? "border-primary text-primary bg-primary/5"
-                : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-            )}
-          >
-            FDP {ano === 2025 ? "Maio-Dez 2025" : `Jan-Dez ${ano}`}
-          </button>
-        ))}
+      {/* Filtros de ano e mês (igual ao FFH) */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <Select value={String(anoFiltro)} onValueChange={(v) => { setAnoFiltro(Number(v)); setVisibleCount(PAGE_INCREMENT); }}>
+          <SelectTrigger className="w-28 h-9">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {anosDisponiveis.map(a => (
+              <SelectItem key={a} value={String(a)}>{a}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Summary Cards */}
