@@ -265,9 +265,9 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
                           return;
                         }
                         const last = ts[0];
-                        const receiptNumber = `REC-FDP-${last.id.slice(0, 8).toUpperCase()}`;
+                        const receiptNumber = `REC-FPD-${last.id.slice(0, 8).toUpperCase()}`;
                         const pdf = await generateReceiptPdf({
-                          receiptNumber, system: "FDP",
+                          receiptNumber, system: "FPD",
                           residentName: r.unidade.nome, residentId: `Apt ${r.unidade.apartamento}`, contacto: r.unidade.contacto,
                           allocations: [{ period: `${MESES_LABELS[last.mes_referencia]}/${last.ano_referencia}`, amount: last.valor_pago }],
                           totalPago: last.valor_pago,
@@ -299,7 +299,7 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
         <CascadePaymentDialog
           open={!!paymentUnidade}
           onOpenChange={(o) => { if (!o) setPaymentUnidade(null); }}
-          system="FDP"
+          system="FPD"
           table="fpd_fees"
           unidadesTable="fpd_unidades"
           unidade={{
@@ -332,13 +332,13 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
         taxas={fpdHistoryTaxas}
         adminUserId={user?.id}
         residentUserId={historyUnidade?.user_id ?? null}
-        system="FDP"
+        system="FPD"
       />
 
       <Dialog open={!!editUnidade} onOpenChange={(o) => { if (!o) setEditUnidade(null); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Editar Unidade FDP</DialogTitle>
+            <DialogTitle>Editar Unidade FPD</DialogTitle>
             <DialogDescription>Actualize os dados da unidade.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">

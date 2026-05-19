@@ -157,8 +157,8 @@ const FpdDataGrid = () => {
       setTaxas(mappedTaxas);
       feesCache.set(cacheKey, { unidades: mappedUnidades, taxas: mappedTaxas, years });
     } catch (error) {
-      console.error("Erro ao carregar taxas FDP:", error);
-      toast({ title: "Erro", description: "Não foi possível carregar as taxas FDP.", variant: "destructive" });
+      console.error("Erro ao carregar taxas FPD:", error);
+      toast({ title: "Erro", description: "Não foi possível carregar as taxas FPD.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
