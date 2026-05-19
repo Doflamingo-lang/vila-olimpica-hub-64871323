@@ -15,7 +15,7 @@ const FeesManagement = () => {
 
   const tabs: { key: System; label: string }[] = [
     { key: "ffh", label: "Taxa de Condomínio FFH" },
-    { key: "fdp", label: "Taxa de Condomínio FDP" },
+    { key: "fdp", label: "Taxa de Condomínio FPD" },
     { key: "instituicoes", label: "Instituições" },
   ];
 
