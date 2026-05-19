@@ -42,7 +42,7 @@ const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
   const [historyUnidade, setHistoryUnidade] = useState<Unidade | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_INCREMENT);
 
-  const handlePrintReceipt = useCallback(async (unidade: Unidade, system: "FFH" | "FDP" = "FFH") => {
+  const handlePrintReceipt = useCallback(async (unidade: Unidade, system: "FFH" | "FPD" = "FFH") => {
     const ts = (taxas || []).filter((t) => t.unidade_id === unidade.id && t.valor_pago > 0)
       .sort((a, b) => (b.ano_referencia - a.ano_referencia) || (b.mes_referencia - a.mes_referencia));
     if (ts.length === 0) {

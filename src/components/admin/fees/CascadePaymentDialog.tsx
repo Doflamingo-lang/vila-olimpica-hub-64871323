@@ -25,7 +25,7 @@ export interface CascadeTaxa {
 interface CascadePaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  system: "FFH" | "FDP";
+  system: "FFH" | "FPD";
   table: "condominium_fees" | "fpd_fees";
   unidadesTable: "unidades" | "fpd_unidades";
   unidade: {
