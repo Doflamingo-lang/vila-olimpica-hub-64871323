@@ -157,8 +157,8 @@ const FpdDataGrid = () => {
       setTaxas(mappedTaxas);
       feesCache.set(cacheKey, { unidades: mappedUnidades, taxas: mappedTaxas, years });
     } catch (error) {
-      console.error("Erro ao carregar taxas FDP:", error);
-      toast({ title: "Erro", description: "Não foi possível carregar as taxas FDP.", variant: "destructive" });
+      console.error("Erro ao carregar taxas FPD:", error);
+      toast({ title: "Erro", description: "Não foi possível carregar as taxas FPD.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -333,7 +333,7 @@ const FpdDataGrid = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Taxa de Condomínio FDP</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Taxa de Condomínio FPD</h2>
           <p className="text-muted-foreground text-sm">
             {unidades.length} unidades · {taxasAno.length} taxas em {anoFiltro}
           </p>
@@ -430,7 +430,7 @@ const FpdDataGrid = () => {
       <Dialog open={gerarOpen} onOpenChange={setGerarOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Gerar Taxas FDP</DialogTitle>
+            <DialogTitle>Gerar Taxas FPD</DialogTitle>
             <DialogDescription>Gerar taxas mensais para um novo ano</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">

@@ -25,7 +25,7 @@ export interface CascadeTaxa {
 interface CascadePaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  system: "FFH" | "FDP";
+  system: "FFH" | "FPD";
   table: "condominium_fees" | "fpd_fees";
   unidadesTable: "unidades" | "fpd_unidades";
   unidade: {
@@ -36,6 +36,7 @@ interface CascadePaymentDialogProps {
     user_id?: string | null;
     divida_anterior: number;
     pagamentos_historicos: number;
+    categoria?: string;
   };
   taxasInquilino: CascadeTaxa[];
   adminUserId?: string | null;
@@ -235,17 +236,28 @@ const CascadePaymentDialog = ({
       // 5. Gerar PDF
       const receiptNumber = `REC-${system}-${Date.now().toString().slice(-8)}`;
       const fileName = `${receiptNumber}.pdf`;
+      const paidMonths = updates.map((u) => `${MESES_LABELS[u.mes]}/${u.ano}`);
+      // Saldo total remanescente após este pagamento = histórica restante + Σ dívidas mensais não cobertas
+      const dividaHistRestante = Math.max(0, (unidade.divida_anterior ?? 0) - novosPagHist);
+      const dividaMensalRestante = mesesDoAno.reduce((s, m) => {
+        const u = updates.find((x) => x.mes === m.mes);
+        const pagoFinal = u ? u.valor_pago : m.pago;
+        return s + Math.max(0, m.valor - pagoFinal);
+      }, 0);
+      const saldoTotalRemanescente = dividaHistRestante + dividaMensalRestante;
       const pdf = await generateReceiptPdf({
         receiptNumber,
         system,
         residentName: unidade.nome,
         residentId: unidade.idLegivel,
         contacto: unidade.contacto,
+        categoria: unidade.categoria,
         allocations,
+        paidMonths,
         totalPago: valorNumber,
         paymentMethod: PAYMENT_METHODS.find((m) => m.value === via)?.label || via,
         paymentDate: new Date(),
-        saldoRemanescente,
+        saldoRemanescente: saldoTotalRemanescente,
       });
 
       downloadBlob(pdf, fileName);

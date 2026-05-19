@@ -8,7 +8,7 @@ import { Search, MoreVertical, CreditCard, History, Pencil, CheckCircle2, AlertC
 import EditUnidadeDialog from "./EditUnidadeDialog";
 import PaymentHistoryDialog from "./PaymentHistoryDialog";
 import CascadePaymentDialog from "./CascadePaymentDialog";
-import { Taxa, Unidade, formatCurrency, MESES_LABELS } from "./types";
+import { Taxa, Unidade, formatCurrency, MESES_LABELS, CATEGORIAS_LABELS } from "./types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { generateReceiptPdf, downloadBlob } from "@/lib/paymentReceipt";
@@ -42,7 +42,7 @@ const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
   const [historyUnidade, setHistoryUnidade] = useState<Unidade | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_INCREMENT);
 
-  const handlePrintReceipt = useCallback(async (unidade: Unidade, system: "FFH" | "FDP" = "FFH") => {
+  const handlePrintReceipt = useCallback(async (unidade: Unidade, system: "FFH" | "FPD" = "FFH") => {
     const ts = (taxas || []).filter((t) => t.unidade_id === unidade.id && t.valor_pago > 0)
       .sort((a, b) => (b.ano_referencia - a.ano_referencia) || (b.mes_referencia - a.mes_referencia));
     if (ts.length === 0) {
@@ -51,17 +51,26 @@ const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
     }
     const last = ts[0];
     const receiptNumber = `REC-${system}-${last.id.slice(0, 8).toUpperCase()}`;
+    const paidMonths = ts
+      .sort((a, b) => (a.ano_referencia - b.ano_referencia) || (a.mes_referencia - b.mes_referencia))
+      .map((t) => `${MESES_LABELS[t.mes_referencia]}/${t.ano_referencia}`);
+    const saldoTotal = (taxas || [])
+      .filter((t) => t.unidade_id === unidade.id)
+      .reduce((s, t) => s + Math.max(0, t.valor - t.valor_pago), 0)
+      + Math.max(0, (unidade.divida_anterior ?? unidade.divida_inicial ?? 0) - (unidade.pagamentos_historicos ?? 0));
     const pdf = await generateReceiptPdf({
       receiptNumber,
       system,
       residentName: unidade.nome,
       residentId: `${unidade.bloco}-${unidade.edificio}-${unidade.apartamento}`,
       contacto: unidade.contacto,
+      categoria: CATEGORIAS_LABELS[unidade.categoria],
       allocations: [{ period: `${MESES_LABELS[last.mes_referencia]}/${last.ano_referencia}`, amount: last.valor_pago }],
+      paidMonths,
       totalPago: last.valor_pago,
       paymentMethod: last.payment_method || "—",
       paymentDate: last.data_pagamento ? new Date(last.data_pagamento) : new Date(),
-      saldoRemanescente: Math.max(0, last.valor - last.valor_pago),
+      saldoRemanescente: saldoTotal,
     });
     downloadBlob(pdf, `${receiptNumber}.pdf`);
   }, [taxas, toast]);
@@ -247,6 +256,7 @@ const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
             user_id: (paymentUnidade as any).user_id ?? null,
             divida_anterior: paymentUnidade.divida_anterior ?? paymentUnidade.divida_inicial ?? 0,
             pagamentos_historicos: paymentUnidade.pagamentos_historicos ?? 0,
+            categoria: CATEGORIAS_LABELS[paymentUnidade.categoria],
           }}
           taxasInquilino={(taxasPorUnidade[paymentUnidade.id] || []).map((t) => ({
             id: t.id,

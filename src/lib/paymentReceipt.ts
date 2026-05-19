@@ -4,16 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 export interface ReceiptPayload {
   /** Identificador do recibo (será usado no nome do ficheiro) */
   receiptNumber: string;
-  /** Sistema: FFH ou FDP */
-  system: "FFH" | "FDP";
+  /** Sistema: FFH ou FPD (apenas usado no nº de recibo) */
+  system: "FFH" | "FPD" | "FDP";
   residentName: string;
   residentId: string; // ex: "1-2-3" ou "Apt 12"
   contacto?: string;
+  /** Categoria do morador (ex: Quitadas, 1ª Fase via Cedsif...) */
+  categoria?: string;
   /** Distribuição do pagamento (uma linha por taxa coberta) */
   allocations: Array<{
     period: string; // ex: "Janeiro/2025" ou "Dívida histórica"
     amount: number;
   }>;
+  /** Lista de meses efetivamente pagos (ex: ["Janeiro/2025", "Fevereiro/2025"]) */
+  paidMonths?: string[];
   totalPago: number;
   paymentMethod: string;
   paymentDate: Date;
@@ -56,7 +60,7 @@ export const generateReceiptPdf = async (data: ReceiptPayload): Promise<Blob> =>
   doc.text("Vila Olímpica", W - margin, y + 6, { align: "right" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text(`Taxa de Condomínio · ${data.system}`, W - margin, y + 12, { align: "right" });
+  doc.text("Taxa de Condomínio", W - margin, y + 12, { align: "right" });
   doc.text("Recibo de Pagamento", W - margin, y + 17, { align: "right" });
 
   y += 28;
@@ -75,6 +79,7 @@ export const generateReceiptPdf = async (data: ReceiptPayload): Promise<Blob> =>
   doc.text(`Morador: ${data.residentName}`, margin, y); y += 5;
   doc.text(`ID: ${data.residentId}`, margin, y); y += 5;
   if (data.contacto) { doc.text(`Contacto: ${data.contacto}`, margin, y); y += 5; }
+  if (data.categoria) { doc.text(`Categoria: ${data.categoria}`, margin, y); y += 5; }
   doc.text(`Via de pagamento: ${data.paymentMethod}`, margin, y); y += 8;
 
   // Tabela de distribuição
@@ -97,16 +102,27 @@ export const generateReceiptPdf = async (data: ReceiptPayload): Promise<Blob> =>
   doc.line(margin, y, W - margin, y);
   y += 6;
 
+  // Meses pagos (resumo explícito)
+  if (data.paidMonths && data.paidMonths.length > 0) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Meses pagos:", margin, y);
+    doc.setFont("helvetica", "normal");
+    const txt = data.paidMonths.join(", ");
+    const lines = doc.splitTextToSize(txt, W - margin * 2 - 30);
+    doc.text(lines, margin + 28, y);
+    y += Math.max(6, lines.length * 5) + 2;
+  }
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.text("Total Pago:", margin, y);
   doc.text(formatMt(data.totalPago), W - margin, y, { align: "right" });
   y += 7;
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text("Saldo remanescente:", margin, y);
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Saldo remanescente (total):", margin, y);
   doc.setTextColor(data.saldoRemanescente > 0 ? 200 : 30, data.saldoRemanescente > 0 ? 30 : 130, 30);
   doc.text(formatMt(data.saldoRemanescente), W - margin, y, { align: "right" });
   doc.setTextColor(0);

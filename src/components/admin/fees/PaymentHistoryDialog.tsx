@@ -15,7 +15,7 @@ interface Props {
   taxas: Taxa[];
   adminUserId?: string | null;
   residentUserId?: string | null;
-  system?: "FFH" | "FDP";
+  system?: "FFH" | "FPD";
 }
 
 interface PaidRow {
