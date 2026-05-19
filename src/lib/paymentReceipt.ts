@@ -60,7 +60,7 @@ export const generateReceiptPdf = async (data: ReceiptPayload): Promise<Blob> =>
   doc.text("Vila Olímpica", W - margin, y + 6, { align: "right" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text(`Taxa de Condomínio · ${data.system}`, W - margin, y + 12, { align: "right" });
+  doc.text("Taxa de Condomínio", W - margin, y + 12, { align: "right" });
   doc.text("Recibo de Pagamento", W - margin, y + 17, { align: "right" });
 
   y += 28;
