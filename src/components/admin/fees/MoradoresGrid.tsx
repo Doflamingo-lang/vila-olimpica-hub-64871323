@@ -8,7 +8,7 @@ import { Search, MoreVertical, CreditCard, History, Pencil, CheckCircle2, AlertC
 import EditUnidadeDialog from "./EditUnidadeDialog";
 import PaymentHistoryDialog from "./PaymentHistoryDialog";
 import CascadePaymentDialog from "./CascadePaymentDialog";
-import { Taxa, Unidade, formatCurrency, MESES_LABELS } from "./types";
+import { Taxa, Unidade, formatCurrency, MESES_LABELS, CATEGORIAS_LABELS } from "./types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { generateReceiptPdf, downloadBlob } from "@/lib/paymentReceipt";
