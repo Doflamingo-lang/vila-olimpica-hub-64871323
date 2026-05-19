@@ -36,6 +36,7 @@ interface CascadePaymentDialogProps {
     user_id?: string | null;
     divida_anterior: number;
     pagamentos_historicos: number;
+    categoria?: string;
   };
   taxasInquilino: CascadeTaxa[];
   adminUserId?: string | null;
