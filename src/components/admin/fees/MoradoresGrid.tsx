@@ -257,7 +257,7 @@ const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
             user_id: (paymentUnidade as any).user_id ?? null,
             divida_anterior: paymentUnidade.divida_anterior ?? paymentUnidade.divida_inicial ?? 0,
             pagamentos_historicos: paymentUnidade.pagamentos_historicos ?? 0,
-            categoria: (await import("./types")).CATEGORIAS_LABELS[paymentUnidade.categoria],
+            categoria: CATEGORIAS_LABELS[paymentUnidade.categoria],
           }}
           taxasInquilino={(taxasPorUnidade[paymentUnidade.id] || []).map((t) => ({
             id: t.id,
