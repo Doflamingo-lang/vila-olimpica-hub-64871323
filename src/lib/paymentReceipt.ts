@@ -4,16 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 export interface ReceiptPayload {
   /** Identificador do recibo (será usado no nome do ficheiro) */
   receiptNumber: string;
-  /** Sistema: FFH ou FDP */
-  system: "FFH" | "FDP";
+  /** Sistema: FFH ou FPD (apenas usado no nº de recibo) */
+  system: "FFH" | "FPD" | "FDP";
   residentName: string;
   residentId: string; // ex: "1-2-3" ou "Apt 12"
   contacto?: string;
+  /** Categoria do morador (ex: Quitadas, 1ª Fase via Cedsif...) */
+  categoria?: string;
   /** Distribuição do pagamento (uma linha por taxa coberta) */
   allocations: Array<{
     period: string; // ex: "Janeiro/2025" ou "Dívida histórica"
     amount: number;
   }>;
+  /** Lista de meses efetivamente pagos (ex: ["Janeiro/2025", "Fevereiro/2025"]) */
+  paidMonths?: string[];
   totalPago: number;
   paymentMethod: string;
   paymentDate: Date;
