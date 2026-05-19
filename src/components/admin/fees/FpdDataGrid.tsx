@@ -430,7 +430,7 @@ const FpdDataGrid = () => {
       <Dialog open={gerarOpen} onOpenChange={setGerarOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Gerar Taxas FDP</DialogTitle>
+            <DialogTitle>Gerar Taxas FPD</DialogTitle>
             <DialogDescription>Gerar taxas mensais para um novo ano</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
