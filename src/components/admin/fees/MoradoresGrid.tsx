@@ -51,17 +51,27 @@ const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
     }
     const last = ts[0];
     const receiptNumber = `REC-${system}-${last.id.slice(0, 8).toUpperCase()}`;
+    const { CATEGORIAS_LABELS } = await import("./types");
+    const paidMonths = ts
+      .sort((a, b) => (a.ano_referencia - b.ano_referencia) || (a.mes_referencia - b.mes_referencia))
+      .map((t) => `${MESES_LABELS[t.mes_referencia]}/${t.ano_referencia}`);
+    const saldoTotal = (taxas || [])
+      .filter((t) => t.unidade_id === unidade.id)
+      .reduce((s, t) => s + Math.max(0, t.valor - t.valor_pago), 0)
+      + Math.max(0, (unidade.divida_anterior ?? unidade.divida_inicial ?? 0) - (unidade.pagamentos_historicos ?? 0));
     const pdf = await generateReceiptPdf({
       receiptNumber,
       system,
       residentName: unidade.nome,
       residentId: `${unidade.bloco}-${unidade.edificio}-${unidade.apartamento}`,
       contacto: unidade.contacto,
+      categoria: CATEGORIAS_LABELS[unidade.categoria],
       allocations: [{ period: `${MESES_LABELS[last.mes_referencia]}/${last.ano_referencia}`, amount: last.valor_pago }],
+      paidMonths,
       totalPago: last.valor_pago,
       paymentMethod: last.payment_method || "—",
       paymentDate: last.data_pagamento ? new Date(last.data_pagamento) : new Date(),
-      saldoRemanescente: Math.max(0, last.valor - last.valor_pago),
+      saldoRemanescente: saldoTotal,
     });
     downloadBlob(pdf, `${receiptNumber}.pdf`);
   }, [taxas, toast]);
