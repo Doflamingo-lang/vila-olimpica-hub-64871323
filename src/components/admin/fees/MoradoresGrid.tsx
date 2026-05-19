@@ -51,7 +51,6 @@ const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
     }
     const last = ts[0];
     const receiptNumber = `REC-${system}-${last.id.slice(0, 8).toUpperCase()}`;
-    const { CATEGORIAS_LABELS } = await import("./types");
     const paidMonths = ts
       .sort((a, b) => (a.ano_referencia - b.ano_referencia) || (a.mes_referencia - b.mes_referencia))
       .map((t) => `${MESES_LABELS[t.mes_referencia]}/${t.ano_referencia}`);
