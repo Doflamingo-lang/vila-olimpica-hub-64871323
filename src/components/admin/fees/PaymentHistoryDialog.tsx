@@ -120,7 +120,7 @@ const PaymentHistoryDialog = ({
   };
 
   if (!unidade) return null;
-  const idMorador = system === "FDP" ? `Apt ${unidade.apartamento}` : `${unidade.bloco}-${unidade.edificio}-${unidade.apartamento}`;
+  const idMorador = system === "FPD" ? `Apt ${unidade.apartamento}` : `${unidade.bloco}-${unidade.edificio}-${unidade.apartamento}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
