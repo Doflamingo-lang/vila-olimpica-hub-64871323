@@ -56,8 +56,8 @@ const TRANSACTION_TYPES: Record<string, string> = {
   seasonal: "Temporada",
 };
 
-const WHATSAPP_NUMBER = "258843001234";
-const PHONE_NUMBER = "+258 84 300 1234";
+const WHATSAPP_NUMBER = "258842814557";
+const PHONE_NUMBER = "+258 84 281 4557";
 
 const fallbackImages = [imovel1, imovel2, imovel3, imovel4];
 
