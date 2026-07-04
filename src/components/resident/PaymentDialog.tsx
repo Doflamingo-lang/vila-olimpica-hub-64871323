@@ -315,50 +315,63 @@ const PaymentDialog = ({ fee, open, onOpenChange, onPaymentSuccess }: PaymentDia
     setStep("processing");
     setIsProcessing(true);
 
-    // Upload receipt if bank transfer
-    let receiptUrl: string | null = null;
     if (selectedMethod === "bank_transfer") {
-      receiptUrl = await uploadReceipt(fee.id);
+      // Upload receipt + registar como pendente de verificação
+      const receiptUrl = await uploadReceipt(fee.id);
       if (!receiptUrl) {
         setIsProcessing(false);
         setStep("form");
         toast({ title: "Erro no upload", description: "Não foi possível enviar o comprovativo. Tente novamente.", variant: "destructive" });
         return;
       }
+
+      const now = new Date().toISOString();
+      const { error: updateError } = await supabase
+        .from("condominium_fees")
+        .update({
+          status: "pending_verification",
+          payment_method: selectedMethod,
+          receipt_url: receiptUrl,
+          updated_at: now,
+        })
+        .eq("id", fee.id);
+
+      if (updateError) {
+        console.error("Error updating fee:", updateError);
+        setIsProcessing(false);
+        setStep("method");
+        toast({ title: "Erro no pagamento", description: "Não foi possível registar o comprovativo. Tente novamente.", variant: "destructive" });
+        return;
+      }
     } else {
-      // Simulate processing for other methods
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      // Pagamento online (M-Pesa / e-Mola / Cartão) via edge function
+      const { data, error } = await supabase.functions.invoke("process-payment", {
+        body: {
+          feeId: fee.id,
+          method: selectedMethod,
+          amount: Number(fee.amount),
+          phone: (selectedMethod === "mpesa" || selectedMethod === "emola") ? `258${phoneNumber}` : undefined,
+          cardNumber: selectedMethod === "card" ? cardNumber : undefined,
+          cardExpiry: selectedMethod === "card" ? cardExpiry : undefined,
+          cardCvv: selectedMethod === "card" ? cardCvv : undefined,
+          cardName: selectedMethod === "card" ? cardName : undefined,
+        },
+      });
+
+      if (error || !data?.success) {
+        console.error("Payment error:", error, data);
+        setIsProcessing(false);
+        setStep("form");
+        toast({
+          title: "Falha no pagamento",
+          description: (data?.error || error?.message) ?? "Não foi possível processar o pagamento. Tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
-    // Update the fee status in the database
     const now = new Date().toISOString();
-    const updateData: Record<string, unknown> = {
-      status: selectedMethod === "bank_transfer" ? "pending_verification" : "paid",
-      payment_method: selectedMethod,
-      updated_at: now,
-    };
-
-    if (selectedMethod !== "bank_transfer") {
-      updateData.paid_at = now;
-    }
-
-    if (receiptUrl) {
-      updateData.receipt_url = receiptUrl;
-    }
-
-    const { error: updateError } = await supabase
-      .from("condominium_fees")
-      .update(updateData)
-      .eq("id", fee.id);
-
-    if (updateError) {
-      console.error("Error updating fee:", updateError);
-      setIsProcessing(false);
-      setStep("method");
-      toast({ title: "Erro no pagamento", description: "Não foi possível processar o pagamento. Tente novamente.", variant: "destructive" });
-      return;
-    }
-
     setIsProcessing(false);
     setStep("success");
 
