@@ -101,9 +101,9 @@ const PropertyDetailsPage = () => {
 
   const formatPrice = (price: number | null) => {
     if (!price) return "Consulte";
-    return new Intl.NumberFormat("pt-BR", {
+    return new Intl.NumberFormat("pt-MZ", {
       style: "currency",
-      currency: "BRL",
+      currency: "MZN",
       maximumFractionDigits: 0,
     }).format(price);
   };
