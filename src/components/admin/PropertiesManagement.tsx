@@ -384,9 +384,9 @@ const PropertiesManagement = () => {
 
   const formatPrice = (price: number | null) => {
     if (!price) return "-";
-    return new Intl.NumberFormat("pt-BR", {
+    return new Intl.NumberFormat("pt-MZ", {
       style: "currency",
-      currency: "BRL",
+      currency: "MZN",
     }).format(price);
   };
 
@@ -535,7 +535,7 @@ const PropertiesManagement = () => {
                 
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   <div>
-                    <Label htmlFor="price">Preço (R$)</Label>
+                    <Label htmlFor="price">Preço (MT)</Label>
                     <Input
                       id="price"
                       type="number"
