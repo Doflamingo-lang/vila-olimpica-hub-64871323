@@ -60,7 +60,7 @@ const Hero = () => {
           <p className="text-base md:text-lg text-primary-foreground/85 mb-10 leading-relaxed max-w-2xl mx-auto animate-fade-up opacity-0" style={{ animationDelay: "0.3s", animationFillMode: "forwards" }}>
             Projecto emblemático do <span className="font-semibold text-accent">Fundo para o Fomento de Habitação (FFH)</span>, 
             nascido como legado dos X Jogos Africanos de 2011. Uma comunidade de mais de 
-            <span className="font-semibold text-primary-foreground"> 2.643 moradores</span> focada na excelência e transparência.
+            <span className="font-semibold text-primary-foreground"> 3.371 moradores</span> focada na excelência e transparência.
           </p>
 
           {/* CTA Buttons */}
@@ -85,7 +85,7 @@ const Hero = () => {
               { icon: Home, value: "1.088", label: "Apartamentos" },
               { icon: Building2, value: "136", label: "Edifícios" },
               { icon: Building2, value: "32", label: "Blocos" },
-              { icon: Users, value: "2.643+", label: "Moradores" },
+              { icon: Users, value: "3.371+", label: "Moradores" },
             ].map((stat, index) => (
               <div key={index} className="flex flex-col items-center gap-2">
                 <div className="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center mb-1">

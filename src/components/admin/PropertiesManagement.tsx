@@ -120,9 +120,9 @@ const PropertiesManagement = () => {
     building: "",
     apartment_number: "",
     address: "",
-    neighborhood: "",
-    city: "São Paulo",
-    state: "SP",
+    neighborhood: "Vila Olímpica",
+    city: "Zimpeto",
+    state: "Maputo",
     zip_code: "",
     features: [] as string[],
     image_url: "",
@@ -170,9 +170,9 @@ const PropertiesManagement = () => {
       building: "",
       apartment_number: "",
       address: "",
-      neighborhood: "",
-      city: "São Paulo",
-      state: "SP",
+      neighborhood: "Vila Olímpica",
+      city: "Zimpeto",
+      state: "Maputo",
       zip_code: "",
       features: [],
       image_url: "",
@@ -200,8 +200,8 @@ const PropertiesManagement = () => {
       apartment_number: property.apartment_number || "",
       address: property.address || "",
       neighborhood: property.neighborhood || "",
-      city: property.city || "São Paulo",
-      state: property.state || "SP",
+      city: property.city || "Zimpeto",
+      state: property.state || "Maputo",
       zip_code: property.zip_code || "",
       features: property.features || [],
       image_url: property.image_url || "",
@@ -384,9 +384,9 @@ const PropertiesManagement = () => {
 
   const formatPrice = (price: number | null) => {
     if (!price) return "-";
-    return new Intl.NumberFormat("pt-BR", {
+    return new Intl.NumberFormat("pt-MZ", {
       style: "currency",
-      currency: "BRL",
+      currency: "MZN",
     }).format(price);
   };
 
@@ -535,7 +535,7 @@ const PropertiesManagement = () => {
                 
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   <div>
-                    <Label htmlFor="price">Preço (R$)</Label>
+                    <Label htmlFor="price">Preço (MT)</Label>
                     <Input
                       id="price"
                       type="number"
