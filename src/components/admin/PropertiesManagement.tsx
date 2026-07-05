@@ -132,6 +132,8 @@ const PropertiesManagement = () => {
     gallery_urls: [] as string[],
     is_featured: false,
     is_active: true,
+    owner_name: "",
+    owner_whatsapp: "",
   });
 
   useEffect(() => {
