@@ -429,10 +429,10 @@ const PropertyDetailsPage = () => {
                     variant="outline"
                     className="w-full"
                     size="lg"
-                    onClick={() => window.open(`tel:${PHONE_NUMBER}`, "_self")}
+                    onClick={() => window.open(`tel:${ownerPhoneDisplay}`, "_self")}
                   >
                     <Phone className="w-5 h-5 mr-2" />
-                    {PHONE_NUMBER}
+                    {ownerPhoneDisplay}
                   </Button>
 
                   <div className="pt-4 border-t border-border">
@@ -459,7 +459,7 @@ const PropertyDetailsPage = () => {
           </Button>
           <Button
             variant="outline"
-            onClick={() => window.open(`tel:${PHONE_NUMBER}`, "_self")}
+            onClick={() => window.open(`tel:${ownerPhoneDisplay}`, "_self")}
           >
             <Phone className="w-5 h-5" />
           </Button>
