@@ -444,6 +444,14 @@ const PropertyDetailsPage = () => {
               </Card>
             </div>
           </div>
+
+          {/* Ficha fixa do apartamento */}
+          <div className="mt-10 rounded-2xl border-2 border-primary/20 bg-primary/5 p-6 text-center">
+            <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">Ficha do Apartamento</p>
+            <p className="text-lg md:text-xl font-semibold text-foreground">
+              Apartamento tipo 3, 1 suíte, 2 varandas, sala espaçosa, 1 cozinha
+            </p>
+          </div>
         </div>
       </main>
 
