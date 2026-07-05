@@ -215,6 +215,8 @@ const PropertiesManagement = () => {
       gallery_urls: property.gallery_urls || [],
       is_featured: property.is_featured,
       is_active: property.is_active,
+      owner_name: property.owner_name || "",
+      owner_whatsapp: property.owner_whatsapp || "",
     });
     setIsDialogOpen(true);
   };
