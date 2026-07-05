@@ -70,6 +70,9 @@ interface Property {
   gallery_urls: string[] | null;
   is_featured: boolean;
   is_active: boolean;
+  owner_name: string | null;
+  owner_whatsapp: string | null;
+  user_id: string | null;
   created_at: string;
 }
 
@@ -129,6 +132,8 @@ const PropertiesManagement = () => {
     gallery_urls: [] as string[],
     is_featured: false,
     is_active: true,
+    owner_name: "",
+    owner_whatsapp: "",
   });
 
   useEffect(() => {
@@ -179,6 +184,8 @@ const PropertiesManagement = () => {
       gallery_urls: [],
       is_featured: false,
       is_active: true,
+      owner_name: "",
+      owner_whatsapp: "",
     });
     setEditingProperty(null);
   };
@@ -208,6 +215,8 @@ const PropertiesManagement = () => {
       gallery_urls: property.gallery_urls || [],
       is_featured: property.is_featured,
       is_active: property.is_active,
+      owner_name: property.owner_name || "",
+      owner_whatsapp: property.owner_whatsapp || "",
     });
     setIsDialogOpen(true);
   };
@@ -322,6 +331,8 @@ const PropertiesManagement = () => {
       gallery_urls: formData.gallery_urls.length > 0 ? formData.gallery_urls : null,
       is_featured: formData.is_featured,
       is_active: formData.is_active,
+      owner_name: formData.owner_name.trim() || null,
+      owner_whatsapp: formData.owner_whatsapp.trim() || null,
     };
 
     let error;
@@ -333,9 +344,10 @@ const PropertiesManagement = () => {
         .eq("id", editingProperty.id);
       error = updateError;
     } else {
+      const { data: { user } } = await supabase.auth.getUser();
       const { error: insertError } = await supabase
         .from("properties")
-        .insert([propertyData]);
+        .insert([{ ...propertyData, user_id: user?.id ?? null }]);
       error = insertError;
     }
 
@@ -525,6 +537,32 @@ const PropertiesManagement = () => {
                       onChange={(e) => setFormData({ ...formData, apartment_number: e.target.value })}
                       placeholder="Ex: 101, 202"
                     />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contacto do Dono */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">Contacto do Dono do Imóvel</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="owner_name">Nome do Dono</Label>
+                    <Input
+                      id="owner_name"
+                      value={formData.owner_name}
+                      onChange={(e) => setFormData({ ...formData, owner_name: e.target.value })}
+                      placeholder="Ex: João Manuel"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="owner_whatsapp">WhatsApp do Dono</Label>
+                    <Input
+                      id="owner_whatsapp"
+                      value={formData.owner_whatsapp}
+                      onChange={(e) => setFormData({ ...formData, owner_whatsapp: e.target.value })}
+                      placeholder="Ex: +258 84 000 0000"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Este é o número que será contactado quando um interessado clicar no botão do WhatsApp.</p>
                   </div>
                 </div>
               </div>

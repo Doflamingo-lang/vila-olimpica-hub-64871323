@@ -38,6 +38,8 @@ interface Property {
   image_url: string | null;
   gallery_urls: string[] | null;
   is_featured: boolean;
+  owner_name: string | null;
+  owner_whatsapp: string | null;
   created_at: string;
 }
 
@@ -56,8 +58,15 @@ const TRANSACTION_TYPES: Record<string, string> = {
   seasonal: "Temporada",
 };
 
-const WHATSAPP_NUMBER = "258842814557";
-const PHONE_NUMBER = "+258 84 281 4557";
+const DEFAULT_WHATSAPP = "258842814557";
+const DEFAULT_PHONE = "+258 84 281 4557";
+
+const normalizeWhatsapp = (raw?: string | null) => {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return null;
+  return digits.startsWith("258") ? digits : `258${digits}`;
+};
 
 const fallbackImages = [imovel1, imovel2, imovel3, imovel4];
 
@@ -132,12 +141,15 @@ const PropertyDetailsPage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  const ownerWhatsapp = normalizeWhatsapp(property?.owner_whatsapp) || DEFAULT_WHATSAPP;
+  const ownerPhoneDisplay = property?.owner_whatsapp?.trim() || DEFAULT_PHONE;
+
   const getWhatsAppLink = () => {
     if (!property) return "";
     const message = encodeURIComponent(
-      `Olá! Tenho interesse no imóvel: ${property.title}.\n\nDetalhes:\n- Tipo: ${PROPERTY_TYPES[property.property_type] || property.property_type}\n- Preço: ${formatPrice(property.price)}\n\nGostaria de mais informações e agendar uma visita.`
+      `Olá${property.owner_name ? ` ${property.owner_name}` : ""}! Tenho interesse no imóvel: ${property.title}.\n\nDetalhes:\n- Tipo: ${PROPERTY_TYPES[property.property_type] || property.property_type}\n- Preço: ${formatPrice(property.price)}\n\nGostaria de mais informações e agendar uma visita.`
     );
-    return `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+    return `https://wa.me/${ownerWhatsapp}?text=${message}`;
   };
 
   const handleShare = async () => {
@@ -417,10 +429,10 @@ const PropertyDetailsPage = () => {
                     variant="outline"
                     className="w-full"
                     size="lg"
-                    onClick={() => window.open(`tel:${PHONE_NUMBER}`, "_self")}
+                    onClick={() => window.open(`tel:${ownerPhoneDisplay}`, "_self")}
                   >
                     <Phone className="w-5 h-5 mr-2" />
-                    {PHONE_NUMBER}
+                    {ownerPhoneDisplay}
                   </Button>
 
                   <div className="pt-4 border-t border-border">
@@ -431,6 +443,14 @@ const PropertyDetailsPage = () => {
                 </CardContent>
               </Card>
             </div>
+          </div>
+
+          {/* Ficha fixa do apartamento */}
+          <div className="mt-10 rounded-2xl border-2 border-primary/20 bg-primary/5 p-6 text-center">
+            <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">Ficha do Apartamento</p>
+            <p className="text-lg md:text-xl font-semibold text-foreground">
+              Apartamento tipo 3, 1 suíte, 2 varandas, sala espaçosa, 1 cozinha
+            </p>
           </div>
         </div>
       </main>
@@ -447,7 +467,7 @@ const PropertyDetailsPage = () => {
           </Button>
           <Button
             variant="outline"
-            onClick={() => window.open(`tel:${PHONE_NUMBER}`, "_self")}
+            onClick={() => window.open(`tel:${ownerPhoneDisplay}`, "_self")}
           >
             <Phone className="w-5 h-5" />
           </Button>
