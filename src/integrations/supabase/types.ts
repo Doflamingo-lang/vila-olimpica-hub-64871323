@@ -672,6 +672,8 @@ export type Database = {
           is_active: boolean | null
           is_featured: boolean | null
           neighborhood: string | null
+          owner_name: string | null
+          owner_whatsapp: string | null
           parking_spots: number | null
           price: number | null
           property_type: string
@@ -679,6 +681,7 @@ export type Database = {
           title: string
           transaction_type: string
           updated_at: string
+          user_id: string | null
           zip_code: string | null
         }
         Insert: {
@@ -700,6 +703,8 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           neighborhood?: string | null
+          owner_name?: string | null
+          owner_whatsapp?: string | null
           parking_spots?: number | null
           price?: number | null
           property_type?: string
@@ -707,6 +712,7 @@ export type Database = {
           title: string
           transaction_type?: string
           updated_at?: string
+          user_id?: string | null
           zip_code?: string | null
         }
         Update: {
@@ -728,6 +734,8 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           neighborhood?: string | null
+          owner_name?: string | null
+          owner_whatsapp?: string | null
           parking_spots?: number | null
           price?: number | null
           property_type?: string
@@ -735,6 +743,7 @@ export type Database = {
           title?: string
           transaction_type?: string
           updated_at?: string
+          user_id?: string | null
           zip_code?: string | null
         }
         Relationships: []
