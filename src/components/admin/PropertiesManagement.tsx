@@ -541,6 +541,32 @@ const PropertiesManagement = () => {
                 </div>
               </div>
 
+              {/* Contacto do Dono */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">Contacto do Dono do Imóvel</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="owner_name">Nome do Dono</Label>
+                    <Input
+                      id="owner_name"
+                      value={formData.owner_name}
+                      onChange={(e) => setFormData({ ...formData, owner_name: e.target.value })}
+                      placeholder="Ex: João Manuel"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="owner_whatsapp">WhatsApp do Dono</Label>
+                    <Input
+                      id="owner_whatsapp"
+                      value={formData.owner_whatsapp}
+                      onChange={(e) => setFormData({ ...formData, owner_whatsapp: e.target.value })}
+                      placeholder="Ex: +258 84 000 0000"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Este é o número que será contactado quando um interessado clicar no botão do WhatsApp.</p>
+                  </div>
+                </div>
+              </div>
+
               {/* Details */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-foreground border-b pb-2">Detalhes</h3>
