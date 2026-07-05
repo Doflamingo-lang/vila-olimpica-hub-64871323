@@ -58,8 +58,15 @@ const TRANSACTION_TYPES: Record<string, string> = {
   seasonal: "Temporada",
 };
 
-const WHATSAPP_NUMBER = "258842814557";
-const PHONE_NUMBER = "+258 84 281 4557";
+const DEFAULT_WHATSAPP = "258842814557";
+const DEFAULT_PHONE = "+258 84 281 4557";
+
+const normalizeWhatsapp = (raw?: string | null) => {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return null;
+  return digits.startsWith("258") ? digits : `258${digits}`;
+};
 
 const fallbackImages = [imovel1, imovel2, imovel3, imovel4];
 
