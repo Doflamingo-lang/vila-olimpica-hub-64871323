@@ -70,6 +70,9 @@ interface Property {
   gallery_urls: string[] | null;
   is_featured: boolean;
   is_active: boolean;
+  owner_name: string | null;
+  owner_whatsapp: string | null;
+  user_id: string | null;
   created_at: string;
 }
 
