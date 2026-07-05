@@ -184,6 +184,8 @@ const PropertiesManagement = () => {
       gallery_urls: [],
       is_featured: false,
       is_active: true,
+      owner_name: "",
+      owner_whatsapp: "",
     });
     setEditingProperty(null);
   };
