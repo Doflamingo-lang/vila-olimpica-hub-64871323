@@ -331,6 +331,8 @@ const PropertiesManagement = () => {
       gallery_urls: formData.gallery_urls.length > 0 ? formData.gallery_urls : null,
       is_featured: formData.is_featured,
       is_active: formData.is_active,
+      owner_name: formData.owner_name.trim() || null,
+      owner_whatsapp: formData.owner_whatsapp.trim() || null,
     };
 
     let error;
