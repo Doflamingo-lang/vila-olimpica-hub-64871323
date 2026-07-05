@@ -38,6 +38,8 @@ interface Property {
   image_url: string | null;
   gallery_urls: string[] | null;
   is_featured: boolean;
+  owner_name: string | null;
+  owner_whatsapp: string | null;
   created_at: string;
 }
 
