@@ -344,9 +344,10 @@ const PropertiesManagement = () => {
         .eq("id", editingProperty.id);
       error = updateError;
     } else {
+      const { data: { user } } = await supabase.auth.getUser();
       const { error: insertError } = await supabase
         .from("properties")
-        .insert([propertyData]);
+        .insert([{ ...propertyData, user_id: user?.id ?? null }]);
       error = insertError;
     }
 
