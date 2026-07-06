@@ -1,20 +1,23 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, MoreVertical, CreditCard, History, Pencil, CheckCircle2, AlertCircle, Loader2, Printer } from "lucide-react";
+import { Search, MoreVertical, CreditCard, History, Pencil, CheckCircle2, AlertCircle, Loader2, Printer, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import CascadePaymentDialog from "./CascadePaymentDialog";
 import PaymentHistoryDialog from "./PaymentHistoryDialog";
 import { Taxa, Unidade, formatCurrency, PaymentStatus, MESES_LABELS } from "./types";
 import { generateReceiptPdf, downloadBlob } from "@/lib/paymentReceipt";
+import { generateDebtorsPdf } from "@/lib/debtorsReport";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+type DebtFilter = "todos" | "acumuladas" | "pos_sistema";
 
 export interface FpdMoradorUnidade {
   id: string;
