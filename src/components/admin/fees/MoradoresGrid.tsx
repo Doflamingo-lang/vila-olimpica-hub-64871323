@@ -26,12 +26,14 @@ interface MoradorRow {
   unidade: Unidade;
   idLegivel: string;
   dividaAcumulada: number;
+  dividaPosSistema: number;
   dividaMes: number;
   dividaTotal: number;
   pagouMesActual: boolean;
 }
 
 const PAGE_INCREMENT = 100;
+type DebtFilter = "todos" | "acumuladas" | "pos_sistema";
 
 const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
   const { user } = useAuth();
