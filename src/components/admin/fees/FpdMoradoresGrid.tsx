@@ -56,6 +56,7 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"todos" | "em_dia" | "em_atraso">("todos");
+  const [debtFilter, setDebtFilter] = useState<DebtFilter>("todos");
   const [paymentUnidade, setPaymentUnidade] = useState<FpdMoradorUnidade | null>(null);
   const [editUnidade, setEditUnidade] = useState<FpdMoradorUnidade | null>(null);
   const [historyUnidade, setHistoryUnidade] = useState<FpdMoradorUnidade | null>(null);
@@ -77,14 +78,16 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
     return unidades.map((u) => {
       const ts = taxasPorUnidade[u.id] || [];
       const dividaAcumulada = Math.max(0, (u.divida_anterior ?? 0) - (u.pagamentos_historicos ?? 0));
+      const dividaPosSistema = ts.reduce((s, t) => s + Math.max(0, t.valor - t.valor_pago), 0);
       const taxaMes = ts.find((t) => t.ano_referencia === anoH && t.mes_referencia === mesH);
       const pagouMesActual = !!taxaMes && taxaMes.valor_pago >= taxaMes.valor;
       return {
         unidade: u,
         idLegivel: `Apt ${u.apartamento}`,
         dividaAcumulada,
+        dividaPosSistema,
         dividaMes: TAXA_MENSAL,
-        dividaTotal: dividaAcumulada + TAXA_MENSAL,
+        dividaTotal: dividaAcumulada + dividaPosSistema,
         pagouMesActual,
       };
     });
@@ -95,11 +98,13 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
     return rows.filter((r) => {
       if (statusFilter === "em_dia" && !r.pagouMesActual) return false;
       if (statusFilter === "em_atraso" && r.pagouMesActual) return false;
+      if (debtFilter === "acumuladas" && r.dividaAcumulada <= 0) return false;
+      if (debtFilter === "pos_sistema" && r.dividaPosSistema <= 0) return false;
       if (!q) return true;
       const hay = `${r.unidade.nome} ${r.unidade.contacto} ${r.idLegivel} ${r.unidade.apartamento}`.toLowerCase().replace(/\s+/g, "");
       return hay.includes(q);
     });
-  }, [rows, search, statusFilter]);
+  }, [rows, search, statusFilter, debtFilter]);
 
   const visible = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
 
@@ -108,6 +113,40 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
     { value: "em_dia", label: "Em Dia" },
     { value: "em_atraso", label: "Em Atraso" },
   ];
+  const debtChips: { value: DebtFilter; label: string }[] = [
+    { value: "todos", label: "Todas as dívidas" },
+    { value: "acumuladas", label: "Só acumuladas (antes do sistema)" },
+    { value: "pos_sistema", label: "Só depois do sistema" },
+  ];
+
+  const handlePrintReport = useCallback(async () => {
+    if (!filtered.length) {
+      toast({ title: "Sem registos", description: "Nenhum morador corresponde ao filtro actual.", variant: "destructive" });
+      return;
+    }
+    const debtLabel = debtChips.find((c) => c.value === debtFilter)?.label || "Todas";
+    const statusLabel = chips.find((c) => c.value === statusFilter)?.label || "Todos";
+    const rowsOut = [...filtered]
+      .sort((a, b) => a.unidade.nome.localeCompare(b.unidade.nome))
+      .map((r) => ({
+        idLegivel: r.idLegivel,
+        nome: r.unidade.nome,
+        contacto: r.unidade.contacto || "",
+        categoriaLabel: "FPD",
+        dividaAcumulada: r.dividaAcumulada,
+        dividaPosSistema: r.dividaPosSistema,
+        dividaTotal: r.dividaTotal,
+      }));
+    const pdf = await generateDebtorsPdf({
+      system: "FPD",
+      title: "Relatório de Devedores — FPD",
+      filterLabel: `${debtLabel}  •  Status: ${statusLabel}`,
+      groupByCategoria: false,
+      rows: rowsOut,
+    });
+    downloadBlob(pdf, `devedores-fpd-${new Date().toISOString().slice(0, 10)}.pdf`);
+  }, [filtered, debtFilter, statusFilter, toast]);
+
 
   const openEdit = (u: FpdMoradorUnidade) => {
     const dividaAcum = Math.max(0, (u.divida_anterior ?? 0) - (u.pagamentos_historicos ?? 0));
