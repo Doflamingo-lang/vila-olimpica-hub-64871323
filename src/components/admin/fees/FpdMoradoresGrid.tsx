@@ -1,20 +1,23 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, MoreVertical, CreditCard, History, Pencil, CheckCircle2, AlertCircle, Loader2, Printer } from "lucide-react";
+import { Search, MoreVertical, CreditCard, History, Pencil, CheckCircle2, AlertCircle, Loader2, Printer, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import CascadePaymentDialog from "./CascadePaymentDialog";
 import PaymentHistoryDialog from "./PaymentHistoryDialog";
 import { Taxa, Unidade, formatCurrency, PaymentStatus, MESES_LABELS } from "./types";
 import { generateReceiptPdf, downloadBlob } from "@/lib/paymentReceipt";
+import { generateDebtorsPdf } from "@/lib/debtorsReport";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+type DebtFilter = "todos" | "acumuladas" | "pos_sistema";
 
 export interface FpdMoradorUnidade {
   id: string;
@@ -53,6 +56,7 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"todos" | "em_dia" | "em_atraso">("todos");
+  const [debtFilter, setDebtFilter] = useState<DebtFilter>("todos");
   const [paymentUnidade, setPaymentUnidade] = useState<FpdMoradorUnidade | null>(null);
   const [editUnidade, setEditUnidade] = useState<FpdMoradorUnidade | null>(null);
   const [historyUnidade, setHistoryUnidade] = useState<FpdMoradorUnidade | null>(null);
@@ -74,14 +78,16 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
     return unidades.map((u) => {
       const ts = taxasPorUnidade[u.id] || [];
       const dividaAcumulada = Math.max(0, (u.divida_anterior ?? 0) - (u.pagamentos_historicos ?? 0));
+      const dividaPosSistema = ts.reduce((s, t) => s + Math.max(0, t.valor - t.valor_pago), 0);
       const taxaMes = ts.find((t) => t.ano_referencia === anoH && t.mes_referencia === mesH);
       const pagouMesActual = !!taxaMes && taxaMes.valor_pago >= taxaMes.valor;
       return {
         unidade: u,
         idLegivel: `Apt ${u.apartamento}`,
         dividaAcumulada,
+        dividaPosSistema,
         dividaMes: TAXA_MENSAL,
-        dividaTotal: dividaAcumulada + TAXA_MENSAL,
+        dividaTotal: dividaAcumulada + dividaPosSistema,
         pagouMesActual,
       };
     });
@@ -92,11 +98,13 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
     return rows.filter((r) => {
       if (statusFilter === "em_dia" && !r.pagouMesActual) return false;
       if (statusFilter === "em_atraso" && r.pagouMesActual) return false;
+      if (debtFilter === "acumuladas" && r.dividaAcumulada <= 0) return false;
+      if (debtFilter === "pos_sistema" && r.dividaPosSistema <= 0) return false;
       if (!q) return true;
       const hay = `${r.unidade.nome} ${r.unidade.contacto} ${r.idLegivel} ${r.unidade.apartamento}`.toLowerCase().replace(/\s+/g, "");
       return hay.includes(q);
     });
-  }, [rows, search, statusFilter]);
+  }, [rows, search, statusFilter, debtFilter]);
 
   const visible = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
 
@@ -105,6 +113,40 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
     { value: "em_dia", label: "Em Dia" },
     { value: "em_atraso", label: "Em Atraso" },
   ];
+  const debtChips: { value: DebtFilter; label: string }[] = [
+    { value: "todos", label: "Todas as dívidas" },
+    { value: "acumuladas", label: "Só acumuladas (antes do sistema)" },
+    { value: "pos_sistema", label: "Só depois do sistema" },
+  ];
+
+  const handlePrintReport = useCallback(async () => {
+    if (!filtered.length) {
+      toast({ title: "Sem registos", description: "Nenhum morador corresponde ao filtro actual.", variant: "destructive" });
+      return;
+    }
+    const debtLabel = debtChips.find((c) => c.value === debtFilter)?.label || "Todas";
+    const statusLabel = chips.find((c) => c.value === statusFilter)?.label || "Todos";
+    const rowsOut = [...filtered]
+      .sort((a, b) => a.unidade.nome.localeCompare(b.unidade.nome))
+      .map((r) => ({
+        idLegivel: r.idLegivel,
+        nome: r.unidade.nome,
+        contacto: r.unidade.contacto || "",
+        categoriaLabel: "FPD",
+        dividaAcumulada: r.dividaAcumulada,
+        dividaPosSistema: r.dividaPosSistema,
+        dividaTotal: r.dividaTotal,
+      }));
+    const pdf = await generateDebtorsPdf({
+      system: "FPD",
+      title: "Relatório de Devedores — FPD",
+      filterLabel: `${debtLabel}  •  Status: ${statusLabel}`,
+      groupByCategoria: false,
+      rows: rowsOut,
+    });
+    downloadBlob(pdf, `devedores-fpd-${new Date().toISOString().slice(0, 10)}.pdf`);
+  }, [filtered, debtFilter, statusFilter, toast]);
+
 
   const openEdit = (u: FpdMoradorUnidade) => {
     const dividaAcum = Math.max(0, (u.divida_anterior ?? 0) - (u.pagamentos_historicos ?? 0));
@@ -170,31 +212,53 @@ const FpdMoradoresGrid = ({ unidades, taxas, onRefresh }: Props) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <div className="flex gap-1.5 flex-wrap">
+            {chips.map((c) => (
+              <button
+                key={c.value}
+                onClick={() => { setStatusFilter(c.value); setVisibleCount(PAGE_INCREMENT); }}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium transition-colors border",
+                  statusFilter === c.value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                )}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Pesquisar por apartamento, nome ou contacto..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setVisibleCount(PAGE_INCREMENT); }}
+              className="pl-10 h-9"
+            />
+          </div>
+          <Button variant="outline" size="sm" onClick={handlePrintReport}>
+            <FileText className="w-4 h-4 mr-2" />
+            Imprimir PDF
+          </Button>
+        </div>
         <div className="flex gap-1.5 flex-wrap">
-          {chips.map((c) => (
+          {debtChips.map((c) => (
             <button
               key={c.value}
-              onClick={() => { setStatusFilter(c.value); setVisibleCount(PAGE_INCREMENT); }}
+              onClick={() => { setDebtFilter(c.value); setVisibleCount(PAGE_INCREMENT); }}
               className={cn(
                 "px-3 py-1.5 rounded-full text-xs font-medium transition-colors border",
-                statusFilter === c.value
-                  ? "bg-primary text-primary-foreground border-primary"
+                debtFilter === c.value
+                  ? "bg-accent text-accent-foreground border-accent"
                   : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
               )}
             >
               {c.label}
             </button>
           ))}
-        </div>
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Pesquisar por apartamento, nome ou contacto..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setVisibleCount(PAGE_INCREMENT); }}
-            className="pl-10 h-9"
-          />
         </div>
       </div>
 
