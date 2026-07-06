@@ -40,6 +40,7 @@ const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"todos" | "em_dia" | "em_atraso">("todos");
+  const [debtFilter, setDebtFilter] = useState<DebtFilter>("todos");
   const [paymentUnidade, setPaymentUnidade] = useState<Unidade | null>(null);
   const [editUnidade, setEditUnidade] = useState<Unidade | null>(null);
   const [historyUnidade, setHistoryUnidade] = useState<Unidade | null>(null);
