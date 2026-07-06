@@ -95,14 +95,16 @@ const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
     return unidades.map((u) => {
       const ts = taxasPorUnidade[u.id] || [];
       const dividaAcumulada = Math.max(0, (u.divida_anterior ?? u.divida_inicial ?? 0) - (u.pagamentos_historicos ?? 0));
+      const dividaPosSistema = ts.reduce((s, t) => s + Math.max(0, t.valor - t.valor_pago), 0);
       const taxaMes = ts.find((t) => t.ano_referencia === anoH && t.mes_referencia === mesH);
       const pagouMesActual = !!taxaMes && taxaMes.valor_pago >= taxaMes.valor;
       return {
         unidade: u,
         idLegivel: `${u.bloco}-${u.edificio}-${u.apartamento}`,
         dividaAcumulada,
+        dividaPosSistema,
         dividaMes: TAXA_MENSAL,
-        dividaTotal: dividaAcumulada + TAXA_MENSAL,
+        dividaTotal: dividaAcumulada + dividaPosSistema,
         pagouMesActual,
       };
     });
@@ -113,11 +115,13 @@ const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
     return rows.filter((r) => {
       if (statusFilter === "em_dia" && !r.pagouMesActual) return false;
       if (statusFilter === "em_atraso" && r.pagouMesActual) return false;
+      if (debtFilter === "acumuladas" && r.dividaAcumulada <= 0) return false;
+      if (debtFilter === "pos_sistema" && r.dividaPosSistema <= 0) return false;
       if (!q) return true;
       const hay = `${r.unidade.nome} ${r.unidade.contacto} ${r.idLegivel}`.toLowerCase().replace(/\s+/g, "");
       return hay.includes(q);
     });
-  }, [rows, search, statusFilter]);
+  }, [rows, search, statusFilter, debtFilter]);
 
   const visible = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
 
