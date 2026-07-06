@@ -130,34 +130,97 @@ const MoradoresGrid = ({ taxas, unidades, anoFiltro, onRefresh }: Props) => {
     { value: "em_dia", label: "Em Dia" },
     { value: "em_atraso", label: "Em Atraso" },
   ];
+  const debtChips: { value: DebtFilter; label: string }[] = [
+    { value: "todos", label: "Todas as dívidas" },
+    { value: "acumuladas", label: "Só acumuladas (antes do sistema)" },
+    { value: "pos_sistema", label: "Só depois do sistema" },
+  ];
+
+  const handlePrintReport = useCallback(async () => {
+    if (!filtered.length) {
+      toast({ title: "Sem registos", description: "Nenhum morador corresponde ao filtro actual.", variant: "destructive" });
+      return;
+    }
+    const debtLabel = debtChips.find((c) => c.value === debtFilter)?.label || "Todas";
+    const statusLabel = chips.find((c) => c.value === statusFilter)?.label || "Todos";
+    const orderedCat = new Map<string, number>();
+    CATEGORIAS_LIST.forEach((c, i) => orderedCat.set(CATEGORIAS_LABELS[c], i));
+    const rowsOut = [...filtered]
+      .sort((a, b) => {
+        const ai = orderedCat.get(CATEGORIAS_LABELS[a.unidade.categoria]) ?? 99;
+        const bi = orderedCat.get(CATEGORIAS_LABELS[b.unidade.categoria]) ?? 99;
+        if (ai !== bi) return ai - bi;
+        return a.unidade.nome.localeCompare(b.unidade.nome);
+      })
+      .map((r) => ({
+        idLegivel: r.idLegivel,
+        nome: r.unidade.nome,
+        contacto: r.unidade.contacto || "",
+        categoriaLabel: CATEGORIAS_LABELS[r.unidade.categoria],
+        dividaAcumulada: r.dividaAcumulada,
+        dividaPosSistema: r.dividaPosSistema,
+        dividaTotal: r.dividaTotal,
+      }));
+    const pdf = await generateDebtorsPdf({
+      system: "FFH",
+      title: "Relatório de Devedores — FFH",
+      subtitle: `Ano de referência: ${anoFiltro}`,
+      filterLabel: `${debtLabel}  •  Status: ${statusLabel}`,
+      groupByCategoria: true,
+      rows: rowsOut,
+    });
+    downloadBlob(pdf, `devedores-ffh-${new Date().toISOString().slice(0, 10)}.pdf`);
+  }, [filtered, debtFilter, statusFilter, anoFiltro, toast]);
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <div className="flex gap-1.5 flex-wrap">
+            {chips.map((c) => (
+              <button
+                key={c.value}
+                onClick={() => { setStatusFilter(c.value); setVisibleCount(PAGE_INCREMENT); }}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium transition-colors border",
+                  statusFilter === c.value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                )}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Pesquisar por ID (bloco-edif-apt), nome ou contacto..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setVisibleCount(PAGE_INCREMENT); }}
+              className="pl-10 h-9"
+            />
+          </div>
+          <Button variant="outline" size="sm" onClick={handlePrintReport}>
+            <FileText className="w-4 h-4 mr-2" />
+            Imprimir PDF por Fase
+          </Button>
+        </div>
         <div className="flex gap-1.5 flex-wrap">
-          {chips.map((c) => (
+          {debtChips.map((c) => (
             <button
               key={c.value}
-              onClick={() => { setStatusFilter(c.value); setVisibleCount(PAGE_INCREMENT); }}
+              onClick={() => { setDebtFilter(c.value); setVisibleCount(PAGE_INCREMENT); }}
               className={cn(
                 "px-3 py-1.5 rounded-full text-xs font-medium transition-colors border",
-                statusFilter === c.value
-                  ? "bg-primary text-primary-foreground border-primary"
+                debtFilter === c.value
+                  ? "bg-accent text-accent-foreground border-accent"
                   : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
               )}
             >
               {c.label}
             </button>
           ))}
-        </div>
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Pesquisar por ID (bloco-edif-apt), nome ou contacto..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setVisibleCount(PAGE_INCREMENT); }}
-            className="pl-10 h-9"
-          />
         </div>
       </div>
 
