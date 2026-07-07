@@ -48,7 +48,16 @@ interface Property {
   features: string[] | null;
   image_url: string | null;
   is_featured: boolean;
+  owner_name: string | null;
+  owner_whatsapp: string | null;
 }
+
+const normalizeWhatsapp = (raw?: string | null) => {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return null;
+  return digits.startsWith("258") ? digits : `258${digits}`;
+};
 
 const PROPERTY_TYPES = [
   { value: "all", label: "Todos os Tipos" },
@@ -170,10 +179,12 @@ const PropertiesPage = () => {
   };
 
   const getWhatsAppLink = (property: Property) => {
+    const owner = normalizeWhatsapp(property.owner_whatsapp);
+    if (!owner) return null;
     const message = encodeURIComponent(
-      `Olá! Tenho interesse no imóvel: ${property.title}. Gostaria de mais informações.`
+      `Olá${property.owner_name ? ` ${property.owner_name}` : ""}! Tenho interesse no imóvel: ${property.title}. Gostaria de mais informações.`
     );
-    return `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+    return `https://wa.me/${owner}?text=${message}`;
   };
 
   const getFallbackImage = (index: number) => {
@@ -512,16 +523,19 @@ const PropertiesPage = () => {
                         {formatPrice(property.price)}
                       </div>
                       <div className="flex gap-2">
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={() =>
-                            window.open(getWhatsAppLink(property), "_blank")
-                          }
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                        </Button>
+                        {getWhatsAppLink(property) && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() =>
+                              window.open(getWhatsAppLink(property)!, "_blank")
+                            }
+                            title={property.owner_name ? `WhatsApp de ${property.owner_name}` : "WhatsApp do proprietário"}
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </Button>
+                        )}
                         <Link to={`/imoveis/${property.id}`}>
                           <Button variant="outline" size="sm">
                             Ver Detalhes

@@ -58,9 +58,6 @@ const TRANSACTION_TYPES: Record<string, string> = {
   seasonal: "Temporada",
 };
 
-const DEFAULT_WHATSAPP = "258842814557";
-const DEFAULT_PHONE = "+258 84 281 4557";
-
 const normalizeWhatsapp = (raw?: string | null) => {
   if (!raw) return null;
   const digits = raw.replace(/\D/g, "");
@@ -141,13 +138,14 @@ const PropertyDetailsPage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  const ownerWhatsapp = normalizeWhatsapp(property?.owner_whatsapp) || DEFAULT_WHATSAPP;
-  const ownerPhoneDisplay = property?.owner_whatsapp?.trim() || DEFAULT_PHONE;
+  const ownerWhatsapp = normalizeWhatsapp(property?.owner_whatsapp);
+  const ownerPhoneDisplay = property?.owner_whatsapp?.trim() || "";
+  const ownerName = property?.owner_name?.trim() || "";
 
   const getWhatsAppLink = () => {
-    if (!property) return "";
+    if (!property || !ownerWhatsapp) return "";
     const message = encodeURIComponent(
-      `Olá${property.owner_name ? ` ${property.owner_name}` : ""}! Tenho interesse no imóvel: ${property.title}.\n\nDetalhes:\n- Tipo: ${PROPERTY_TYPES[property.property_type] || property.property_type}\n- Preço: ${formatPrice(property.price)}\n\nGostaria de mais informações e agendar uma visita.`
+      `Olá${ownerName ? ` ${ownerName}` : ""}! Tenho interesse no imóvel: ${property.title}.\n\nDetalhes:\n- Tipo: ${PROPERTY_TYPES[property.property_type] || property.property_type}\n- Preço: ${formatPrice(property.price)}\n\nGostaria de mais informações e agendar uma visita.`
     );
     return `https://wa.me/${ownerWhatsapp}?text=${message}`;
   };
@@ -413,33 +411,42 @@ const PropertyDetailsPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-muted-foreground">
-                    Entre em contato conosco para mais informações ou agendar uma visita.
+                    Entre em contato diretamente com o proprietário para mais informações ou agendar uma visita.
                   </p>
 
-                  <Button
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    size="lg"
-                    onClick={() => window.open(getWhatsAppLink(), "_blank")}
-                  >
-                    <MessageCircle className="w-5 h-5 mr-2" />
-                    Contato via WhatsApp
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    size="lg"
-                    onClick={() => window.open(`tel:${ownerPhoneDisplay}`, "_self")}
-                  >
-                    <Phone className="w-5 h-5 mr-2" />
-                    {ownerPhoneDisplay}
-                  </Button>
-
-                  <div className="pt-4 border-t border-border">
-                    <p className="text-sm text-muted-foreground text-center">
-                      Horário de atendimento: Seg-Sex, 8h às 18h
+                  {ownerName && (
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">Proprietário: </span>
+                      <span className="font-semibold text-foreground">{ownerName}</span>
                     </p>
-                  </div>
+                  )}
+
+                  {ownerWhatsapp ? (
+                    <>
+                      <Button
+                        className="w-full bg-green-600 hover:bg-green-700"
+                        size="lg"
+                        onClick={() => window.open(getWhatsAppLink(), "_blank")}
+                      >
+                        <MessageCircle className="w-5 h-5 mr-2" />
+                        Contato via WhatsApp
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        size="lg"
+                        onClick={() => window.open(`tel:${ownerPhoneDisplay}`, "_self")}
+                      >
+                        <Phone className="w-5 h-5 mr-2" />
+                        {ownerPhoneDisplay}
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">
+                      Contacto do proprietário indisponível no momento.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -456,23 +463,25 @@ const PropertyDetailsPage = () => {
       </main>
 
       {/* Mobile CTA */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-md border-t border-border lg:hidden z-40">
-        <div className="flex gap-3">
-          <Button
-            className="flex-1 bg-green-600 hover:bg-green-700"
-            onClick={() => window.open(getWhatsAppLink(), "_blank")}
-          >
-            <MessageCircle className="w-5 h-5 mr-2" />
-            WhatsApp
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => window.open(`tel:${ownerPhoneDisplay}`, "_self")}
-          >
-            <Phone className="w-5 h-5" />
-          </Button>
+      {ownerWhatsapp && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-md border-t border-border lg:hidden z-40">
+          <div className="flex gap-3">
+            <Button
+              className="flex-1 bg-green-600 hover:bg-green-700"
+              onClick={() => window.open(getWhatsAppLink(), "_blank")}
+            >
+              <MessageCircle className="w-5 h-5 mr-2" />
+              WhatsApp
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => window.open(`tel:${ownerPhoneDisplay}`, "_self")}
+            >
+              <Phone className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <Footer />
       <WhatsAppButton />
