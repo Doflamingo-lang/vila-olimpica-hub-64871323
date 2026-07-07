@@ -21,6 +21,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AccessRequestPage from "./pages/AccessRequestPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 import UserGuidePage from "./pages/UserGuidePage";
+import MyPropertiesPage from "./pages/MyPropertiesPage";
+import MyServicesPage from "./pages/MyServicesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
