@@ -138,13 +138,14 @@ const PropertyDetailsPage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  const ownerWhatsapp = normalizeWhatsapp(property?.owner_whatsapp) || DEFAULT_WHATSAPP;
-  const ownerPhoneDisplay = property?.owner_whatsapp?.trim() || DEFAULT_PHONE;
+  const ownerWhatsapp = normalizeWhatsapp(property?.owner_whatsapp);
+  const ownerPhoneDisplay = property?.owner_whatsapp?.trim() || "";
+  const ownerName = property?.owner_name?.trim() || "";
 
   const getWhatsAppLink = () => {
-    if (!property) return "";
+    if (!property || !ownerWhatsapp) return "";
     const message = encodeURIComponent(
-      `Olá${property.owner_name ? ` ${property.owner_name}` : ""}! Tenho interesse no imóvel: ${property.title}.\n\nDetalhes:\n- Tipo: ${PROPERTY_TYPES[property.property_type] || property.property_type}\n- Preço: ${formatPrice(property.price)}\n\nGostaria de mais informações e agendar uma visita.`
+      `Olá${ownerName ? ` ${ownerName}` : ""}! Tenho interesse no imóvel: ${property.title}.\n\nDetalhes:\n- Tipo: ${PROPERTY_TYPES[property.property_type] || property.property_type}\n- Preço: ${formatPrice(property.price)}\n\nGostaria de mais informações e agendar uma visita.`
     );
     return `https://wa.me/${ownerWhatsapp}?text=${message}`;
   };
