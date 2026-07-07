@@ -463,23 +463,25 @@ const PropertyDetailsPage = () => {
       </main>
 
       {/* Mobile CTA */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-md border-t border-border lg:hidden z-40">
-        <div className="flex gap-3">
-          <Button
-            className="flex-1 bg-green-600 hover:bg-green-700"
-            onClick={() => window.open(getWhatsAppLink(), "_blank")}
-          >
-            <MessageCircle className="w-5 h-5 mr-2" />
-            WhatsApp
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => window.open(`tel:${ownerPhoneDisplay}`, "_self")}
-          >
-            <Phone className="w-5 h-5" />
-          </Button>
+      {ownerWhatsapp && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-md border-t border-border lg:hidden z-40">
+          <div className="flex gap-3">
+            <Button
+              className="flex-1 bg-green-600 hover:bg-green-700"
+              onClick={() => window.open(getWhatsAppLink(), "_blank")}
+            >
+              <MessageCircle className="w-5 h-5 mr-2" />
+              WhatsApp
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => window.open(`tel:${ownerPhoneDisplay}`, "_self")}
+            >
+              <Phone className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <Footer />
       <WhatsAppButton />
