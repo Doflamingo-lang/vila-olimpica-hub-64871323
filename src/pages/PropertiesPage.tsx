@@ -523,16 +523,19 @@ const PropertiesPage = () => {
                         {formatPrice(property.price)}
                       </div>
                       <div className="flex gap-2">
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={() =>
-                            window.open(getWhatsAppLink(property), "_blank")
-                          }
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                        </Button>
+                        {getWhatsAppLink(property) && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() =>
+                              window.open(getWhatsAppLink(property)!, "_blank")
+                            }
+                            title={property.owner_name ? `WhatsApp de ${property.owner_name}` : "WhatsApp do proprietário"}
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </Button>
+                        )}
                         <Link to={`/imoveis/${property.id}`}>
                           <Button variant="outline" size="sm">
                             Ver Detalhes
