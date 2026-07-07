@@ -48,7 +48,16 @@ interface Property {
   features: string[] | null;
   image_url: string | null;
   is_featured: boolean;
+  owner_name: string | null;
+  owner_whatsapp: string | null;
 }
+
+const normalizeWhatsapp = (raw?: string | null) => {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return null;
+  return digits.startsWith("258") ? digits : `258${digits}`;
+};
 
 const PROPERTY_TYPES = [
   { value: "all", label: "Todos os Tipos" },
