@@ -52,6 +52,8 @@ const App = () => (
           <Route path="/pedido-acesso" element={<AccessRequestPage />} />
           <Route path="/alterar-senha" element={<ChangePasswordPage />} />
           <Route path="/guia" element={<UserGuidePage />} />
+          <Route path="/meus-imoveis" element={<MyPropertiesPage />} />
+          <Route path="/meus-servicos" element={<MyServicesPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
