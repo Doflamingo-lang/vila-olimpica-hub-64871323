@@ -58,9 +58,6 @@ const TRANSACTION_TYPES: Record<string, string> = {
   seasonal: "Temporada",
 };
 
-const DEFAULT_WHATSAPP = "258842814557";
-const DEFAULT_PHONE = "+258 84 281 4557";
-
 const normalizeWhatsapp = (raw?: string | null) => {
   if (!raw) return null;
   const digits = raw.replace(/\D/g, "");
