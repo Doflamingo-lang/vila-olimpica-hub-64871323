@@ -179,10 +179,12 @@ const PropertiesPage = () => {
   };
 
   const getWhatsAppLink = (property: Property) => {
+    const owner = normalizeWhatsapp(property.owner_whatsapp);
+    if (!owner) return null;
     const message = encodeURIComponent(
-      `Olá! Tenho interesse no imóvel: ${property.title}. Gostaria de mais informações.`
+      `Olá${property.owner_name ? ` ${property.owner_name}` : ""}! Tenho interesse no imóvel: ${property.title}. Gostaria de mais informações.`
     );
-    return `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+    return `https://wa.me/${owner}?text=${message}`;
   };
 
   const getFallbackImage = (index: number) => {
