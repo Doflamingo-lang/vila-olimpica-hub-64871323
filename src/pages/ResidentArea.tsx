@@ -15,6 +15,7 @@ import {
   Loader2,
   Shield,
   MessageSquare,
+  Store,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -157,6 +158,28 @@ const ResidentArea = () => {
                   <FileText className="w-6 h-6" />
                 </div>
                 <p className="font-medium text-sm">Documentos</p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/meus-imoveis" className="block">
+            <Card className="cursor-pointer hover:shadow-lg transition-all hover:border-primary h-full">
+              <CardContent className="p-4 flex flex-col items-center text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-2">
+                  <Home className="w-6 h-6" />
+                </div>
+                <p className="font-medium text-sm">Meus Imóveis</p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/meus-servicos" className="block">
+            <Card className="cursor-pointer hover:shadow-lg transition-all hover:border-primary h-full">
+              <CardContent className="p-4 flex flex-col items-center text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-2">
+                  <Store className="w-6 h-6" />
+                </div>
+                <p className="font-medium text-sm">Meus Serviços</p>
               </CardContent>
             </Card>
           </Link>
