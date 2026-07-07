@@ -15,6 +15,7 @@ import {
   Loader2,
   Shield,
   MessageSquare,
+  Store,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
