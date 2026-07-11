@@ -283,13 +283,16 @@ const ResidentsManagement = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>
               {confirmTarget?.action === "deactivate" ? "Desativar morador?" :
-               confirmTarget?.action === "reactivate" ? "Reativar morador?" : "Remover morador?"}
+               confirmTarget?.action === "reactivate" ? "Reativar morador?" :
+               confirmTarget?.action === "unlock" ? "Desbloquear e gerar nova senha?" : "Remover morador?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmTarget?.action === "deactivate" ? (
                 <>Tem certeza que deseja desativar <strong>{confirmTarget?.resident.full_name}</strong>? O morador deixará de poder iniciar sessão. Os dados são preservados.</>
               ) : confirmTarget?.action === "reactivate" ? (
                 <>Reativar <strong>{confirmTarget?.resident.full_name}</strong>? O morador voltará a poder aceder ao sistema.</>
+              ) : confirmTarget?.action === "unlock" ? (
+                <>Vai desbloquear <strong>{confirmTarget?.resident.full_name}</strong> e gerar uma <strong>nova senha temporária</strong>. A senha antiga deixará de funcionar. O morador será obrigado a alterá-la no primeiro login (uso único). Deverá enviar as credenciais por WhatsApp.</>
               ) : (
                 <>Esta ação <strong>removerá permanentemente</strong> o registo de <strong>{confirmTarget?.resident.full_name}</strong>. Esta operação não pode ser revertida.</>
               )}
@@ -303,6 +306,68 @@ const ResidentsManagement = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!unlockResult} onOpenChange={(o) => !o && setUnlockResult(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-primary" />
+              Novas credenciais geradas
+            </DialogTitle>
+            <DialogDescription>
+              Envie estas credenciais ao morador por WhatsApp. A senha só funciona uma vez — o morador será obrigado a definir uma nova ao entrar.
+            </DialogDescription>
+          </DialogHeader>
+          {unlockResult && (
+            <div className="space-y-3">
+              <div className="rounded-lg border bg-muted/30 p-3">
+                <p className="text-xs text-muted-foreground">Nome</p>
+                <p className="font-medium">{unlockResult.full_name}</p>
+              </div>
+              <div className="rounded-lg border bg-muted/30 p-3">
+                <p className="text-xs text-muted-foreground">Email</p>
+                <p className="font-mono text-sm">{unlockResult.email}</p>
+              </div>
+              <div className="rounded-lg border bg-primary/10 border-primary/30 p-3">
+                <p className="text-xs text-muted-foreground">Senha temporária (uso único)</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-mono text-lg font-semibold flex-1">{unlockResult.password}</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(unlockResult.password);
+                      toast.success("Senha copiada");
+                    }}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {unlockResult?.whatsapp && (
+              <Button
+                variant="default"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  const msg = encodeURIComponent(
+                    `Olá ${unlockResult.full_name},\n\nA sua conta foi desbloqueada. Novas credenciais de acesso (uso único — será obrigado a alterar a senha no primeiro login):\n\nEmail: ${unlockResult.email}\nSenha: ${unlockResult.password}\n\nAdministração Vila Olímpica`,
+                  );
+                  const phone = unlockResult.whatsapp.replace(/\D/g, "");
+                  const normalized = phone.startsWith("258") ? phone : `258${phone}`;
+                  window.open(`https://wa.me/${normalized}?text=${msg}`, "_blank");
+                }}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Enviar por WhatsApp
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setUnlockResult(null)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
