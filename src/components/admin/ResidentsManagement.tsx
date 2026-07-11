@@ -91,6 +91,19 @@ const ResidentsManagement = () => {
         const { error } = await supabase.from("access_requests").delete().eq("id", resident.id);
         if (error) throw error;
         toast.success("Morador removido com sucesso");
+      } else if (action === "unlock") {
+        const { data, error } = await supabase.functions.invoke("unlock-resident", {
+          body: { email: resident.email },
+        });
+        if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
+        const res = data as any;
+        setUnlockResult({
+          email: res.email,
+          password: res.password,
+          full_name: res.full_name || resident.full_name,
+          whatsapp: res.whatsapp || resident.phone,
+        });
+        toast.success("Nova senha gerada. Envie ao morador pelo WhatsApp.");
       } else {
         const { data, error } = await supabase.functions.invoke("toggle-resident-status", {
           body: { request_id: resident.id, action },
