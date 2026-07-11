@@ -26,10 +26,12 @@ interface ApprovedResident {
 
 const ResidentsManagement = () => {
   const [residents, setResidents] = useState<ApprovedResident[]>([]);
+  const [lockMap, setLockMap] = useState<Record<string, { failed_count: number; is_locked: boolean; locked_at: string | null }>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [confirmTarget, setConfirmTarget] = useState<{ resident: ApprovedResident; action: "deactivate" | "reactivate" | "remove" } | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{ resident: ApprovedResident; action: "deactivate" | "reactivate" | "remove" | "unlock" } | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [unlockResult, setUnlockResult] = useState<{ email: string; password: string; full_name: string; whatsapp: string } | null>(null);
 
   const moradorId = (r: ApprovedResident) => {
     const b = String(r.block || "").replace(/\D/g, "");
