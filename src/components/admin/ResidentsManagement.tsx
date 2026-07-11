@@ -185,6 +185,8 @@ const ResidentsManagement = () => {
                 <TableBody>
                   {filtered.map((resident) => {
                     const isInactive = resident.status === "deactivated";
+                    const lock = lockMap[resident.email.toLowerCase()];
+                    const isLocked = !!lock?.is_locked;
                     return (
                       <TableRow key={resident.id} className={isInactive ? "opacity-60" : ""}>
                         <TableCell className="font-mono font-semibold text-primary">{moradorId(resident)}</TableCell>
@@ -201,17 +203,39 @@ const ResidentsManagement = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {isInactive ? (
-                            <Badge variant="destructive">Desativado</Badge>
-                          ) : (
-                            <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/30">Ativo</Badge>
-                          )}
+                          <div className="flex flex-col gap-1">
+                            {isInactive ? (
+                              <Badge variant="destructive">Desativado</Badge>
+                            ) : (
+                              <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/30">Ativo</Badge>
+                            )}
+                            {isLocked && (
+                              <Badge variant="destructive" className="gap-1">
+                                <Lock className="w-3 h-3" />
+                                Bloqueado
+                              </Badge>
+                            )}
+                            {!isLocked && lock && lock.failed_count > 0 && (
+                              <span className="text-xs text-muted-foreground">{lock.failed_count} tentativa(s)</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {format(new Date(resident.created_at), "dd/MM/yyyy")}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-2 flex-wrap">
+                            {isLocked && (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                disabled={processingId === resident.id}
+                                onClick={() => setConfirmTarget({ resident, action: "unlock" })}
+                              >
+                                <KeyRound className="w-4 h-4 mr-1" />
+                                Desbloquear + Nova Senha
+                              </Button>
+                            )}
                             {isInactive ? (
                               <Button
                                 size="sm"
