@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Users, Search, Loader2, UserX, UserCheck, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Users, Search, Loader2, UserX, UserCheck, Trash2, Lock, KeyRound, Copy, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -25,10 +26,12 @@ interface ApprovedResident {
 
 const ResidentsManagement = () => {
   const [residents, setResidents] = useState<ApprovedResident[]>([]);
+  const [lockMap, setLockMap] = useState<Record<string, { failed_count: number; is_locked: boolean; locked_at: string | null }>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [confirmTarget, setConfirmTarget] = useState<{ resident: ApprovedResident; action: "deactivate" | "reactivate" | "remove" } | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{ resident: ApprovedResident; action: "deactivate" | "reactivate" | "remove" | "unlock" } | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [unlockResult, setUnlockResult] = useState<{ email: string; password: string; full_name: string; whatsapp: string } | null>(null);
 
   const moradorId = (r: ApprovedResident) => {
     const b = String(r.block || "").replace(/\D/g, "");
@@ -43,17 +46,25 @@ const ResidentsManagement = () => {
 
   const fetchResidents = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from("access_requests")
-      .select("*")
-      .in("status", ["approved", "deactivated"])
-      .order("full_name", { ascending: true });
+    const [{ data, error }, { data: attempts }] = await Promise.all([
+      supabase
+        .from("access_requests")
+        .select("*")
+        .in("status", ["approved", "deactivated"])
+        .order("full_name", { ascending: true }),
+      (supabase as any).from("login_attempts").select("email, failed_count, is_locked, locked_at"),
+    ]);
 
     if (error) {
       console.error("Error fetching residents:", error);
     } else {
       setResidents(data || []);
     }
+    const map: Record<string, any> = {};
+    (attempts || []).forEach((a: any) => {
+      map[String(a.email).toLowerCase()] = a;
+    });
+    setLockMap(map);
     setIsLoading(false);
   };
 
@@ -80,6 +91,19 @@ const ResidentsManagement = () => {
         const { error } = await supabase.from("access_requests").delete().eq("id", resident.id);
         if (error) throw error;
         toast.success("Morador removido com sucesso");
+      } else if (action === "unlock") {
+        const { data, error } = await supabase.functions.invoke("unlock-resident", {
+          body: { email: resident.email },
+        });
+        if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
+        const res = data as any;
+        setUnlockResult({
+          email: res.email,
+          password: res.password,
+          full_name: res.full_name || resident.full_name,
+          whatsapp: res.whatsapp || resident.phone,
+        });
+        toast.success("Nova senha gerada. Envie ao morador pelo WhatsApp.");
       } else {
         const { data, error } = await supabase.functions.invoke("toggle-resident-status", {
           body: { request_id: resident.id, action },
@@ -161,6 +185,8 @@ const ResidentsManagement = () => {
                 <TableBody>
                   {filtered.map((resident) => {
                     const isInactive = resident.status === "deactivated";
+                    const lock = lockMap[resident.email.toLowerCase()];
+                    const isLocked = !!lock?.is_locked;
                     return (
                       <TableRow key={resident.id} className={isInactive ? "opacity-60" : ""}>
                         <TableCell className="font-mono font-semibold text-primary">{moradorId(resident)}</TableCell>
@@ -177,17 +203,39 @@ const ResidentsManagement = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {isInactive ? (
-                            <Badge variant="destructive">Desativado</Badge>
-                          ) : (
-                            <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/30">Ativo</Badge>
-                          )}
+                          <div className="flex flex-col gap-1">
+                            {isInactive ? (
+                              <Badge variant="destructive">Desativado</Badge>
+                            ) : (
+                              <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/30">Ativo</Badge>
+                            )}
+                            {isLocked && (
+                              <Badge variant="destructive" className="gap-1">
+                                <Lock className="w-3 h-3" />
+                                Bloqueado
+                              </Badge>
+                            )}
+                            {!isLocked && lock && lock.failed_count > 0 && (
+                              <span className="text-xs text-muted-foreground">{lock.failed_count} tentativa(s)</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {format(new Date(resident.created_at), "dd/MM/yyyy")}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-2 flex-wrap">
+                            {isLocked && (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                disabled={processingId === resident.id}
+                                onClick={() => setConfirmTarget({ resident, action: "unlock" })}
+                              >
+                                <KeyRound className="w-4 h-4 mr-1" />
+                                Desbloquear + Nova Senha
+                              </Button>
+                            )}
                             {isInactive ? (
                               <Button
                                 size="sm"
@@ -235,13 +283,16 @@ const ResidentsManagement = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>
               {confirmTarget?.action === "deactivate" ? "Desativar morador?" :
-               confirmTarget?.action === "reactivate" ? "Reativar morador?" : "Remover morador?"}
+               confirmTarget?.action === "reactivate" ? "Reativar morador?" :
+               confirmTarget?.action === "unlock" ? "Desbloquear e gerar nova senha?" : "Remover morador?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmTarget?.action === "deactivate" ? (
                 <>Tem certeza que deseja desativar <strong>{confirmTarget?.resident.full_name}</strong>? O morador deixará de poder iniciar sessão. Os dados são preservados.</>
               ) : confirmTarget?.action === "reactivate" ? (
                 <>Reativar <strong>{confirmTarget?.resident.full_name}</strong>? O morador voltará a poder aceder ao sistema.</>
+              ) : confirmTarget?.action === "unlock" ? (
+                <>Vai desbloquear <strong>{confirmTarget?.resident.full_name}</strong> e gerar uma <strong>nova senha temporária</strong>. A senha antiga deixará de funcionar. O morador será obrigado a alterá-la no primeiro login (uso único). Deverá enviar as credenciais por WhatsApp.</>
               ) : (
                 <>Esta ação <strong>removerá permanentemente</strong> o registo de <strong>{confirmTarget?.resident.full_name}</strong>. Esta operação não pode ser revertida.</>
               )}
@@ -255,6 +306,68 @@ const ResidentsManagement = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!unlockResult} onOpenChange={(o) => !o && setUnlockResult(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-primary" />
+              Novas credenciais geradas
+            </DialogTitle>
+            <DialogDescription>
+              Envie estas credenciais ao morador por WhatsApp. A senha só funciona uma vez — o morador será obrigado a definir uma nova ao entrar.
+            </DialogDescription>
+          </DialogHeader>
+          {unlockResult && (
+            <div className="space-y-3">
+              <div className="rounded-lg border bg-muted/30 p-3">
+                <p className="text-xs text-muted-foreground">Nome</p>
+                <p className="font-medium">{unlockResult.full_name}</p>
+              </div>
+              <div className="rounded-lg border bg-muted/30 p-3">
+                <p className="text-xs text-muted-foreground">Email</p>
+                <p className="font-mono text-sm">{unlockResult.email}</p>
+              </div>
+              <div className="rounded-lg border bg-primary/10 border-primary/30 p-3">
+                <p className="text-xs text-muted-foreground">Senha temporária (uso único)</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-mono text-lg font-semibold flex-1">{unlockResult.password}</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(unlockResult.password);
+                      toast.success("Senha copiada");
+                    }}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {unlockResult?.whatsapp && (
+              <Button
+                variant="default"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  const msg = encodeURIComponent(
+                    `Olá ${unlockResult.full_name},\n\nA sua conta foi desbloqueada. Novas credenciais de acesso (uso único — será obrigado a alterar a senha no primeiro login):\n\nEmail: ${unlockResult.email}\nSenha: ${unlockResult.password}\n\nAdministração Vila Olímpica`,
+                  );
+                  const phone = unlockResult.whatsapp.replace(/\D/g, "");
+                  const normalized = phone.startsWith("258") ? phone : `258${phone}`;
+                  window.open(`https://wa.me/${normalized}?text=${msg}`, "_blank");
+                }}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Enviar por WhatsApp
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setUnlockResult(null)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

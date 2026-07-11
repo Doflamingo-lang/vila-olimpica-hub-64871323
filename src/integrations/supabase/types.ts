@@ -457,6 +457,39 @@ export type Database = {
           },
         ]
       }
+      login_attempts: {
+        Row: {
+          created_at: string
+          email: string
+          failed_count: number
+          id: string
+          is_locked: boolean
+          last_attempt_at: string
+          locked_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          failed_count?: number
+          id?: string
+          is_locked?: boolean
+          last_attempt_at?: string
+          locked_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          failed_count?: number
+          id?: string
+          is_locked?: boolean
+          last_attempt_at?: string
+          locked_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketplace_services: {
         Row: {
           business_name: string
