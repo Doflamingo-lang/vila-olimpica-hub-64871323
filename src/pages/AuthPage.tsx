@@ -76,26 +76,56 @@ const AuthPage = () => {
         });
         
         if (error) {
-          if (error.message.includes("Email not confirmed")) {
+          const msg = error.message || "";
+          const isBanned = /banned|blocked|user is banned/i.test(msg);
+          const isInvalid = msg.includes("Invalid login credentials");
+
+          // Track failed attempt for invalid credentials
+          let lockInfo: { is_locked?: boolean; remaining?: number } = {};
+          if (isInvalid) {
+            try {
+              const { data: rec } = await supabase.functions.invoke("record-failed-login", {
+                body: { email: email.trim().toLowerCase() },
+              });
+              lockInfo = (rec as any) || {};
+            } catch (e) {
+              console.error("record-failed-login failed", e);
+            }
+          }
+
+          if (isBanned || lockInfo.is_locked) {
+            toast({
+              title: "Conta bloqueada",
+              description: "Excedeu o número de tentativas. Contacte a administração para desbloquear e receber novas credenciais.",
+              variant: "destructive",
+            });
+          } else if (msg.includes("Email not confirmed")) {
             toast({
               title: "Email não verificado",
               description: "Por favor, verifique seu email antes de fazer login.",
               variant: "destructive",
             });
-          } else if (error.message.includes("Invalid login credentials")) {
+          } else if (isInvalid) {
+            const remaining = typeof lockInfo.remaining === "number" ? lockInfo.remaining : null;
             toast({
               title: "Erro de Login",
-              description: "Email ou senha incorretos. Verifique suas credenciais.",
+              description: remaining !== null
+                ? `Email ou senha incorretos. Tentativas restantes: ${remaining}.`
+                : "Email ou senha incorretos. Verifique suas credenciais.",
               variant: "destructive",
             });
           } else {
-            toast({
-              title: "Erro",
-              description: error.message,
-              variant: "destructive",
-            });
+            toast({ title: "Erro", description: msg, variant: "destructive" });
           }
         } else if (data?.session) {
+          // Reset attempts counter on successful login
+          try {
+            await supabase.functions.invoke("reset-login-attempts", {
+              body: { email: email.trim().toLowerCase() },
+            });
+          } catch (e) {
+            console.error("reset-login-attempts failed", e);
+          }
           // Check if user must change temporary password
           const mustChange = data.session.user.user_metadata?.must_change_password;
           if (mustChange) {
