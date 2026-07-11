@@ -46,17 +46,25 @@ const ResidentsManagement = () => {
 
   const fetchResidents = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from("access_requests")
-      .select("*")
-      .in("status", ["approved", "deactivated"])
-      .order("full_name", { ascending: true });
+    const [{ data, error }, { data: attempts }] = await Promise.all([
+      supabase
+        .from("access_requests")
+        .select("*")
+        .in("status", ["approved", "deactivated"])
+        .order("full_name", { ascending: true }),
+      (supabase as any).from("login_attempts").select("email, failed_count, is_locked, locked_at"),
+    ]);
 
     if (error) {
       console.error("Error fetching residents:", error);
     } else {
       setResidents(data || []);
     }
+    const map: Record<string, any> = {};
+    (attempts || []).forEach((a: any) => {
+      map[String(a.email).toLowerCase()] = a;
+    });
+    setLockMap(map);
     setIsLoading(false);
   };
 
